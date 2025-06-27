@@ -65,8 +65,8 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# OpenAI
-OPENAI_API_KEY=your_openai_api_key
+# OpenAI (Required for AI Chat)
+OPENAI_API_KEY=your_openai_api_key  # Get from https://platform.openai.com/api-keys
 
 # Stripe
 STRIPE_SECRET_KEY=your_stripe_secret_key

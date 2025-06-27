@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { ArrowRight, Brain, Heart, Shield, Users } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'
+import { ArchetypeChat } from '@/components/chat/ArchetypeChat'
 
 export default function Home() {
   return (
@@ -29,6 +30,15 @@ export default function Home() {
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* AI Chat Section */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold mb-2">Start Your Journey Right Now</h2>
+          <p className="text-muted-foreground">Talk to our AI assistant about your relationship patterns</p>
+        </div>
+        <ArchetypeChat />
       </section>
 
       {/* Features Section */}
