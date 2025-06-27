@@ -3,8 +3,6 @@ import { Database } from '@/lib/types/database'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
-type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
-type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
 export class ProfileRepository extends BaseRepository<'profiles'> {
   constructor(client: SupabaseClient<Database>) {

@@ -1,7 +1,6 @@
 import Stripe from 'stripe'
 import { ProfileRepository } from '@/lib/repositories/profile.repository'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { APP_CONFIG } from '@/config/app.config'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-05-28.basil',
@@ -132,7 +131,8 @@ export class StripeService {
 
           await profileRepo.update(userId, {
             subscription_status: subscriptionType as 'monthly' | 'yearly',
-            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
           })
         }
         break
@@ -150,7 +150,8 @@ export class StripeService {
           
           await profileRepo.update(userId, {
             subscription_status: subscriptionType,
-            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
           })
         }
         break
@@ -215,7 +216,8 @@ export class StripeService {
     const subscription = subscriptions.data[0]
     return {
       status: subscription.status,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     }
   }

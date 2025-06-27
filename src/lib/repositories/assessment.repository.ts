@@ -3,8 +3,6 @@ import { Database } from '@/lib/types/database'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 type Assessment = Database['public']['Tables']['assessments']['Row']
-type AssessmentInsert = Database['public']['Tables']['assessments']['Insert']
-type AssessmentUpdate = Database['public']['Tables']['assessments']['Update']
 type ArchetypeResult = Database['public']['Tables']['archetype_results']['Row']
 
 export class AssessmentRepository extends BaseRepository<'assessments'> {
@@ -55,7 +53,7 @@ export class AssessmentRepository extends BaseRepository<'assessments'> {
     return {
       assessment: data,
       results: data.archetype_results?.[0] || null
-    } as any
+    } as { assessment: Assessment; results: ArchetypeResult | null }
   }
 
   async getCompletedAssessmentsByUserId(userId: string): Promise<Assessment[]> {
@@ -87,7 +85,7 @@ export class AssessmentRepository extends BaseRepository<'assessments'> {
 
   async updateResponses(
     assessmentId: string,
-    responses: any
+    responses: Record<string, unknown>
   ): Promise<Assessment> {
     const { data, error } = await this.client
       .from(this.tableName)

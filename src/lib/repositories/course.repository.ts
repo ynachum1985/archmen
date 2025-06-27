@@ -2,9 +2,9 @@ import { BaseRepository } from './base.repository'
 import { Database } from '@/lib/types/database'
 import { SupabaseClient } from '@supabase/supabase-js'
 
+type Json = Database['public']['Tables']['course_enrollments']['Row']['progress']
+
 type Course = Database['public']['Tables']['courses']['Row']
-type CourseInsert = Database['public']['Tables']['courses']['Insert']
-type CourseUpdate = Database['public']['Tables']['courses']['Update']
 type CourseEnrollment = Database['public']['Tables']['course_enrollments']['Row']
 
 export class CourseRepository extends BaseRepository<'courses'> {
@@ -61,17 +61,17 @@ export class CourseRepository extends BaseRepository<'courses'> {
 
     if (error) throw error
     
-    return data.map((item: any) => ({
+    return data.map((item: { courses: Course; id: string; user_id: string; course_id: string; created_at: string; updated_at: string; progress: Json; completed_at: string | null }) => ({
       ...item.courses,
-      enrollment: {
-        id: item.id,
-        user_id: item.user_id,
-        course_id: item.course_id,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        progress: item.progress,
-        completed_at: item.completed_at
-      }
+              enrollment: {
+          id: item.id,
+          user_id: item.user_id,
+          course_id: item.course_id,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          progress: item.progress as Json,
+          completed_at: item.completed_at
+        }
     }))
   }
 
@@ -94,7 +94,7 @@ export class CourseRepository extends BaseRepository<'courses'> {
 
   async updateProgress(
     enrollmentId: string,
-    progress: Record<string, any>
+    progress: Json
   ): Promise<CourseEnrollment> {
     const { data, error } = await this.client
       .from('course_enrollments')

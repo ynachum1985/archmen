@@ -42,7 +42,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Based on Carl Jung's proven archetypal framework for understanding the masculine psyche
+                Based on Carl Jung&apos;s proven archetypal framework for understanding the masculine psyche
               </CardDescription>
             </CardContent>
           </Card>
