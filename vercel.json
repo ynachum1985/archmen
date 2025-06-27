@@ -3,11 +3,6 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "env": {
     "NEXT_PUBLIC_APP_NAME": "ArchMen",
     "NEXT_PUBLIC_APP_URL": "https://archmen.vercel.app"
