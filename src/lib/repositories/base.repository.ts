@@ -39,7 +39,8 @@ export abstract class BaseRepository<
     const { data, error } = await this.client
       .from(this.tableName)
       .select('*')
-      .eq('id', id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .eq('id' as any, id)
       .single()
 
     if (error && error.code !== 'PGRST116') throw error
@@ -49,7 +50,8 @@ export abstract class BaseRepository<
   async create(data: TInsert): Promise<T> {
     const { data: created, error } = await this.client
       .from(this.tableName)
-      .insert(data)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .insert(data as any)
       .select()
       .single()
 
@@ -60,8 +62,10 @@ export abstract class BaseRepository<
   async update(id: string, data: TUpdate): Promise<T> {
     const { data: updated, error } = await this.client
       .from(this.tableName)
-      .update(data)
-      .eq('id', id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update(data as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .eq('id' as any, id)
       .select()
       .single()
 
@@ -73,7 +77,8 @@ export abstract class BaseRepository<
     const { error } = await this.client
       .from(this.tableName)
       .delete()
-      .eq('id', id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .eq('id' as any, id)
 
     if (error) throw error
   }

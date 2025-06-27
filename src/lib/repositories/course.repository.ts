@@ -61,7 +61,7 @@ export class CourseRepository extends BaseRepository<'courses'> {
 
     if (error) throw error
     
-    return data.map((item: { courses: Course; id: string; user_id: string; course_id: string; created_at: string; updated_at: string; progress: Json; completed_at: string | null }) => ({
+    return data.map((item: { courses: Course; id: string; user_id: string; course_id: string; created_at: string | null; updated_at: string | null; progress: Json; completed_at: string | null }) => ({
       ...item.courses,
               enrollment: {
           id: item.id,

@@ -4,6 +4,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 type Assessment = Database['public']['Tables']['assessments']['Row']
 type ArchetypeResult = Database['public']['Tables']['archetype_results']['Row']
+type Json = Database['public']['Tables']['assessments']['Update']['responses']
 
 export class AssessmentRepository extends BaseRepository<'assessments'> {
   constructor(client: SupabaseClient<Database>) {
@@ -85,7 +86,7 @@ export class AssessmentRepository extends BaseRepository<'assessments'> {
 
   async updateResponses(
     assessmentId: string,
-    responses: Record<string, unknown>
+    responses: Json
   ): Promise<Assessment> {
     const { data, error } = await this.client
       .from(this.tableName)
