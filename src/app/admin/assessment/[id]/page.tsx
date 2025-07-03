@@ -103,11 +103,11 @@ export default function AssessmentDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 p-4">
+      <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-slate-700 rounded w-1/3"></div>
-            <div className="h-64 bg-slate-700 rounded"></div>
+            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
           </div>
         </div>
       </div>
@@ -115,40 +115,40 @@ export default function AssessmentDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6 mb-8">
           <Link href="/admin">
-            <Button variant="outline" className="border-slate-600 text-white hover:bg-slate-700">
+            <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Admin
             </Button>
           </Link>
           
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-3xl font-light text-gray-900 mb-2">
               {assessmentConfig?.name || 'Assessment Configuration'}
             </h1>
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               Configure AI-driven assessment parameters and test the experience
             </p>
           </div>
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-slate-800 border-slate-700">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="bg-white border border-gray-200 p-1 rounded-lg shadow-sm">
             <TabsTrigger 
               value="builder" 
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
             >
               <Settings className="mr-2 h-4 w-4" />
               Configure Assessment
             </TabsTrigger>
             <TabsTrigger 
               value="test"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
               disabled={!assessmentConfig}
             >
               <TestTube className="mr-2 h-4 w-4" />
@@ -156,7 +156,7 @@ export default function AssessmentDetailPage() {
             </TabsTrigger>
             <TabsTrigger 
               value="results"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
               disabled={!testResults}
             >
               <BarChart3 className="mr-2 h-4 w-4" />
@@ -188,30 +188,30 @@ export default function AssessmentDetailPage() {
           {/* Results Tab */}
           <TabsContent value="results">
             {testResults && (
-              <Card className="bg-slate-800/50 border-slate-700">
+              <Card className="bg-white border border-gray-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-white flex items-center gap-2">
-                    <Users className="h-6 w-6 text-teal-400" />
+                  <CardTitle className="text-2xl font-light text-gray-900 flex items-center gap-3">
+                    <Users className="h-6 w-6 text-blue-500" />
                     Assessment Test Results
                   </CardTitle>
-                  <CardDescription className="text-gray-400">
+                  <CardDescription className="text-gray-600">
                     Results from your test run of the assessment
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-8">
                   {testResults
                     .sort((a, b) => b.score - a.score)
                     .map((archetype, index) => (
                       <div key={index} className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-semibold text-white">
+                          <h3 className="text-xl font-medium text-gray-900">
                             #{index + 1} {archetype.name}
                           </h3>
-                          <div className="flex gap-2">
-                            <Badge className="bg-teal-600 text-white">
+                          <div className="flex gap-3">
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-200">
                               Score: {Math.round(archetype.score * 100)}%
                             </Badge>
-                            <Badge variant="outline" className="border-slate-600 text-slate-400">
+                            <Badge variant="outline" className="border-gray-300 text-gray-600">
                               Confidence: {Math.round(archetype.confidence * 100)}%
                             </Badge>
                           </div>
@@ -219,13 +219,13 @@ export default function AssessmentDetailPage() {
 
                         {archetype.traits && archetype.traits.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-medium text-white mb-2">Key Traits Identified:</h4>
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Key Traits Identified:</h4>
                             <div className="flex flex-wrap gap-2">
                               {archetype.traits.map((trait, i) => (
                                 <Badge 
                                   key={i} 
-                                  variant="secondary" 
-                                  className="bg-slate-700 text-gray-300"
+                                  variant="outline" 
+                                  className="bg-green-50 text-green-700 border-green-200"
                                 >
                                   {trait}
                                 </Badge>
@@ -236,11 +236,11 @@ export default function AssessmentDetailPage() {
 
                         {archetype.evidence && archetype.evidence.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-medium text-white mb-2">Linguistic Evidence:</h4>
-                            <ul className="space-y-1 text-sm text-gray-400">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Linguistic Evidence:</h4>
+                            <ul className="space-y-2 text-sm text-gray-600">
                               {archetype.evidence.map((evidence, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                  <span className="text-teal-400 mt-1">•</span>
+                                <li key={i} className="flex items-start gap-3">
+                                  <span className="text-blue-500 mt-1">•</span>
                                   {evidence}
                                 </li>
                               ))}
@@ -249,22 +249,22 @@ export default function AssessmentDetailPage() {
                         )}
 
                         {index < testResults.length - 1 && (
-                          <hr className="border-slate-700" />
+                          <hr className="border-gray-200" />
                         )}
                       </div>
                     ))}
 
-                  <div className="flex gap-4 mt-6">
+                  <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
                     <Button 
                       onClick={() => setActiveTab('builder')}
                       variant="outline"
-                      className="border-slate-600 text-white hover:bg-slate-700"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       Modify Configuration
                     </Button>
                     <Button 
                       onClick={() => setActiveTab('test')}
-                      className="bg-teal-600 hover:bg-teal-700 text-white"
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
                     >
                       Test Again
                     </Button>

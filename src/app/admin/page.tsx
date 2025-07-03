@@ -13,7 +13,9 @@ import {
   Users, 
   MessageCircle,
   Target,
-  Sparkles
+  Sparkles,
+  Edit,
+  BarChart3
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -52,47 +54,41 @@ export default function AdminPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-900 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Admin Console</h1>
-            <p className="text-gray-400">Develop assessments, archetypes, and content</p>
-          </div>
-          <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Assessment
-          </Button>
+        <div className="mb-12">
+          <h1 className="text-4xl font-light text-gray-900 mb-3">Admin Console</h1>
+          <p className="text-lg text-gray-600">Manage assessments and content</p>
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-slate-800 border-slate-700">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="bg-white border border-gray-200 p-1 rounded-lg shadow-sm">
             <TabsTrigger 
               value="assessments" 
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
             >
               <Brain className="mr-2 h-4 w-4" />
               Assessments
             </TabsTrigger>
             <TabsTrigger 
               value="archetypes"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
             >
               <Users className="mr-2 h-4 w-4" />
-              Archetype Content
+              Archetypes
             </TabsTrigger>
             <TabsTrigger 
               value="linguistics"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
             >
               <MessageCircle className="mr-2 h-4 w-4" />
-              Archetype Linguistics
+              Linguistics
             </TabsTrigger>
             <TabsTrigger 
               value="ai-assistant"
-              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
             >
               <Sparkles className="mr-2 h-4 w-4" />
               AI Assistant
@@ -100,128 +96,117 @@ export default function AdminPage() {
           </TabsList>
 
           {/* Assessments Tab */}
-          <TabsContent value="assessments" className="space-y-6">
-            {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-400">Total Assessments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-white">{assessments.length}</div>
-                  <p className="text-xs text-gray-400">AI-driven experiences</p>
+          <TabsContent value="assessments" className="space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="text-3xl font-light text-gray-900 mb-1">{assessments.length}</div>
+                  <p className="text-sm text-gray-500">Total Assessments</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-400">Active Sessions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-white">0</div>
-                  <p className="text-xs text-gray-400">Users taking assessments</p>
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="text-3xl font-light text-gray-900 mb-1">0</div>
+                  <p className="text-sm text-gray-500">Active Sessions</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-400">Completion Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-white">--</div>
-                  <p className="text-xs text-gray-400">Average completion</p>
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="text-3xl font-light text-gray-900 mb-1">--</div>
+                  <p className="text-sm text-gray-500">Completion Rate</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-6 flex items-center justify-center">
+                  <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Assessment
+                  </Button>
                 </CardContent>
               </Card>
             </div>
 
             {/* Assessments List */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-white">AI-Driven Assessments</h2>
+            <div className="space-y-6">
+              <h2 className="text-2xl font-light text-gray-900">Assessments</h2>
               
               {assessments.map((assessment) => (
-                <Card key={assessment.id} className="bg-slate-800/50 border-slate-700 hover:border-teal-600/50 transition-colors">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2">
-                        <CardTitle className="text-xl text-white flex items-center gap-2">
-                          <Brain className="h-5 w-5 text-teal-400" />
-                          {assessment.name}
-                        </CardTitle>
-                        <CardDescription className="text-gray-400">
-                          {assessment.description}
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          className={
-                            assessment.status === 'active' 
-                              ? 'bg-green-600 text-white' 
-                              : 'bg-yellow-600 text-white'
-                          }
-                        >
-                          {assessment.status}
-                        </Badge>
-                        <Badge variant="outline" className="border-teal-600 text-teal-400">
-                          AI-Driven
-                        </Badge>
+                <Card key={assessment.id} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-8">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-xl font-medium text-gray-900">{assessment.name}</h3>
+                          <Badge 
+                            className={
+                              assessment.status === 'active' 
+                                ? 'bg-green-100 text-green-800 border-green-200' 
+                                : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                            }
+                          >
+                            {assessment.status}
+                          </Badge>
+                        </div>
+                        <p className="text-gray-600 max-w-2xl">{assessment.description}</p>
                       </div>
                     </div>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
+
                     {/* Target Archetypes */}
-                    <div>
-                      <h4 className="text-sm font-medium text-white mb-2">Target Archetypes</h4>
+                    <div className="mb-6">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Target Archetypes</h4>
                       <div className="flex flex-wrap gap-2">
-                        {assessment.targetArchetypes.slice(0, 4).map((archetype) => (
+                        {assessment.targetArchetypes.map((archetype) => (
                           <Badge 
                             key={archetype}
-                            variant="secondary" 
-                            className="bg-slate-700 text-gray-300 text-xs"
+                            variant="outline" 
+                            className="bg-gray-50 text-gray-600 border-gray-200 px-3 py-1"
                           >
                             {archetype}
                           </Badge>
                         ))}
-                        {assessment.targetArchetypes.length > 4 && (
-                          <Badge variant="secondary" className="bg-slate-700 text-gray-300 text-xs">
-                            +{assessment.targetArchetypes.length - 4} more
-                          </Badge>
-                        )}
                       </div>
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-3 gap-8 mb-6 py-4 border-t border-gray-100">
                       <div>
-                        <div className="text-lg font-semibold text-white">{assessment.sessions}</div>
-                        <div className="text-xs text-gray-400">Sessions</div>
+                        <div className="text-2xl font-light text-gray-900">{assessment.sessions}</div>
+                        <div className="text-sm text-gray-500">Sessions</div>
                       </div>
                       <div>
-                        <div className="text-lg font-semibold text-white">{assessment.completion}%</div>
-                        <div className="text-xs text-gray-400">Completion</div>
+                        <div className="text-2xl font-light text-gray-900">{assessment.completion}%</div>
+                        <div className="text-sm text-gray-500">Completion</div>
                       </div>
                       <div>
-                        <div className="text-lg font-semibold text-white">
+                        <div className="text-2xl font-light text-gray-900">
                           {assessment.lastUpdated.toLocaleDateString()}
                         </div>
-                        <div className="text-xs text-gray-400">Last Updated</div>
+                        <div className="text-sm text-gray-500">Last Updated</div>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                      <Link href={`/admin/assessment/${assessment.id}`} className="flex-1">
-                        <Button className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+                    <div className="flex gap-3">
+                      <Link href={`/admin/assessment/${assessment.id}`}>
+                        <Button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
                           <Settings className="mr-2 h-4 w-4" />
                           Configure
                         </Button>
                       </Link>
-                      <Link href={`/admin/assessment/${assessment.id}?tab=test`} className="flex-1">
-                        <Button variant="outline" className="w-full border-slate-600 text-white hover:bg-slate-700">
+                      <Link href={`/admin/assessment/${assessment.id}?tab=test`}>
+                        <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium">
                           <TestTube className="mr-2 h-4 w-4" />
-                          Test AI
+                          Test
                         </Button>
                       </Link>
+                      <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium">
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Analytics
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -230,75 +215,196 @@ export default function AdminPage() {
           </TabsContent>
 
           {/* Archetype Content Tab */}
-          <TabsContent value="archetypes" className="space-y-6">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-xl text-white flex items-center gap-2">
-                  <Users className="h-5 w-5 text-teal-400" />
-                  Archetype Content Management
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Manage archetype descriptions, traits, and characteristics
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">Archetype content management coming soon</p>
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Archetype
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="archetypes" className="space-y-8">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-light text-gray-900 mb-2">Archetype Content</h2>
+                <p className="text-gray-600">Manage archetype definitions and characteristics</p>
+              </div>
+              <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Archetype
+              </Button>
+            </div>
+
+            {/* Archetype List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Sample Archetypes */}
+              {[
+                { name: "The Lover", category: "Relationship", description: "Seeks connection and intimacy" },
+                { name: "The Caregiver", category: "Relationship", description: "Nurtures and supports others" },
+                { name: "The Sage", category: "Wisdom", description: "Seeks truth and understanding" },
+                { name: "The Hero", category: "Action", description: "Overcomes challenges courageously" },
+                { name: "The Innocent", category: "Purity", description: "Maintains optimism and faith" },
+                { name: "The Explorer", category: "Freedom", description: "Seeks adventure and discovery" }
+              ].map((archetype, index) => (
+                <Card key={index} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">{archetype.name}</h3>
+                        <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
+                          {archetype.category}
+                        </Badge>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">{archetype.description}</p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                        Edit Details
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                        View Patterns
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           {/* Archetype Linguistics Tab */}
-          <TabsContent value="linguistics" className="space-y-6">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-xl text-white flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-teal-400" />
-                  Archetype Linguistic Patterns
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Define language patterns and indicators for each archetype
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">Linguistic pattern management coming soon</p>
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                    <Target className="mr-2 h-4 w-4" />
-                    Define Patterns
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="linguistics" className="space-y-8">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-light text-gray-900 mb-2">Linguistic Patterns</h2>
+                <p className="text-gray-600">Define language patterns for archetype detection</p>
+              </div>
+              <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Pattern
+              </Button>
+            </div>
+
+            {/* Linguistic Patterns */}
+            <div className="space-y-4">
+              {[
+                { 
+                  archetype: "The Lover", 
+                  keywords: ["connection", "intimacy", "heart", "passion"],
+                  phrases: ["I feel deeply", "we're meant to be", "my heart tells me"],
+                  emotions: ["romantic", "passionate", "vulnerable"]
+                },
+                { 
+                  archetype: "The Caregiver", 
+                  keywords: ["help", "support", "care", "nurture"],
+                  phrases: ["let me help", "I'm here for you", "take care of yourself"],
+                  emotions: ["compassionate", "protective", "selfless"]
+                },
+                { 
+                  archetype: "The Hero", 
+                  keywords: ["challenge", "overcome", "victory", "strength"],
+                  phrases: ["I can do this", "never give up", "fight for what's right"],
+                  emotions: ["determined", "courageous", "resilient"]
+                }
+              ].map((pattern, index) => (
+                <Card key={index} className="bg-white border border-gray-200 shadow-sm">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-lg font-medium text-gray-900">{pattern.archetype}</h3>
+                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Keywords</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {pattern.keywords.map((keyword, i) => (
+                            <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Common Phrases</h4>
+                        <div className="space-y-1">
+                          {pattern.phrases.slice(0, 2).map((phrase, i) => (
+                            <p key={i} className="text-sm text-gray-600 italic">"{phrase}"</p>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Emotional Tone</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {pattern.emotions.map((emotion, i) => (
+                            <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                              {emotion}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           {/* AI Assistant Tab */}
-          <TabsContent value="ai-assistant" className="space-y-6">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-xl text-white flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-teal-400" />
-                  AI Assistant Configuration
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Configure AI behavior, prompts, and analysis parameters
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">AI assistant configuration coming soon</p>
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                    <Brain className="mr-2 h-4 w-4" />
-                    Configure AI
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="ai-assistant" className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-light text-gray-900 mb-2">AI Assistant</h2>
+              <p className="text-gray-600">Configure AI behavior and analysis parameters</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Quick Actions</h3>
+                  <div className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50 p-4">
+                      <Brain className="mr-3 h-5 w-5" />
+                      <div className="text-left">
+                        <div className="font-medium">Generate Questions</div>
+                        <div className="text-sm text-gray-500">Create new assessment scenarios</div>
+                      </div>
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50 p-4">
+                      <TestTube className="mr-3 h-5 w-5" />
+                      <div className="text-left">
+                        <div className="font-medium">Test Analysis</div>
+                        <div className="text-sm text-gray-500">Validate archetype detection</div>
+                      </div>
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50 p-4">
+                      <Users className="mr-3 h-5 w-5" />
+                      <div className="text-left">
+                        <div className="font-medium">Expand Archetypes</div>
+                        <div className="text-sm text-gray-500">Add new definitions</div>
+                      </div>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">System Status</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">AI Model</span>
+                      <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Analysis Engine</span>
+                      <Badge className="bg-green-100 text-green-800 border-green-200">Online</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Pattern Database</span>
+                      <Badge className="bg-green-100 text-green-800 border-green-200">Updated</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

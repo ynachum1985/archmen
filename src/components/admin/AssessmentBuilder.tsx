@@ -66,119 +66,119 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-2xl text-white flex items-center gap-2">
-            <Brain className="h-6 w-6 text-teal-400" />
+      <Card className="bg-white border border-gray-200 shadow-sm">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-2xl font-light text-gray-900 flex items-center gap-3">
+            <Brain className="h-6 w-6 text-blue-500" />
             AI Assessment Builder
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-gray-600 text-base">
             Define the purpose and goals for your AI-driven assessment
           </CardDescription>
         </CardHeader>
       </Card>
 
       {/* Basic Information */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="bg-white border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-white flex items-center gap-2">
-            <Settings className="h-5 w-5 text-teal-400" />
+          <CardTitle className="text-lg font-medium text-gray-900 flex items-center gap-2">
+            <Settings className="h-5 w-5 text-blue-500" />
             Basic Information
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="name" className="text-white">Assessment Name</Label>
+              <Label htmlFor="name" className="text-gray-700 font-medium">Assessment Name</Label>
               <Input
                 id="name"
                 value={config.name}
                 onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Leadership Archetype Discovery"
-                className="bg-slate-700 border-slate-600 text-white"
+                className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
             <div>
-              <Label htmlFor="duration" className="text-white">Expected Duration (minutes)</Label>
+              <Label htmlFor="duration" className="text-gray-700 font-medium">Expected Duration (minutes)</Label>
               <Input
                 id="duration"
                 type="number"
                 value={config.expectedDuration}
                 onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 10 }))}
-                className="bg-slate-700 border-slate-600 text-white"
+                className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
           </div>
           
           <div>
-            <Label htmlFor="description" className="text-white">Description</Label>
+            <Label htmlFor="description" className="text-gray-700 font-medium">Description</Label>
             <Textarea
               id="description"
               value={config.description}
               onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Brief description of what this assessment measures"
-              className="bg-slate-700 border-slate-600 text-white"
-              rows={2}
+              className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              rows={3}
             />
           </div>
         </CardContent>
       </Card>
 
       {/* Assessment Purpose & Goals */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="bg-white border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-white flex items-center gap-2">
-            <Target className="h-5 w-5 text-teal-400" />
+          <CardTitle className="text-lg font-medium text-gray-900 flex items-center gap-2">
+            <Target className="h-5 w-5 text-blue-500" />
             Assessment Purpose & AI Instructions
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-gray-600">
             Define what the AI should accomplish and how it should analyze responses
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="purpose" className="text-white">Assessment Purpose</Label>
+            <Label htmlFor="purpose" className="text-gray-700 font-medium">Assessment Purpose</Label>
             <Textarea
               id="purpose"
               value={config.purpose}
               onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
               placeholder="e.g., Discover the user's dominant leadership archetypes by analyzing their communication patterns, decision-making style, and relationship dynamics in professional settings..."
-              className="bg-slate-700 border-slate-600 text-white"
+              className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               rows={4}
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 mt-2">
               This tells the AI what the assessment is trying to accomplish
             </p>
           </div>
 
           <div>
-            <Label htmlFor="analysis" className="text-white">Linguistic Analysis Instructions</Label>
+            <Label htmlFor="analysis" className="text-gray-700 font-medium">Linguistic Analysis Instructions</Label>
             <Textarea
               id="analysis"
               value={config.analysisInstructions}
               onChange={(e) => setConfig(prev => ({ ...prev, analysisInstructions: e.target.value }))}
               placeholder="e.g., Focus on power language, collaborative vs. directive communication, emotional expression, problem-solving approaches, and authority relationships. Look for patterns in metaphors, decision-making language, and interpersonal dynamics..."
-              className="bg-slate-700 border-slate-600 text-white"
+              className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               rows={4}
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 mt-2">
               Specific instructions for how the AI should analyze language patterns
             </p>
           </div>
 
           <div>
-            <Label htmlFor="completion" className="text-white">Completion Criteria</Label>
+            <Label htmlFor="completion" className="text-gray-700 font-medium">Completion Criteria</Label>
             <Textarea
               id="completion"
               value={config.completionCriteria}
               onChange={(e) => setConfig(prev => ({ ...prev, completionCriteria: e.target.value }))}
               placeholder="e.g., Continue until you have high confidence in identifying the top 2-3 archetypes, with at least 5-7 meaningful exchanges that reveal deep patterns..."
-              className="bg-slate-700 border-slate-600 text-white"
+              className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               rows={3}
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 mt-2">
               When should the AI consider the assessment complete?
             </p>
           </div>
@@ -186,28 +186,28 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
       </Card>
 
       {/* Target Archetypes */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="bg-white border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-white flex items-center gap-2">
-            <Users className="h-5 w-5 text-teal-400" />
+          <CardTitle className="text-lg font-medium text-gray-900 flex items-center gap-2">
+            <Users className="h-5 w-5 text-blue-500" />
             Target Archetypes
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-gray-600">
             Define which archetypes this assessment can discover
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
+        <CardContent className="space-y-6">
+          <div className="flex gap-3">
             <Input
               value={newArchetype}
               onChange={(e) => setNewArchetype(e.target.value)}
               placeholder="e.g., The Visionary Leader"
-              className="bg-slate-700 border-slate-600 text-white flex-1"
+              className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               onKeyPress={(e) => e.key === 'Enter' && handleAddArchetype()}
             />
             <Button 
               onClick={handleAddArchetype}
-              className="bg-teal-600 hover:bg-teal-700 text-white"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6"
             >
               Add
             </Button>
@@ -218,7 +218,7 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
               <Badge 
                 key={archetype}
                 variant="outline" 
-                className="border-teal-600 text-teal-400 cursor-pointer hover:bg-teal-600/20"
+                className="bg-blue-50 text-blue-700 border-blue-200 cursor-pointer hover:bg-blue-100 px-3 py-1"
                 onClick={() => handleRemoveArchetype(archetype)}
               >
                 {archetype} ×
@@ -227,7 +227,7 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
           </div>
           
           {config.targetArchetypes.length === 0 && (
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-500 text-sm">
               Add archetypes that this assessment can identify (e.g., The King, The Warrior, The Sage)
             </p>
           )}
@@ -235,25 +235,25 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
       </Card>
 
       {/* Questioning Style */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="bg-white border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-white flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-teal-400" />
+          <CardTitle className="text-lg font-medium text-gray-900 flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-blue-500" />
             Questioning Style & Approach
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div>
-            <Label htmlFor="style" className="text-white">AI Questioning Instructions</Label>
+            <Label htmlFor="style" className="text-gray-700 font-medium">AI Questioning Instructions</Label>
             <Textarea
               id="style"
               value={config.questioningStyle}
               onChange={(e) => setConfig(prev => ({ ...prev, questioningStyle: e.target.value }))}
               placeholder="e.g., Ask open-ended questions that invite storytelling. Start with recent experiences, then dig deeper into patterns. Use follow-up questions that explore emotional responses and decision-making processes. Maintain a warm, curious tone..."
-              className="bg-slate-700 border-slate-600 text-white"
+              className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               rows={4}
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 mt-2">
               How should the AI ask questions and interact with users?
             </p>
           </div>
@@ -261,10 +261,10 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 pt-4">
         <Button 
           onClick={handleSave}
-          className="bg-teal-600 hover:bg-teal-700 text-white flex-1"
+          className="bg-blue-500 hover:bg-blue-600 text-white flex-1 py-3 text-base font-medium"
         >
           <Save className="mr-2 h-4 w-4" />
           Save Assessment
@@ -272,7 +272,7 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
         <Button 
           onClick={handleTest}
           variant="outline"
-          className="border-slate-600 text-white hover:bg-slate-700 flex-1"
+          className="border-gray-300 text-gray-700 hover:bg-gray-50 flex-1 py-3 text-base font-medium"
         >
           <Eye className="mr-2 h-4 w-4" />
           Test Assessment
