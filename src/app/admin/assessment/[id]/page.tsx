@@ -1,263 +1,279 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { AssessmentBuilder } from '@/components/admin/AssessmentBuilder'
+import { EnhancedLinguisticAssessment } from '@/components/chat/EnhancedLinguisticAssessment'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Edit, Trash2, Save, GripVertical } from 'lucide-react'
-import { assessmentService } from '@/lib/services/assessment.service'
-import type { Database } from '@/lib/types/database'
+import { ArrowLeft, Settings, TestTube, BarChart3, Users } from 'lucide-react'
+import Link from 'next/link'
 
-type AssessmentTemplate = Database['public']['Tables']['assessment_templates']['Row']
-type AssessmentQuestion = Database['public']['Tables']['assessment_questions']['Row']
+interface AssessmentConfig {
+  name: string
+  description: string
+  purpose: string
+  targetArchetypes: string[]
+  analysisInstructions: string
+  questioningStyle: string
+  expectedDuration: number
+  completionCriteria: string
+}
 
-export default function AssessmentEditor() {
+interface ArchetypeScore {
+  name: string
+  score: number
+  confidence: number
+  evidence: string[]
+  traits: string[]
+}
+
+export default function AssessmentDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const assessmentId = params.id as string
-
-  const [assessment, setAssessment] = useState<AssessmentTemplate | null>(null)
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>([])
+  
+  const [activeTab, setActiveTab] = useState('builder')
+  const [assessmentConfig, setAssessmentConfig] = useState<AssessmentConfig | null>(null)
+  const [testResults, setTestResults] = useState<ArchetypeScore[] | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [editingQuestion, setEditingQuestion] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({
-    question_text: '',
-    options: ['', '', '', ''],
-    order_index: 0,
-  })
 
-  const loadAssessment = useCallback(async () => {
+  // Load assessment data
+  useEffect(() => {
+    loadAssessment()
+  }, [assessmentId])
+
+  const loadAssessment = async () => {
+    setIsLoading(true)
     try {
-      setIsLoading(true)
-      const data = await assessmentService.getTemplateWithQuestions(assessmentId)
-      if (data) {
-        setAssessment(data)
-        setQuestions(data.questions || [])
+      // For now, load the existing "Relationship Patterns Assessment" data
+      // In a real app, this would fetch from the database
+      const mockConfig: AssessmentConfig = {
+        name: "Relationship Patterns Assessment",
+        description: "Discover your main archetype patterns in relationships and explore your shadow aspects.",
+        purpose: "Discover the user's dominant relationship archetypes by analyzing their communication patterns, emotional expression, attachment styles, and interpersonal dynamics. Focus on how they navigate intimacy, conflict, and emotional connection.",
+        targetArchetypes: [
+          "The Lover",
+          "The Caregiver", 
+          "The Innocent",
+          "The Sage",
+          "The Hero",
+          "The Rebel",
+          "The Magician",
+          "The Explorer"
+        ],
+        analysisInstructions: "Focus on emotional language, attachment patterns, communication about relationships, conflict resolution approaches, and expressions of intimacy. Look for patterns in how they describe love, trust, vulnerability, and connection. Analyze their metaphors for relationships and emotional processing style.",
+        questioningStyle: "Ask open-ended questions that invite storytelling about relationships and emotional experiences. Start with recent relationship dynamics, then explore deeper patterns. Use follow-up questions that explore emotional responses, attachment behaviors, and relationship values. Maintain a warm, non-judgmental tone that encourages vulnerability.",
+        expectedDuration: 15,
+        completionCriteria: "Continue until you have high confidence in identifying the top 2-3 relationship archetypes, with at least 6-8 meaningful exchanges that reveal deep emotional and relational patterns. Look for consistent themes in their language about love, trust, intimacy, and emotional expression."
       }
+      
+      setAssessmentConfig(mockConfig)
     } catch (error) {
       console.error('Error loading assessment:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [assessmentId])
-
-  useEffect(() => {
-    if (assessmentId) {
-      loadAssessment()
-    }
-  }, [assessmentId, loadAssessment])
-
-  const handleEditQuestion = (question: AssessmentQuestion) => {
-    setEditingQuestion(question.id)
-    const options = question.options as string[]
-    setEditForm({
-      question_text: question.question_text,
-      options: options,
-      order_index: question.order_index,
-    })
   }
 
-  const handleSaveQuestion = async () => {
-    if (!editingQuestion) return
-
+  const handleSaveAssessment = async (config: AssessmentConfig) => {
     try {
-      await assessmentService.updateQuestion(editingQuestion, {
-        question_text: editForm.question_text,
-        options: JSON.stringify(editForm.options.filter(opt => opt.trim())),
-      })
-      setEditingQuestion(null)
-      loadAssessment()
+      // In a real app, this would save to the database
+      console.log('Saving assessment config:', config)
+      setAssessmentConfig(config)
+      
+      // Show success message (you might want to add a toast notification)
+      alert('Assessment configuration saved successfully!')
     } catch (error) {
-      console.error('Error updating question:', error)
+      console.error('Error saving assessment:', error)
+      alert('Error saving assessment. Please try again.')
     }
   }
 
-  const handleDeleteQuestion = async (questionId: string) => {
-    if (confirm('Are you sure you want to delete this question?')) {
-      try {
-        await assessmentService.deleteQuestion(questionId)
-        loadAssessment()
-      } catch (error) {
-        console.error('Error deleting question:', error)
-      }
-    }
+  const handleTestAssessment = (config: AssessmentConfig) => {
+    setAssessmentConfig(config)
+    setActiveTab('test')
   }
 
-  const handleAddQuestion = async () => {
-    try {
-      const newQuestion = {
-        template_id: assessmentId,
-        question_text: 'New question',
-        question_type: 'multiple_choice' as const,
-        options: JSON.stringify(['Option 1', 'Option 2', 'Option 3', 'Option 4']),
-        order_index: questions.length + 1,
-        is_required: true,
-        scoring_weights: null,
-        archetype_indicators: null,
-        metadata: null,
-      }
-      await assessmentService.createQuestion(newQuestion)
-      loadAssessment()
-    } catch (error) {
-      console.error('Error adding question:', error)
-    }
-  }
-
-  const updateOptionText = (index: number, value: string) => {
-    const newOptions = [...editForm.options]
-    newOptions[index] = value
-    setEditForm(prev => ({ ...prev, options: newOptions }))
+  const handleTestComplete = (results: ArchetypeScore[]) => {
+    setTestResults(results)
+    setActiveTab('results')
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-        <div className="container mx-auto">
-          <div className="text-center text-white">Loading assessment...</div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!assessment) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-        <div className="container mx-auto">
-          <div className="text-center text-white">Assessment not found</div>
+      <div className="min-h-screen bg-slate-900 p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-slate-700 rounded w-1/3"></div>
+            <div className="h-64 bg-slate-700 rounded"></div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-      <div className="container mx-auto max-w-4xl">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/admin')}
-            className="text-white hover:bg-slate-700"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Admin
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">{assessment.name}</h1>
-            <p className="text-gray-400">Edit assessment questions</p>
+    <div className="min-h-screen bg-slate-900 p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link href="/admin">
+            <Button variant="outline" className="border-slate-600 text-white hover:bg-slate-700">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Admin
+            </Button>
+          </Link>
+          
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              {assessmentConfig?.name || 'Assessment Configuration'}
+            </h1>
+            <p className="text-gray-400">
+              Configure AI-driven assessment parameters and test the experience
+            </p>
           </div>
-          <Badge variant="outline" className="border-teal-600 text-teal-400">
-            {questions.length} questions
-          </Badge>
         </div>
 
-        <div className="space-y-6">
-          {questions.map((question, index) => (
-            <Card key={question.id} className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg text-white flex items-center gap-2">
-                    <GripVertical className="h-4 w-4 text-gray-400" />
-                    Question {index + 1}
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-slate-800 border-slate-700">
+            <TabsTrigger 
+              value="builder" 
+              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Configure Assessment
+            </TabsTrigger>
+            <TabsTrigger 
+              value="test"
+              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              disabled={!assessmentConfig}
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              Test Experience
+            </TabsTrigger>
+            <TabsTrigger 
+              value="results"
+              className="data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+              disabled={!testResults}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Test Results
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Builder Tab */}
+          <TabsContent value="builder">
+            {assessmentConfig && (
+              <AssessmentBuilder
+                assessment={assessmentConfig}
+                onSave={handleSaveAssessment}
+                onTest={handleTestAssessment}
+              />
+            )}
+          </TabsContent>
+
+          {/* Test Tab */}
+          <TabsContent value="test">
+            {assessmentConfig && (
+              <EnhancedLinguisticAssessment
+                config={assessmentConfig}
+                onComplete={handleTestComplete}
+              />
+            )}
+          </TabsContent>
+
+          {/* Results Tab */}
+          <TabsContent value="results">
+            {testResults && (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-white flex items-center gap-2">
+                    <Users className="h-6 w-6 text-teal-400" />
+                    Assessment Test Results
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleEditQuestion(question)}
-                      className="text-white hover:bg-slate-700"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteQuestion(question.id)}
-                      className="text-red-400 hover:bg-red-900/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {editingQuestion === question.id ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="question_text" className="text-white">Question Text</Label>
-                      <Textarea
-                        id="question_text"
-                        value={editForm.question_text}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, question_text: e.target.value }))}
-                        className="bg-slate-700 border-slate-600 text-white"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-white">Answer Options</Label>
-                      <div className="space-y-2">
-                        {editForm.options.map((option, idx) => (
-                          <Input
-                            key={idx}
-                            value={option}
-                            onChange={(e) => updateOptionText(idx, e.target.value)}
-                            placeholder={`Option ${idx + 1}`}
-                            className="bg-slate-700 border-slate-600 text-white"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleSaveQuestion}
-                        className="bg-teal-600 hover:bg-teal-700 text-white"
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Changes
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setEditingQuestion(null)}
-                        className="border-slate-600 text-white hover:bg-slate-700"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-white font-medium">{question.question_text}</p>
-                    <div className="space-y-2">
-                      {(question.options as string[]).map((option: string, idx: number) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full border-2 border-slate-600 flex items-center justify-center">
-                            <span className="text-xs text-gray-400">{idx + 1}</span>
+                  <CardDescription className="text-gray-400">
+                    Results from your test run of the assessment
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {testResults
+                    .sort((a, b) => b.score - a.score)
+                    .map((archetype, index) => (
+                      <div key={index} className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-xl font-semibold text-white">
+                            #{index + 1} {archetype.name}
+                          </h3>
+                          <div className="flex gap-2">
+                            <Badge className="bg-teal-600 text-white">
+                              Score: {Math.round(archetype.score * 100)}%
+                            </Badge>
+                            <Badge variant="outline" className="border-slate-600 text-slate-400">
+                              Confidence: {Math.round(archetype.confidence * 100)}%
+                            </Badge>
                           </div>
-                          <span className="text-gray-300">{option}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
 
-          <Card className="bg-slate-800/30 border-slate-700 border-dashed">
-            <CardContent className="p-8 text-center">
-              <Button
-                onClick={handleAddQuestion}
-                className="bg-teal-600 hover:bg-teal-700 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Question
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+                        {archetype.traits && archetype.traits.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-white mb-2">Key Traits Identified:</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {archetype.traits.map((trait, i) => (
+                                <Badge 
+                                  key={i} 
+                                  variant="secondary" 
+                                  className="bg-slate-700 text-gray-300"
+                                >
+                                  {trait}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {archetype.evidence && archetype.evidence.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-white mb-2">Linguistic Evidence:</h4>
+                            <ul className="space-y-1 text-sm text-gray-400">
+                              {archetype.evidence.map((evidence, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <span className="text-teal-400 mt-1">•</span>
+                                  {evidence}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {index < testResults.length - 1 && (
+                          <hr className="border-slate-700" />
+                        )}
+                      </div>
+                    ))}
+
+                  <div className="flex gap-4 mt-6">
+                    <Button 
+                      onClick={() => setActiveTab('builder')}
+                      variant="outline"
+                      className="border-slate-600 text-white hover:bg-slate-700"
+                    >
+                      Modify Configuration
+                    </Button>
+                    <Button 
+                      onClick={() => setActiveTab('test')}
+                      className="bg-teal-600 hover:bg-teal-700 text-white"
+                    >
+                      Test Again
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )
