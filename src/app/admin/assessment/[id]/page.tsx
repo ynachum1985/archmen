@@ -20,6 +20,10 @@ interface AssessmentConfig {
   questioningStyle: string
   expectedDuration: number
   completionCriteria: string
+  systemPrompt: string
+  conversationFlow: string
+  archetypeMapping: string
+  reportGeneration: string
 }
 
 interface ArchetypeScore {
@@ -66,7 +70,11 @@ export default function AssessmentDetailPage() {
         analysisInstructions: "Focus on emotional language, attachment patterns, communication about relationships, conflict resolution approaches, and expressions of intimacy. Look for patterns in how they describe love, trust, vulnerability, and connection. Analyze their metaphors for relationships and emotional processing style.",
         questioningStyle: "Ask open-ended questions that invite storytelling about relationships and emotional experiences. Start with recent relationship dynamics, then explore deeper patterns. Use follow-up questions that explore emotional responses, attachment behaviors, and relationship values. Maintain a warm, non-judgmental tone that encourages vulnerability.",
         expectedDuration: 15,
-        completionCriteria: "Continue until you have high confidence in identifying the top 2-3 relationship archetypes, with at least 6-8 meaningful exchanges that reveal deep emotional and relational patterns. Look for consistent themes in their language about love, trust, intimacy, and emotional expression."
+        completionCriteria: "Continue until you have high confidence in identifying the top 2-3 relationship archetypes, with at least 6-8 meaningful exchanges that reveal deep emotional and relational patterns. Look for consistent themes in their language about love, trust, intimacy, and emotional expression.",
+        systemPrompt: "You are an expert psychological assessor specializing in relationship archetype identification through linguistic analysis. Your role is to conduct natural, engaging conversations that reveal deep emotional and relational patterns through language use, metaphors, and communication styles.",
+        conversationFlow: "Start with warm questions about recent relationship experiences, then explore deeper patterns through follow-up questions about emotional responses and attachment behaviors.",
+        archetypeMapping: "The Lover: Uses passionate, intimate language with metaphors of connection. The Caregiver: Focuses on nurturing and support language. The Innocent: Uses optimistic, trusting language patterns.",
+        reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores."
       }
       
       setAssessmentConfig(mockConfig)
