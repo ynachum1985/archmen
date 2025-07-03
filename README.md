@@ -1,6 +1,8 @@
-# ArchMen - Jungian Archetypes for Men's Relationships
+# ArchMen - AI-Powered Relationship Assessment Platform
 
-A web application that helps men understand their relationship patterns through Jungian archetypes and shadow work.
+<!-- Production deployment: January 2025 -->
+
+A sophisticated Next.js application that uses AI to analyze relationship patterns and provide personalized insights based on Jungian archetypes.
 
 ## 🏗️ Project Architecture
 
