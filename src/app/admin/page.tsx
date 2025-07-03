@@ -17,6 +17,7 @@ import {
   BarChart3
 } from 'lucide-react'
 import Link from 'next/link'
+import { archetypeService } from '@/lib/services/archetype.service'
 
 interface AssessmentOverview {
   id: string
@@ -30,27 +31,73 @@ interface AssessmentOverview {
   lastUpdated: Date
 }
 
+interface Archetype {
+  id: string
+  name: string
+  category: string
+  description: string
+  impact_score: number
+  traits: any
+  psychology_profile: any
+}
+
+interface LinguisticPattern {
+  id: string
+  archetype_name: string
+  category: string
+  keywords: string[] | null
+  phrases: string[] | null
+  emotional_indicators: string[] | null
+  behavioral_patterns: string[] | null
+  created_at: string
+  updated_at: string
+}
+
 export default function AdminPage() {
   const [assessments, setAssessments] = useState<AssessmentOverview[]>([])
+  const [archetypes, setArchetypes] = useState<Archetype[]>([])
+  const [linguisticPatterns, setLinguisticPatterns] = useState<LinguisticPattern[]>([])
   const [activeTab, setActiveTab] = useState('assessments')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load assessments - for now using mock data
-    const mockAssessments: AssessmentOverview[] = [
-      {
-        id: '1',
-        name: 'Relationship Patterns Assessment',
-        description: 'AI-driven discovery of relationship archetypes through linguistic analysis',
-        type: 'ai-driven',
-        status: 'active',
-        targetArchetypes: ['The Lover', 'The Caregiver', 'The Innocent', 'The Sage'],
-        sessions: 0,
-        completion: 0,
-        lastUpdated: new Date()
-      }
-    ]
-    setAssessments(mockAssessments)
+    loadData()
   }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      
+      // Load assessments - for now using mock data
+      const mockAssessments: AssessmentOverview[] = [
+        {
+          id: '1',
+          name: 'Relationship Patterns Assessment',
+          description: 'AI-driven discovery of relationship archetypes through linguistic analysis',
+          type: 'ai-driven',
+          status: 'active',
+          targetArchetypes: ['The Lover', 'The Caregiver', 'The Innocent', 'The Sage'],
+          sessions: 0,
+          completion: 0,
+          lastUpdated: new Date()
+        }
+      ]
+      setAssessments(mockAssessments)
+
+      // Load real archetype data from Supabase
+      const archetypeData = await archetypeService.getAllArchetypes()
+      setArchetypes(archetypeData)
+
+      // Load linguistic patterns
+      const patternsData = await archetypeService.getAllLinguisticPatterns()
+      setLinguisticPatterns(patternsData)
+
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -226,43 +273,40 @@ export default function AdminPage() {
               </Button>
             </div>
 
-            {/* Archetype List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Sample Archetypes */}
-              {[
-                { name: "The Lover", category: "Relationship", description: "Seeks connection and intimacy" },
-                { name: "The Caregiver", category: "Relationship", description: "Nurtures and supports others" },
-                { name: "The Sage", category: "Wisdom", description: "Seeks truth and understanding" },
-                { name: "The Hero", category: "Action", description: "Overcomes challenges courageously" },
-                { name: "The Innocent", category: "Purity", description: "Maintains optimism and faith" },
-                { name: "The Explorer", category: "Freedom", description: "Seeks adventure and discovery" }
-              ].map((archetype, index) => (
-                <Card key={index} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">{archetype.name}</h3>
-                        <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
-                          {archetype.category}
-                        </Badge>
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="text-gray-500">Loading archetypes...</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {archetypes.map((archetype) => (
+                  <Card key={archetype.id} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-1">{archetype.name}</h3>
+                          <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
+                            {archetype.category}
+                          </Badge>
+                        </div>
+                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-4">{archetype.description}</p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
-                        Edit Details
-                      </Button>
-                      <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
-                        View Patterns
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <p className="text-gray-600 text-sm mb-4">{archetype.description}</p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                          Edit Details
+                        </Button>
+                        <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                          View Patterns
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Archetype Linguistics Tab */}
@@ -278,73 +322,86 @@ export default function AdminPage() {
               </Button>
             </div>
 
-            {/* Linguistic Patterns */}
-            <div className="space-y-4">
-              {[
-                { 
-                  archetype: "The Lover", 
-                  keywords: ["connection", "intimacy", "heart", "passion"],
-                  phrases: ["I feel deeply", "we're meant to be", "my heart tells me"],
-                  emotions: ["romantic", "passionate", "vulnerable"]
-                },
-                { 
-                  archetype: "The Caregiver", 
-                  keywords: ["help", "support", "care", "nurture"],
-                  phrases: ["let me help", "I'm here for you", "take care of yourself"],
-                  emotions: ["compassionate", "protective", "selfless"]
-                },
-                { 
-                  archetype: "The Hero", 
-                  keywords: ["challenge", "overcome", "victory", "strength"],
-                  phrases: ["I can do this", "never give up", "fight for what's right"],
-                  emotions: ["determined", "courageous", "resilient"]
-                }
-              ].map((pattern, index) => (
-                <Card key={index} className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-lg font-medium text-gray-900">{pattern.archetype}</h3>
-                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
-                        <Edit className="h-4 w-4" />
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="text-gray-500">Loading linguistic patterns...</div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {linguisticPatterns.map((pattern) => (
+                  <Card key={pattern.id} className="bg-white border border-gray-200 shadow-sm">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-lg font-medium text-gray-900">{pattern.archetype_name}</h3>
+                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Keywords</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {pattern.keywords?.slice(0, 5).map((keyword, i) => (
+                              <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                                {keyword}
+                              </Badge>
+                            ))}
+                            {(pattern.keywords?.length || 0) > 5 && (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
+                                +{(pattern.keywords?.length || 0) - 5} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Common Phrases</h4>
+                          <div className="space-y-1">
+                            {pattern.phrases?.slice(0, 2).map((phrase, i) => (
+                              <p key={i} className="text-sm text-gray-600 italic">&ldquo;{phrase}&rdquo;</p>
+                            ))}
+                            {(pattern.phrases?.length || 0) > 2 && (
+                              <p className="text-xs text-gray-500">+{(pattern.phrases?.length || 0) - 2} more phrases</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Emotional Indicators</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {pattern.emotional_indicators?.slice(0, 3).map((emotion, i) => (
+                              <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                                {emotion}
+                              </Badge>
+                            ))}
+                            {(pattern.emotional_indicators?.length || 0) > 3 && (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
+                                +{(pattern.emotional_indicators?.length || 0) - 3} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {linguisticPatterns.length === 0 && (
+                  <Card className="bg-white border border-gray-200 shadow-sm">
+                    <CardContent className="p-12 text-center">
+                      <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Linguistic Patterns</h3>
+                      <p className="text-gray-600 mb-4">Add linguistic patterns to help the AI identify archetypes</p>
+                      <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add First Pattern
                       </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Keywords</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {pattern.keywords.map((keyword, i) => (
-                            <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Common Phrases</h4>
-                        <div className="space-y-1">
-                          {pattern.phrases.slice(0, 2).map((phrase, i) => (
-                            <p key={i} className="text-sm text-gray-600 italic">&ldquo;{phrase}&rdquo;</p>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Emotional Tone</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {pattern.emotions.map((emotion, i) => (
-                            <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                              {emotion}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
           </TabsContent>
 
           {/* AI Assistant Tab */}
@@ -398,7 +455,15 @@ export default function AdminPage() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Pattern Database</span>
-                      <Badge className="bg-green-100 text-green-800 border-green-200">Updated</Badge>
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        {linguisticPatterns.length} patterns
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Archetypes</span>
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                        {archetypes.length} defined
+                      </Badge>
                     </div>
                   </div>
                 </CardContent>
