@@ -12,7 +12,6 @@ import {
   TestTube, 
   Users, 
   MessageCircle,
-  Target,
   Sparkles,
   Edit,
   BarChart3
@@ -326,7 +325,7 @@ export default function AdminPage() {
                         <h4 className="text-sm font-medium text-gray-700 mb-2">Common Phrases</h4>
                         <div className="space-y-1">
                           {pattern.phrases.slice(0, 2).map((phrase, i) => (
-                            <p key={i} className="text-sm text-gray-600 italic">"{phrase}"</p>
+                            <p key={i} className="text-sm text-gray-600 italic">&ldquo;{phrase}&rdquo;</p>
                           ))}
                         </div>
                       </div>
