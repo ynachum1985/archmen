@@ -186,7 +186,7 @@ function ArchetypeContent() {
 }
 
 function ArchetypeLinguistics() {
-  const [sortBy, setSortBy] = useState('name')
+  // const [sortBy, setSortBy] = useState('name')
   const [filterBy, setFilterBy] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
 
