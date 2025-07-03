@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { archetypeService } from '@/lib/services/archetype.service'
+import type { Database } from '@/lib/types/database'
+
+type Archetype = Database['public']['Tables']['enhanced_archetypes']['Row']
 
 interface AddPatternDialogProps {
   open: boolean
@@ -15,7 +18,7 @@ interface AddPatternDialogProps {
 }
 
 export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatternDialogProps) {
-  const [archetypes, setArchetypes] = useState<any[]>([])
+  const [archetypes, setArchetypes] = useState<Archetype[]>([])
   const [formData, setFormData] = useState({
     archetype_name: '',
     category: '',

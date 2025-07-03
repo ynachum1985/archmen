@@ -9,6 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AddArchetypeDialog } from "@/components/admin/AddArchetypeDialog"
 import { AddPatternDialog } from "@/components/admin/AddPatternDialog"
 import { archetypeService } from '@/lib/services/archetype.service'
+import type { Database } from '@/lib/types/database'
+
+type Archetype = Database['public']['Tables']['enhanced_archetypes']['Row']
+type LinguisticPattern = Database['public']['Tables']['linguistic_patterns']['Row']
 
 export default function AdminPage() {
   return (
@@ -97,7 +101,7 @@ function AssessmentDashboard() {
 }
 
 function ArchetypeContent() {
-  const [archetypes, setArchetypes] = useState<any[]>([])
+  const [archetypes, setArchetypes] = useState<Archetype[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [sortBy, setSortBy] = useState('name')
   const [filterBy, setFilterBy] = useState('all')
@@ -227,7 +231,7 @@ function ArchetypeContent() {
 }
 
 function ArchetypeLinguistics() {
-  const [patterns, setPatterns] = useState<any[]>([])
+  const [patterns, setPatterns] = useState<LinguisticPattern[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [sortBy, setSortBy] = useState('name')
   const [filterBy, setFilterBy] = useState('all')
@@ -422,21 +426,21 @@ function AIAssistant() {
 
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-lg text-white">About "Prompt Library"</CardTitle>
+          <CardTitle className="text-lg text-white">About &quot;Prompt Library&quot;</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-300 mb-3">
-            The "Prompt Library" contains instructions that tell the AI how to analyze user responses.
+            The &quot;Prompt Library&quot; contains instructions that tell the AI how to analyze user responses.
             It&apos;s separate from assessment questions.
           </p>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
               <h5 className="font-medium text-white mb-1">Assessment Questions</h5>
-              <p className="text-gray-400">What users see: "Your partner&apos;s ex wants to meet for coffee..."</p>
+              <p className="text-gray-400">What users see: &quot;Your partner&apos;s ex wants to meet for coffee...&quot;</p>
             </div>
             <div>
               <h5 className="font-medium text-white mb-1">AI Prompts</h5>
-              <p className="text-gray-400">Instructions to AI: "Analyze response for Warrior patterns..."</p>
+              <p className="text-gray-400">Instructions to AI: &quot;Analyze response for Warrior patterns...&quot;</p>
             </div>
           </div>
         </CardContent>
