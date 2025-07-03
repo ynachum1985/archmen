@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { ArrowRight, Brain, Heart, Shield, Users, Target, Send } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'
-import { ArchetypeChat } from '@/components/chat/ArchetypeChat'
 import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
 
@@ -27,7 +26,7 @@ export default function HomePage() {
                     <span className="text-gradient">Relationship Patterns</span>
                   </h1>
                   <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                    Break free from toxic cycles. Discover your shadow through Carl Jung's archetypes.
+                    Break free from toxic cycles. Discover your shadow through Carl Jung&apos;s archetypes.
                   </p>
                 </div>
 
@@ -70,7 +69,7 @@ export default function HomePage() {
                         <div className="flex-1 space-y-1">
                           <div className="rounded-lg p-4 max-w-[85%] shadow-soft bg-gradient-to-r from-muted/30 to-muted/50 text-foreground border border-border/50 backdrop-blur-sm">
                             <p className="font-body whitespace-pre-wrap">
-                              I'm here to help you understand your relationship patterns through Jungian archetypes. What brings you here today?
+                              I&apos;m here to help you understand your relationship patterns through Jungian archetypes. What brings you here today?
                             </p>
                           </div>
                           <div className="font-body text-xs text-muted-foreground">
@@ -85,7 +84,7 @@ export default function HomePage() {
                       <div className="flex gap-3">
                         <Textarea
                           className="flex-1 min-h-[3rem] max-h-[8rem] resize-none bg-white/80 backdrop-blur-sm border-border/50 focus:border-primary rounded-lg shadow-sm font-body"
-                          placeholder="Share what's on your mind..."
+                          placeholder="Share what&apos;s on your mind..."
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                         />
