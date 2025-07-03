@@ -231,7 +231,7 @@ export default function AssessmentEditor() {
                   <div className="space-y-3">
                     <p className="text-white font-medium">{question.question_text}</p>
                     <div className="space-y-2">
-                      {JSON.parse(question.options as string).map((option: string, idx: number) => (
+                      {(question.options as string[]).map((option: string, idx: number) => (
                         <div key={idx} className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full border-2 border-slate-600 flex items-center justify-center">
                             <span className="text-xs text-gray-400">{idx + 1}</span>
