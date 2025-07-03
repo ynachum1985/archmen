@@ -5,7 +5,8 @@ import { ArrowRight, Brain, Heart, Shield, Send, Sparkles } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'
 import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
-import { AssessmentQuiz, DiscoveredArchetypes } from '@/components/chat/AssessmentQuiz'
+import { LinguisticAssessment } from '@/components/chat/LinguisticAssessment'
+import { DiscoveredArchetypes } from '@/components/chat/AssessmentQuiz'
 
 export default function HomePage() {
   const [message, setMessage] = useState('')
@@ -18,10 +19,10 @@ export default function HomePage() {
   }
 
   const handleQuizComplete = (results: {
-    assessment_id: string | undefined
-    answers: { questionId: string; selectedOption: number; optionText: string }[]
-    discovered_archetypes: string[]
-    completed_at: string
+    theme: string
+    conversation: any[]
+    finalScores: Record<string, number>
+    report: string
   }) => {
     console.log('Assessment completed:', results)
   }
@@ -57,9 +58,9 @@ export default function HomePage() {
             </div>
             
             {showAssessment ? (
-              <AssessmentQuiz 
+              <LinguisticAssessment 
                 onDiscoveredArchetypes={handleDiscoveredArchetypes}
-                onQuizComplete={handleQuizComplete}
+                onAssessmentComplete={handleQuizComplete}
               />
             ) : (
               <Button 
