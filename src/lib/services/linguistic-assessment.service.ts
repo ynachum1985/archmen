@@ -170,7 +170,7 @@ Look for:
 `
   }
 
-  private buildNextQuestionPrompt(analysis: any, history: ConversationTurn[], theme: AssessmentTheme): string {
+  private buildNextQuestionPrompt(analysis: Record<string, unknown>, history: ConversationTurn[], theme: AssessmentTheme): string {
     return `
 Based on this linguistic analysis of the user's response: ${JSON.stringify(analysis)}
 
@@ -191,7 +191,7 @@ Return only the question, no additional text.
 `
   }
 
-  private calculateArchetypeScores(analysis: any, theme: AssessmentTheme): Record<string, number> {
+  private calculateArchetypeScores(analysis: Record<string, unknown>, theme: AssessmentTheme): Record<string, number> {
     const scores: Record<string, number> = {}
     
     // Initialize all archetypes with base score
@@ -200,18 +200,18 @@ Return only the question, no additional text.
     })
 
     // Score based on archetype signals from AI analysis
-    if (analysis.archetypeSignals) {
-      Object.entries(analysis.archetypeSignals).forEach(([archetype, score]) => {
+    if (analysis.archetypeSignals && typeof analysis.archetypeSignals === 'object') {
+      Object.entries(analysis.archetypeSignals as Record<string, number>).forEach(([archetype, score]) => {
         if (scores.hasOwnProperty(archetype)) {
-          scores[archetype] = Math.max(scores[archetype], score as number)
+          scores[archetype] = Math.max(scores[archetype], score)
         }
       })
     }
 
     // Boost scores based on key phrases matching archetype patterns
-    if (analysis.keyPhrases) {
+    if (Array.isArray(analysis.keyPhrases)) {
       Object.entries(theme.archetypeMapping).forEach(([archetype, patterns]) => {
-        const matches = analysis.keyPhrases.filter((phrase: string) =>
+        const matches = (analysis.keyPhrases as string[]).filter((phrase: string) =>
           patterns.some(pattern => phrase.toLowerCase().includes(pattern.toLowerCase()))
         )
         scores[archetype] += matches.length * 0.1

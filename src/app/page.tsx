@@ -20,7 +20,12 @@ export default function HomePage() {
 
   const handleQuizComplete = (results: {
     theme: string
-    conversation: any[]
+    conversation: Array<{
+      question: string
+      response: string
+      timestamp: string
+      linguisticAnalysis: Record<string, unknown>
+    }>
     finalScores: Record<string, number>
     report: string
   }) => {

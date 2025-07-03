@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { linguisticAssessmentService } from '@/lib/services/linguistic-assessment.service'
-import { Sparkles, Brain, Heart, Send, Loader2 } from 'lucide-react'
+import { Sparkles, Brain, Send, Loader2 } from 'lucide-react'
 
 interface AssessmentTheme {
   id: string
@@ -18,11 +18,18 @@ interface AssessmentTheme {
   archetypeMapping: Record<string, string[]>
 }
 
+interface LinguisticIndicators {
+  emotionalTone: string[]
+  keyPhrases: string[]
+  languagePatterns: string[]
+  archetypeSignals: Record<string, number>
+}
+
 interface ConversationTurn {
   question: string
   response: string
   timestamp: string
-  linguisticAnalysis: any
+  linguisticAnalysis: LinguisticIndicators
 }
 
 interface LinguisticAssessmentProps {
@@ -43,7 +50,7 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
   const [userResponse, setUserResponse] = useState('')
   const [conversation, setConversation] = useState<ConversationTurn[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [archetypeScores, setArchetypeScores] = useState<Record<string, number>>({})
+
   const [isComplete, setIsComplete] = useState(false)
   const [finalReport, setFinalReport] = useState('')
 
@@ -60,7 +67,6 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
       setCurrentQuestion(initialQuestion)
       setAssessmentStarted(true)
       setConversation([])
-      setArchetypeScores({})
     } catch (error) {
       console.error('Error starting assessment:', error)
     }
@@ -88,7 +94,6 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
 
       const updatedConversation = [...conversation, newTurn]
       setConversation(updatedConversation)
-      setArchetypeScores(result.archetypeScores)
 
       // Update discovered archetypes
       const topArchetypes = Object.entries(result.archetypeScores)
@@ -152,8 +157,8 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
           <CardContent>
             <div className="space-y-4">
               <div className="text-sm text-gray-400 space-y-2">
-                <p>✨ <strong>How it works:</strong> I'll ask you thoughtful questions and analyze your linguistic patterns, word choices, and communication style to reveal your archetypal patterns.</p>
-                <p>🎯 <strong>What's different:</strong> No multiple choice - just natural conversation that adapts to your responses.</p>
+                <p>✨ <strong>How it works:</strong> I&apos;ll ask you thoughtful questions and analyze your linguistic patterns, word choices, and communication style to reveal your archetypal patterns.</p>
+                <p>🎯 <strong>What&apos;s different:</strong> No multiple choice - just natural conversation that adapts to your responses.</p>
                 <p>🧠 <strong>Focus:</strong> Your language reveals deep patterns about how you show up in different areas of life.</p>
               </div>
             </div>
@@ -280,7 +285,7 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
               
               <div className="flex justify-between items-center">
                 <div className="text-xs text-gray-400">
-                  Tip: Speak naturally - I'm analyzing your language patterns, not looking for "right" answers
+                  Tip: Speak naturally - I&apos;m analyzing your language patterns, not looking for &quot;right&quot; answers
                 </div>
                 <Button
                   onClick={submitResponse}
