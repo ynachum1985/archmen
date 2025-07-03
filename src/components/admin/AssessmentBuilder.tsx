@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,8 +19,7 @@ import {
   Users, 
   Sparkles,
   FileText,
-  CheckCircle,
-  BarChart3
+  CheckCircle
 } from 'lucide-react'
 
 interface AssessmentConfig {
@@ -171,7 +170,7 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
                     onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
                     placeholder="Describe in detail what this assessment is designed to discover about the user. For example:
 
-'This assessment is designed to identify the user's dominant leadership archetypes by analyzing their communication patterns, decision-making approaches, and interpersonal dynamics in professional settings. The goal is to reveal unconscious patterns that influence their leadership style, team interactions, and strategic thinking processes.'"
+&lsquo;This assessment is designed to identify the user&rsquo;s dominant leadership archetypes by analyzing their communication patterns, decision-making approaches, and interpersonal dynamics in professional settings. The goal is to reveal unconscious patterns that influence their leadership style, team interactions, and strategic thinking processes.&rsquo;"
                     className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm leading-relaxed"
                     rows={12}
                   />
@@ -369,7 +368,7 @@ TONE AND APPROACH:
 
 THE VISIONARY LEADER:
 Linguistic Patterns:
-- Uses future-oriented language ('imagine', 'envision', 'transform')
+- Uses future-oriented language (&lsquo;imagine&rsquo;, &lsquo;envision&rsquo;, &lsquo;transform&rsquo;)
 - Speaks in big picture terms and metaphors
 - Expresses confidence in possibilities and change
 - Uses inspirational and motivational language
@@ -377,7 +376,7 @@ Linguistic Patterns:
 Communication Style:
 - Speaks with passion and conviction
 - Focuses on potential and opportunity
-- Uses inclusive language ('we can', 'together')
+- Uses inclusive language (&lsquo;we can&rsquo;, &lsquo;together&rsquo;)
 - Comfortable with ambiguity and uncertainty
 
 Decision-Making Patterns:

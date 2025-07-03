@@ -37,8 +37,11 @@ interface Archetype {
   category: string
   description: string
   impact_score: number
-  traits: any
-  psychology_profile: any
+  traits: unknown
+  psychology_profile: unknown
+  is_active: boolean | null
+  created_at: string
+  updated_at: string
 }
 
 interface LinguisticPattern {
