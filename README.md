@@ -1,6 +1,38 @@
-# ArchMen - Jungian Archetypes for Men's Relationships
+# ArchMen - AI-Powered Relationship Assessment Platform
 
-A web application that helps men understand their relationship patterns through Jungian archetypes and shadow work.
+<!-- Production deployment: January 3, 2025 - Clean UI Version -->
+
+A sophisticated Next.js application that uses AI to analyze relationship patterns and provide personalized insights based on Jungian archetypes.
+
+## Features
+
+- 🧠 **AI-Powered Chat Interface** - Interactive assessment through conversational AI
+- 💫 **Jungian Archetype Framework** - Based on proven psychological models
+- 🎯 **Relationship-Focused** - Specifically designed for romantic relationships
+- 📱 **Responsive Design** - Beautiful UI that works on all devices
+- 🔒 **Secure & Private** - User data protection and privacy-first approach
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **AI**: OpenAI GPT integration for chat interface
+- **Database**: Supabase for user data and conversations
+- **Authentication**: Supabase Auth
+- **Deployment**: Vercel
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see the application.
+
+## Deployment
+
+This project is configured for seamless deployment on Vercel with automatic builds on push to main branches.
 
 ## 🏗️ Project Architecture
 
