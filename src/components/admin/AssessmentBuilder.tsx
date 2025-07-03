@@ -279,12 +279,12 @@ Look for recurring patterns across multiple responses..."
 OPENING (1-2 exchanges):
 - Start with warm, open-ended questions about recent experiences
 - Focus on situations relevant to the assessment purpose
-- Example: 'Tell me about a recent situation where you had to make an important decision. What was going through your mind?'
+- Example: &lsquo;Tell me about a recent situation where you had to make an important decision. What was going through your mind?&rsquo;
 
 EXPLORATION PHASE (3-5 exchanges):
 - Dig deeper into patterns revealed in initial responses
 - Ask about emotional responses, thought processes, and motivations
-- Use follow-up questions like 'What did that feel like?' or 'How did you approach that?'
+- Use follow-up questions like &lsquo;What did that feel like?&rsquo; or &lsquo;How did you approach that?&rsquo;
 
 PATTERN IDENTIFICATION (2-3 exchanges):
 - Explore recurring themes and behavioral patterns
