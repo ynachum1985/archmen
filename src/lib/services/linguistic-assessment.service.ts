@@ -14,6 +14,7 @@ interface LinguisticIndicators {
   keyPhrases: string[]
   languagePatterns: string[]
   archetypeSignals: Record<string, number>
+  [key: string]: unknown
 }
 
 interface AssessmentTheme {
