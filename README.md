@@ -2,6 +2,8 @@
 
 <!-- Production deployment: January 3, 2025 - Clean UI Version -->
 
+<!-- Deployment trigger: Environment variables configured -->
+
 A sophisticated Next.js application that uses AI to analyze relationship patterns and provide personalized insights based on Jungian archetypes.
 
 ## Features
