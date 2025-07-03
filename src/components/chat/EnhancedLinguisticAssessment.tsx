@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -48,12 +48,7 @@ export function EnhancedLinguisticAssessment({ config, onComplete }: EnhancedLin
   const [assessmentComplete, setAssessmentComplete] = useState(false)
   const [progress, setProgress] = useState(0)
 
-  // Initialize with AI's first question
-  useEffect(() => {
-    generateInitialQuestion()
-  }, [config])
-
-  const generateInitialQuestion = async () => {
+  const generateInitialQuestion = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch('/api/chat', {
@@ -86,7 +81,12 @@ Start the assessment with an engaging opening question that will reveal linguist
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [config])
+
+  // Initialize with AI's first question
+  useEffect(() => {
+    generateInitialQuestion()
+  }, [generateInitialQuestion])
 
   const handleSendMessage = async () => {
     if (!currentInput.trim() || isLoading) return
