@@ -96,7 +96,7 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
     if (selectedOption === null) return
 
     const question = questions[currentQuestion]
-    const options = Array.isArray(question.options) ? question.options : JSON.parse(question.options as string)
+    const options = question.options as string[]
     const newAnswer: QuizAnswer = {
       questionId: question.id,
       selectedOption: selectedOption,
@@ -133,7 +133,7 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
     currentAnswers.forEach((answer, index) => {
       const question = questions[index]
       if (question.scoring_weights) {
-        const weights = JSON.parse(question.scoring_weights as string)
+        const weights = question.scoring_weights as Record<string, number[]>
         const selectedWeights = Object.entries(weights).map(([archetype, scores]) => ({
           archetype,
           score: (scores as number[])[answer.selectedOption] || 0
@@ -218,7 +218,7 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
   }
 
   const question = questions[currentQuestion]
-  const options = Array.isArray(question.options) ? question.options : JSON.parse(question.options as string)
+  const options = question.options as string[]
 
   return (
     <Card className="bg-slate-800/50 border-slate-700">

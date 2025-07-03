@@ -53,7 +53,7 @@ export default function AssessmentEditor() {
 
   const handleEditQuestion = (question: AssessmentQuestion) => {
     setEditingQuestion(question.id)
-    const options = Array.isArray(question.options) ? question.options : JSON.parse(question.options as string)
+    const options = question.options as string[]
     setEditForm({
       question_text: question.question_text,
       options: options,
