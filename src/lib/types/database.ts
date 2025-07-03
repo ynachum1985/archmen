@@ -9,42 +9,90 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      archetype_results: {
+      enhanced_archetypes: {
         Row: {
-          archetype_scores: Json
-          assessment_id: string
-          created_at: string | null
           id: string
-          recommendations: Json
-          shadow_patterns: Json
+          created_at: string
+          updated_at: string
+          name: string
+          category: string
+          impact_score: number
+          description: string
+          traits: Json | null
+          psychology_profile: Json | null
+          is_active: boolean | null
         }
         Insert: {
-          archetype_scores: Json
-          assessment_id: string
-          created_at?: string | null
           id?: string
-          recommendations: Json
-          shadow_patterns: Json
+          created_at?: string
+          updated_at?: string
+          name: string
+          category: string
+          impact_score: number
+          description: string
+          traits?: Json | null
+          psychology_profile?: Json | null
+          is_active?: boolean | null
         }
         Update: {
-          archetype_scores?: Json
-          assessment_id?: string
-          created_at?: string | null
           id?: string
-          recommendations?: Json
-          shadow_patterns?: Json
+          created_at?: string
+          updated_at?: string
+          name?: string
+          category?: string
+          impact_score?: number
+          description?: string
+          traits?: Json | null
+          psychology_profile?: Json | null
+          is_active?: boolean | null
+        }
+        Relationships: []
+      }
+      linguistic_patterns: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          archetype_name: string
+          category: string
+          keywords: string[] | null
+          phrases: string[] | null
+          emotional_indicators: string[] | null
+          behavioral_patterns: string[] | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          archetype_name: string
+          category: string
+          keywords?: string[] | null
+          phrases?: string[] | null
+          emotional_indicators?: string[] | null
+          behavioral_patterns?: string[] | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          archetype_name?: string
+          category?: string
+          keywords?: string[] | null
+          phrases?: string[] | null
+          emotional_indicators?: string[] | null
+          behavioral_patterns?: string[] | null
         }
         Relationships: [
           {
-            foreignKeyName: "archetype_results_assessment_id_fkey"
-            columns: ["assessment_id"]
+            foreignKeyName: "linguistic_patterns_archetype_name_fkey"
+            columns: ["archetype_name"]
             isOneToOne: false
-            referencedRelation: "assessments"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: "enhanced_archetypes"
+            referencedColumns: ["name"]
+          }
         ]
       }
       assessments: {
@@ -82,7 +130,42 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
+        ]
+      }
+      archetype_results: {
+        Row: {
+          archetype_scores: Json
+          assessment_id: string
+          created_at: string | null
+          id: string
+          recommendations: Json
+          shadow_patterns: Json
+        }
+        Insert: {
+          archetype_scores: Json
+          assessment_id: string
+          created_at?: string | null
+          id?: string
+          recommendations: Json
+          shadow_patterns: Json
+        }
+        Update: {
+          archetype_scores?: Json
+          assessment_id?: string
+          created_at?: string | null
+          id?: string
+          recommendations?: Json
+          shadow_patterns?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archetype_results_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          }
         ]
       }
       conversations: {
@@ -127,7 +210,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       course_enrollments: {
@@ -172,7 +255,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       courses: {
@@ -254,7 +337,15 @@ export type Database = {
           subscription_status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
