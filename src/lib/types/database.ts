@@ -9,91 +9,259 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
-      enhanced_archetypes: {
+      archetype_results: {
         Row: {
+          archetype_scores: Json
+          assessment_id: string
+          created_at: string | null
           id: string
-          created_at: string
-          updated_at: string
-          name: string
-          category: string
-          impact_score: number
-          description: string
-          traits: Json | null
-          psychology_profile: Json | null
-          is_active: boolean | null
+          recommendations: Json
+          shadow_patterns: Json
         }
         Insert: {
+          archetype_scores: Json
+          assessment_id: string
+          created_at?: string | null
           id?: string
-          created_at?: string
-          updated_at?: string
-          name: string
-          category: string
-          impact_score: number
-          description: string
-          traits?: Json | null
-          psychology_profile?: Json | null
-          is_active?: boolean | null
+          recommendations: Json
+          shadow_patterns: Json
         }
         Update: {
+          archetype_scores?: Json
+          assessment_id?: string
+          created_at?: string | null
           id?: string
-          created_at?: string
-          updated_at?: string
-          name?: string
-          category?: string
-          impact_score?: number
-          description?: string
-          traits?: Json | null
-          psychology_profile?: Json | null
-          is_active?: boolean | null
-        }
-        Relationships: []
-      }
-      linguistic_patterns: {
-        Row: {
-          id: string
-          created_at: string
-          updated_at: string
-          archetype_name: string
-          category: string
-          keywords: string[] | null
-          phrases: string[] | null
-          emotional_indicators: string[] | null
-          behavioral_patterns: string[] | null
-        }
-        Insert: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          archetype_name: string
-          category: string
-          keywords?: string[] | null
-          phrases?: string[] | null
-          emotional_indicators?: string[] | null
-          behavioral_patterns?: string[] | null
-        }
-        Update: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          archetype_name?: string
-          category?: string
-          keywords?: string[] | null
-          phrases?: string[] | null
-          emotional_indicators?: string[] | null
-          behavioral_patterns?: string[] | null
+          recommendations?: Json
+          shadow_patterns?: Json
         }
         Relationships: [
           {
-            foreignKeyName: "linguistic_patterns_archetype_name_fkey"
-            columns: ["archetype_name"]
+            foreignKeyName: "archetype_results_assessment_id_fkey"
+            columns: ["assessment_id"]
             isOneToOne: false
-            referencedRelation: "enhanced_archetypes"
-            referencedColumns: ["name"]
-          }
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      assessment_questions: {
+        Row: {
+          archetype_indicators: Json | null
+          created_at: string | null
+          id: string
+          is_required: boolean | null
+          metadata: Json | null
+          options: Json | null
+          order_index: number
+          question_text: string
+          question_type: string
+          scoring_weights: Json | null
+          template_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          archetype_indicators?: Json | null
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          metadata?: Json | null
+          options?: Json | null
+          order_index?: number
+          question_text: string
+          question_type?: string
+          scoring_weights?: Json | null
+          template_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          archetype_indicators?: Json | null
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          metadata?: Json | null
+          options?: Json | null
+          order_index?: number
+          question_text?: string
+          question_type?: string
+          scoring_weights?: Json | null
+          template_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_questions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_responses: {
+        Row: {
+          created_at: string | null
+          id: string
+          question_id: string
+          response_data: Json | null
+          response_value: string
+          session_id: string | null
+          template_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          question_id: string
+          response_data?: Json | null
+          response_value: string
+          session_id?: string | null
+          template_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          question_id?: string
+          response_data?: Json | null
+          response_value?: string
+          session_id?: string | null
+          template_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_responses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          current_question_index: number | null
+          discovered_archetypes: Json | null
+          id: string
+          progress_percentage: number | null
+          session_data: Json | null
+          status: string
+          template_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_question_index?: number | null
+          discovered_archetypes?: Json | null
+          id?: string
+          progress_percentage?: number | null
+          session_data?: Json | null
+          status?: string
+          template_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_question_index?: number | null
+          discovered_archetypes?: Json | null
+          id?: string
+          progress_percentage?: number | null
+          session_data?: Json | null
+          status?: string
+          template_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_sessions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_templates: {
+        Row: {
+          archetype_focus: string[] | null
+          category: string
+          completion_text: string | null
+          created_at: string | null
+          description: string | null
+          estimated_duration_minutes: number | null
+          id: string
+          intro_text: string | null
+          is_active: boolean | null
+          is_free: boolean | null
+          metadata: Json | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          archetype_focus?: string[] | null
+          category?: string
+          completion_text?: string | null
+          created_at?: string | null
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean | null
+          is_free?: boolean | null
+          metadata?: Json | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          archetype_focus?: string[] | null
+          category?: string
+          completion_text?: string | null
+          created_at?: string | null
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean | null
+          is_free?: boolean | null
+          metadata?: Json | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       assessments: {
         Row: {
@@ -130,42 +298,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
-        ]
-      }
-      archetype_results: {
-        Row: {
-          archetype_scores: Json
-          assessment_id: string
-          created_at: string | null
-          id: string
-          recommendations: Json
-          shadow_patterns: Json
-        }
-        Insert: {
-          archetype_scores: Json
-          assessment_id: string
-          created_at?: string | null
-          id?: string
-          recommendations: Json
-          shadow_patterns: Json
-        }
-        Update: {
-          archetype_scores?: Json
-          assessment_id?: string
-          created_at?: string | null
-          id?: string
-          recommendations?: Json
-          shadow_patterns?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "archetype_results_assessment_id_fkey"
-            columns: ["assessment_id"]
-            isOneToOne: false
-            referencedRelation: "assessments"
-            referencedColumns: ["id"]
-          }
+          },
         ]
       }
       conversations: {
@@ -210,7 +343,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       course_enrollments: {
@@ -255,7 +388,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       courses: {
@@ -303,6 +436,89 @@ export interface Database {
         }
         Relationships: []
       }
+      enhanced_archetypes: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          impact_score: number
+          is_active: boolean | null
+          name: string
+          psychology_profile: Json | null
+          traits: Json | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          impact_score: number
+          is_active?: boolean | null
+          name: string
+          psychology_profile?: Json | null
+          traits?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          impact_score?: number
+          is_active?: boolean | null
+          name?: string
+          psychology_profile?: Json | null
+          traits?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      linguistic_patterns: {
+        Row: {
+          archetype_name: string
+          behavioral_patterns: string[] | null
+          category: string
+          created_at: string
+          emotional_indicators: string[] | null
+          id: string
+          keywords: string[] | null
+          phrases: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          archetype_name: string
+          behavioral_patterns?: string[] | null
+          category: string
+          created_at?: string
+          emotional_indicators?: string[] | null
+          id?: string
+          keywords?: string[] | null
+          phrases?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          archetype_name?: string
+          behavioral_patterns?: string[] | null
+          category?: string
+          created_at?: string
+          emotional_indicators?: string[] | null
+          id?: string
+          keywords?: string[] | null
+          phrases?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linguistic_patterns_archetype_name_fkey"
+            columns: ["archetype_name"]
+            isOneToOne: false
+            referencedRelation: "enhanced_archetypes"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -337,15 +553,7 @@ export interface Database {
           subscription_status?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
     }
     Views: {

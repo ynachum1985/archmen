@@ -4,320 +4,157 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Brain, Heart, Shield, Users, Target, Send } from 'lucide-react'
+import { ArrowRight, Brain, Heart, Shield, Users, Target, Send, Sparkles } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'
 import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
+import { AssessmentQuiz, DiscoveredArchetypes } from '@/components/chat/AssessmentQuiz'
 
 export default function HomePage() {
   const [message, setMessage] = useState('')
+  const [discoveredArchetypes, setDiscoveredArchetypes] = useState<string[]>([])
+  const [showAssessment, setShowAssessment] = useState(false)
+  const [assessmentCompleted, setAssessmentCompleted] = useState(false)
+
+  const handleDiscoveredArchetypes = (archetypes: string[]) => {
+    setDiscoveredArchetypes(archetypes)
+  }
+
+  const handleQuizComplete = (results: any) => {
+    setAssessmentCompleted(true)
+    console.log('Assessment completed:', results)
+  }
+
+  const handleStartAssessment = () => {
+    setShowAssessment(true)
+  }
 
   return (
-    <div className="min-h-screen">
-      <section className="relative bg-gradient-to-br from-background via-muted/30 to-background">
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-              {/* Hero Content */}
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
-                    Understand Your{' '}
-                    <span className="text-gradient">Relationship Patterns</span>
-                  </h1>
-                  <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                    Break free from toxic cycles. Discover your shadow through Carl Jung&apos;s archetypes.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft-lg font-medium">
-                    Take Assessment
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" className="border-accent/30 text-accent hover:bg-accent/5 hover:border-accent/50 font-medium">
-                    Learn More
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-3 gap-6 pt-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-primary font-display">12</div>
-                    <div className="text-sm text-muted-foreground font-body">Archetypes</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-accent font-display">5min</div>
-                    <div className="text-sm text-muted-foreground font-body">Assessment</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-primary font-display">Instant</div>
-                    <div className="text-sm text-muted-foreground font-body">Results</div>
-                  </div>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Header */}
+      <header className="border-b border-slate-700/30 bg-slate-900/30 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">A</span>
               </div>
-
-              {/* Chat Widget */}
-              <div className="lg:pt-0">
-                <Card className="shadow-soft-lg border border-border/50 bg-white/80 backdrop-blur-sm overflow-hidden">
-                  <div className="flex flex-col h-[600px] bg-gradient-to-br from-white to-muted/20">
-                    {/* Chat Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-soft">
-                          <span className="text-white text-sm font-medium">AI</span>
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="rounded-lg p-4 max-w-[85%] shadow-soft bg-gradient-to-r from-muted/30 to-muted/50 text-foreground border border-border/50 backdrop-blur-sm">
-                            <p className="font-body whitespace-pre-wrap">
-                              I&apos;m here to help you understand your relationship patterns through Jungian archetypes. What brings you here today?
-                            </p>
-                          </div>
-                          <div className="font-body text-xs text-muted-foreground">
-                            07:16 AM
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Chat Input */}
-                    <div className="p-4 border-t bg-gradient-to-r from-muted/10 to-muted/20 backdrop-blur-sm">
-                      <div className="flex gap-3">
-                        <Textarea
-                          className="flex-1 min-h-[3rem] max-h-[8rem] resize-none bg-white/80 backdrop-blur-sm border-border/50 focus:border-primary rounded-lg shadow-sm font-body"
-                          placeholder="Share what&apos;s on your mind..."
-                          value={message}
-                          onChange={(e) => setMessage(e.target.value)}
-                        />
-                        <Button 
-                          size="icon"
-                          className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground rounded-lg shadow-soft hover:shadow-soft-lg transition-all duration-200"
-                          disabled={!message.trim()}
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
+              <div>
+                <h1 className="text-xl font-bold text-white">{APP_CONFIG.name}</h1>
+                <p className="text-xs text-gray-400">Discover Your Archetypal Patterns</p>
               </div>
             </div>
+            <nav className="flex items-center space-x-6">
+              <Button
+                variant="ghost"
+                onClick={handleStartAssessment}
+                className="text-gray-300 hover:text-white text-sm font-medium"
+              >
+                Take Assessment
+              </Button>
+              <Link href="/admin" className="text-gray-300 hover:text-white text-sm font-medium">
+                Admin
+              </Link>
+            </nav>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Transform Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="font-display text-3xl font-bold text-foreground mb-4">
-                Transform Your <span className="text-gradient">Relationships</span>
-              </h2>
-              <p className="font-body text-lg text-muted-foreground">
-                Discover the patterns that shape your connections
+      {/* Hero Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              Discover Your <span className="text-teal-400">Inner Patterns</span>
+            </h2>
+            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Uncover the archetypal forces that shape your relationships, understand your shadow aspects, and embark on a journey of profound self-discovery.
+            </p>
+          </div>
+
+          {/* Chat Interface */}
+          <div className="bg-slate-800/20 border border-slate-700/30 rounded-3xl p-8 mb-12 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-full flex items-center justify-center">
+                <Brain className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-medium">ArchMen AI</p>
+                <p className="text-sm text-gray-400">Your Archetypal Guide</p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-700/20 rounded-2xl p-6 mb-6 border border-slate-600/30">
+              <p className="text-gray-300 leading-relaxed">
+                Welcome! I'm here to help you understand your archetypal patterns in relationships. 
+                Start with our free assessment below, or ask me any questions about archetypes, 
+                shadow work, or relationship dynamics.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              <Card className="p-6 text-center shadow-soft border-border/50 bg-white">
-                <Target className="h-8 w-8 text-primary mx-auto mb-4" />
-                <h3 className="font-display font-semibold text-foreground mb-2">Identify Patterns</h3>
-                <p className="font-body text-sm text-muted-foreground">
-                  Recognize recurring relationship dynamics and behaviors
-                </p>
-              </Card>
-
-              <Card className="p-6 text-center shadow-soft border-border/50 bg-white">
-                <Brain className="h-8 w-8 text-accent mx-auto mb-4" />
-                <h3 className="font-display font-semibold text-foreground mb-2">Shadow Work</h3>
-                <p className="font-body text-sm text-muted-foreground">
-                  Explore unconscious aspects affecting your relationships
-                </p>
-              </Card>
-
-              <Card className="p-6 text-center shadow-soft border-border/50 bg-white">
-                <Heart className="h-8 w-8 text-primary mx-auto mb-4" />
-                <h3 className="font-display font-semibold text-foreground mb-2">Heal & Grow</h3>
-                <p className="font-body text-sm text-muted-foreground">
-                  Build healthier, more fulfilling connections
-                </p>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Why ArchMen?</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <Card>
-            <CardHeader>
-              <Brain className="h-12 w-12 text-primary mb-4" />
-              <CardTitle>Jungian Psychology</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Based on Carl Jung&apos;s proven archetypal framework for understanding the masculine psyche
-              </CardDescription>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Shield className="h-12 w-12 text-primary mb-4" />
-              <CardTitle>Shadow Work</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Identify and integrate your shadow patterns for authentic relationship growth
-              </CardDescription>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Heart className="h-12 w-12 text-primary mb-4" />
-              <CardTitle>Relationship Focus</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Specifically designed to improve your romantic relationships and emotional intelligence
-              </CardDescription>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Users className="h-12 w-12 text-primary mb-4" />
-              <CardTitle>Expert Guidance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                AI-powered insights combined with professional psychological frameworks
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section id="how-it-works" className="container mx-auto px-4 py-20 bg-muted/50">
-        <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <div className="text-center">
-            <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">
-              1
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Take the Assessment</h3>
-            <p className="text-muted-foreground">
-              Answer questions about your relationship patterns and behaviors through our AI-guided chat
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">
-              2
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Discover Your Archetypes</h3>
-            <p className="text-muted-foreground">
-              Get a detailed analysis of your dominant archetypes and shadow patterns
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">
-              3
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Transform Your Relationships</h3>
-            <p className="text-muted-foreground">
-              Access personalized courses and exercises to integrate your insights
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Choose Your Journey</h2>
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Free</CardTitle>
-              <CardDescription>Get started with the basics</CardDescription>
-              <div className="text-3xl font-bold mt-4">$0</div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {APP_CONFIG.subscriptions.free.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <span className="text-primary mr-2">✓</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button asChild className="w-full mt-6" variant="outline">
-                <Link href="/register">Get Started</Link>
+            <div className="flex gap-3">
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Ask me about your relationship patterns..."
+                className="flex-1 bg-slate-700/20 border-slate-600/30 text-white placeholder-gray-400 resize-none rounded-xl"
+                rows={2}
+              />
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white self-end rounded-xl">
+                <Send className="h-4 w-4" />
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="border-primary">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>Monthly</CardTitle>
-                <Badge>Popular</Badge>
-              </div>
-              <CardDescription>Full access to transform your relationships</CardDescription>
-              <div className="text-3xl font-bold mt-4">${APP_CONFIG.subscriptions.monthly.price}/mo</div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {APP_CONFIG.subscriptions.monthly.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <span className="text-primary mr-2">✓</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button asChild className="w-full mt-6">
-                <Link href="/register">Start Free Trial</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Assessment and Discovery Section */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div>
+              {showAssessment ? (
+                <AssessmentQuiz 
+                  onDiscoveredArchetypes={handleDiscoveredArchetypes}
+                  onQuizComplete={handleQuizComplete}
+                />
+              ) : (
+                <Card className="bg-slate-800/20 border-slate-700/30 backdrop-blur-sm">
+                  <CardContent className="p-8 text-center">
+                    <div className="mb-6">
+                      <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="h-8 w-8 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Ready to Begin?</h3>
+                      <p className="text-gray-400">Take our free assessment to discover your archetypal patterns</p>
+                    </div>
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+                        <Heart className="h-4 w-4 text-teal-400" />
+                        <span>8 insightful questions</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+                        <Target className="h-4 w-4 text-teal-400" />
+                        <span>5 minutes to complete</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+                        <Shield className="h-4 w-4 text-teal-400" />
+                        <span>Discover your top 3 archetypes</span>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={handleStartAssessment}
+                      className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 text-lg rounded-xl"
+                    >
+                      Start Free Assessment
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>Lifetime</CardTitle>
-                <Badge variant="secondary">Best Value</Badge>
-              </div>
-              <CardDescription>One-time payment, lifetime transformation</CardDescription>
-              <div className="text-3xl font-bold mt-4">${APP_CONFIG.subscriptions.lifetime.price}</div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {APP_CONFIG.subscriptions.lifetime.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <span className="text-primary mr-2">✓</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button asChild className="w-full mt-6" variant="outline">
-                <Link href="/register">Get Lifetime Access</Link>
-              </Button>
-            </CardContent>
-          </Card>
+            <div>
+              <DiscoveredArchetypes archetypes={discoveredArchetypes} />
+            </div>
+          </div>
         </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Relationships?</h2>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of men who have discovered their authentic selves through archetypal understanding
-        </p>
-        <Button asChild size="lg">
-          <Link href="/register">
-            Start Your Journey Now <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
       </section>
     </div>
   )

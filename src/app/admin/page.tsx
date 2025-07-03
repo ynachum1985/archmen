@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,11 +9,14 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AddArchetypeDialog } from "@/components/admin/AddArchetypeDialog"
 import { AddPatternDialog } from "@/components/admin/AddPatternDialog"
+import { CreateAssessmentDialog } from "@/components/admin/CreateAssessmentDialog"
 import { archetypeService } from '@/lib/services/archetype.service'
+import { assessmentService } from '@/lib/services/assessment.service'
 import type { Database } from '@/lib/types/database'
 
 type Archetype = Database['public']['Tables']['enhanced_archetypes']['Row']
 type LinguisticPattern = Database['public']['Tables']['linguistic_patterns']['Row']
+type AssessmentTemplate = Database['public']['Tables']['assessment_templates']['Row']
 
 export default function AdminPage() {
   return (
@@ -53,50 +57,151 @@ export default function AdminPage() {
 }
 
 function AssessmentDashboard() {
-  const assessments = [
-    { id: 1, name: 'Dating Patterns', questions: 12, active: true },
-    { id: 2, name: 'Marriage Dynamics', questions: 18, active: true },
-    { id: 3, name: 'Conflict Resolution', questions: 15, active: false },
-    { id: 4, name: 'Shadow Work', questions: 8, active: true }
-  ]
+  const router = useRouter()
+  const [assessments, setAssessments] = useState<AssessmentTemplate[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedAssessment, setSelectedAssessment] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadAssessments()
+  }, [])
+
+  const loadAssessments = async () => {
+    try {
+      setIsLoading(true)
+      const data = await assessmentService.getAllTemplates()
+      setAssessments(data)
+    } catch (error) {
+      console.error('Error loading assessments:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAssessmentCreated = () => {
+    loadAssessments()
+  }
+
+  const handleEditAssessment = (assessmentId: string) => {
+    router.push(`/admin/assessment/${assessmentId}`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-white">Assessments</h2>
+        </div>
+        <div className="text-center text-gray-400 py-8">Loading assessments...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-white">Assessments</h2>
-        <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-          Create Assessment
-        </Button>
+        <CreateAssessmentDialog onAssessmentCreated={handleAssessmentCreated} />
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {assessments.map((assessment) => (
-          <Card key={assessment.id} className="bg-slate-800 border-slate-700 hover:border-slate-600 cursor-pointer">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg text-white">{assessment.name}</CardTitle>
-                <span className={`px-2 py-1 text-xs rounded ${
-                  assessment.active ? 'bg-teal-600 text-white' : 'bg-slate-600 text-gray-300'
-                }`}>
-                  {assessment.active ? 'Active' : 'Draft'}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-400 mb-3">{assessment.questions} questions</p>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="text-xs border-slate-600 text-white hover:bg-slate-700">
-                  Edit Questions
-                </Button>
-                <Button size="sm" variant="outline" className="text-xs border-slate-600 text-white hover:bg-slate-700">
-                  Test AI
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {assessments.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-400 mb-4">No assessments created yet</div>
+          <CreateAssessmentDialog 
+            onAssessmentCreated={handleAssessmentCreated}
+            trigger={
+              <Button variant="outline" className="border-slate-600 text-white hover:bg-slate-700">
+                Create Your First Assessment
+              </Button>
+            }
+          />
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {assessments.map((assessment) => (
+            <AssessmentCard 
+              key={assessment.id} 
+              assessment={assessment} 
+              onEdit={() => handleEditAssessment(assessment.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
+  )
+}
+
+function AssessmentCard({ assessment, onEdit }: { assessment: AssessmentTemplate; onEdit: () => void }) {
+  const [stats, setStats] = useState<{
+    questionCount: number
+    responseCount: number
+    sessionCount: number
+    completionRate: number
+  } | null>(null)
+
+  useEffect(() => {
+    loadStats()
+  }, [assessment.id])
+
+  const loadStats = async () => {
+    try {
+      const data = await assessmentService.getTemplateStats(assessment.id)
+      setStats(data)
+    } catch (error) {
+      console.error('Error loading assessment stats:', error)
+    }
+  }
+
+  return (
+    <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 cursor-pointer">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg text-white">{assessment.name}</CardTitle>
+          <span className={`px-2 py-1 text-xs rounded ${
+            assessment.is_active ? 'bg-teal-600 text-white' : 'bg-slate-600 text-gray-300'
+          }`}>
+            {assessment.is_active ? 'Active' : 'Draft'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-1 text-xs rounded ${
+            assessment.is_free ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
+          }`}>
+            {assessment.is_free ? 'Free' : 'Paid'}
+          </span>
+          <span className="text-xs text-gray-400">{assessment.category}</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-400 mb-3">
+          {stats ? `${stats.questionCount} questions` : 'Loading...'}
+        </p>
+        {assessment.description && (
+          <p className="text-xs text-gray-500 mb-3 line-clamp-2">{assessment.description}</p>
+        )}
+        <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+          <div className="text-gray-400">
+            Sessions: <span className="text-white">{stats?.sessionCount || 0}</span>
+          </div>
+          <div className="text-gray-400">
+            Completion: <span className="text-white">{stats?.completionRate || 0}%</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="text-xs border-slate-600 text-white hover:bg-slate-700"
+            onClick={onEdit}
+          >
+            Edit Questions
+          </Button>
+          <Button size="sm" variant="outline" className="text-xs border-slate-600 text-white hover:bg-slate-700">
+            Test AI
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
