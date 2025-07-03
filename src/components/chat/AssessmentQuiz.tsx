@@ -96,7 +96,7 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
     if (selectedOption === null) return
 
     const question = questions[currentQuestion]
-    const options = JSON.parse(question.options as string)
+    const options = Array.isArray(question.options) ? question.options : JSON.parse(question.options as string)
     const newAnswer: QuizAnswer = {
       questionId: question.id,
       selectedOption: selectedOption,
@@ -218,7 +218,7 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
   }
 
   const question = questions[currentQuestion]
-  const options = JSON.parse(question.options as string)
+  const options = Array.isArray(question.options) ? question.options : JSON.parse(question.options as string)
 
   return (
     <Card className="bg-slate-800/50 border-slate-700">
