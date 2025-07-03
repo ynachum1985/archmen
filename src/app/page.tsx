@@ -1,9 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { ArrowRight, Brain, Heart, Shield, Target, Send, Sparkles } from 'lucide-react'
+import { ArrowRight, Brain, Heart, Shield, Send, Sparkles } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'
 import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
@@ -28,9 +26,7 @@ export default function HomePage() {
     console.log('Assessment completed:', results)
   }
 
-  const handleStartAssessment = () => {
-    setShowAssessment(true)
-  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
