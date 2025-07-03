@@ -213,7 +213,7 @@ Your analysis should focus on..."
                     rows={15}
                   />
                   <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-                    Define the AI's core identity, role, and behavioral guidelines. This sets the foundation for all interactions.
+                    Define the AI&rsquo;s core identity, role, and behavioral guidelines. This sets the foundation for all interactions.
                   </p>
                 </div>
 
@@ -397,7 +397,7 @@ Linguistic Patterns:
                     rows={20}
                   />
                   <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-                    Provide detailed descriptions of each archetype's linguistic patterns, communication style, and behavioral indicators.
+                    Provide detailed descriptions of each archetype&rsquo;s linguistic patterns, communication style, and behavioral indicators.
                   </p>
                 </div>
               </CardContent>
