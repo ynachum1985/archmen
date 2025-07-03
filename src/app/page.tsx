@@ -2,9 +2,8 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Brain, Heart, Shield, Users, Target, Send, Sparkles } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { ArrowRight, Brain, Heart, Shield, Target, Send, Sparkles } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'
 import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
@@ -14,14 +13,18 @@ export default function HomePage() {
   const [message, setMessage] = useState('')
   const [discoveredArchetypes, setDiscoveredArchetypes] = useState<string[]>([])
   const [showAssessment, setShowAssessment] = useState(false)
-  const [assessmentCompleted, setAssessmentCompleted] = useState(false)
+
 
   const handleDiscoveredArchetypes = (archetypes: string[]) => {
     setDiscoveredArchetypes(archetypes)
   }
 
-  const handleQuizComplete = (results: any) => {
-    setAssessmentCompleted(true)
+  const handleQuizComplete = (results: {
+    assessment_id: string | undefined
+    answers: { questionId: string; selectedOption: number; optionText: string }[]
+    discovered_archetypes: string[]
+    completed_at: string
+  }) => {
     console.log('Assessment completed:', results)
   }
 
@@ -86,7 +89,7 @@ export default function HomePage() {
             
             <div className="bg-slate-700/20 rounded-2xl p-6 mb-6 border border-slate-600/30">
               <p className="text-gray-300 leading-relaxed">
-                Welcome! I'm here to help you understand your archetypal patterns in relationships. 
+                                 Welcome! I&apos;m here to help you understand your archetypal patterns in relationships. 
                 Start with our free assessment below, or ask me any questions about archetypes, 
                 shadow work, or relationship dynamics.
               </p>

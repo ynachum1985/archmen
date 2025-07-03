@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,13 +30,7 @@ export default function AssessmentEditor() {
     order_index: 0,
   })
 
-  useEffect(() => {
-    if (assessmentId) {
-      loadAssessment()
-    }
-  }, [assessmentId])
-
-  const loadAssessment = async () => {
+  const loadAssessment = useCallback(async () => {
     try {
       setIsLoading(true)
       const data = await assessmentService.getTemplateWithQuestions(assessmentId)
@@ -49,7 +43,13 @@ export default function AssessmentEditor() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [assessmentId])
+
+  useEffect(() => {
+    if (assessmentId) {
+      loadAssessment()
+    }
+  }, [assessmentId, loadAssessment])
 
   const handleEditQuestion = (question: AssessmentQuestion) => {
     setEditingQuestion(question.id)

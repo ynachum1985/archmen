@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -60,7 +60,6 @@ function AssessmentDashboard() {
   const router = useRouter()
   const [assessments, setAssessments] = useState<AssessmentTemplate[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedAssessment, setSelectedAssessment] = useState<string | null>(null)
 
   useEffect(() => {
     loadAssessments()
@@ -139,18 +138,18 @@ function AssessmentCard({ assessment, onEdit }: { assessment: AssessmentTemplate
     completionRate: number
   } | null>(null)
 
-  useEffect(() => {
-    loadStats()
-  }, [assessment.id])
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const data = await assessmentService.getTemplateStats(assessment.id)
       setStats(data)
     } catch (error) {
       console.error('Error loading assessment stats:', error)
     }
-  }
+  }, [assessment.id])
+
+  useEffect(() => {
+    loadStats()
+  }, [loadStats])
 
   return (
     <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 cursor-pointer">

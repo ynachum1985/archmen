@@ -14,7 +14,12 @@ type AssessmentQuestion = Database['public']['Tables']['assessment_questions']['
 
 interface AssessmentQuizProps {
   onDiscoveredArchetypes: (archetypes: string[]) => void
-  onQuizComplete: (results: any) => void
+  onQuizComplete: (results: {
+    assessment_id: string | undefined
+    answers: { questionId: string; selectedOption: number; optionText: string }[]
+    discovered_archetypes: string[]
+    completed_at: string
+  }) => void
 }
 
 interface QuizAnswer {
@@ -50,7 +55,7 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([])
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
-  const [discoveredArchetypes, setDiscoveredArchetypes] = useState<string[]>([])
+
   const [isLoading, setIsLoading] = useState(true)
   const [quizStarted, setQuizStarted] = useState(false)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
@@ -80,7 +85,6 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
     setQuizStarted(true)
     setCurrentQuestion(0)
     setAnswers([])
-    setDiscoveredArchetypes([])
     setSelectedOption(null)
   }
 
@@ -104,7 +108,6 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
 
     // Analyze current answers to discover archetypes
     const currentArchetypes = analyzeAnswers(newAnswers)
-    setDiscoveredArchetypes(currentArchetypes)
     onDiscoveredArchetypes(currentArchetypes)
 
     if (currentQuestion < questions.length - 1) {
@@ -144,7 +147,7 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
 
     // Return top 3 archetypes with scores > 0
     return Object.entries(archetypeScores)
-      .filter(([_, score]) => score > 0)
+      .filter(([, score]) => score > 0)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([archetype]) => archetype)
