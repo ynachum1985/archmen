@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -178,7 +178,7 @@ export function ProgressiveArchetypeDiscovery({
     if (newDiscoveries.length > 0) {
       setDiscoveredArchetypes(prev => [...prev, ...newDiscoveries])
     }
-  }, [archetypeScores, conversationTurn, archetypeCardData, discoveredArchetypes])
+  }, [archetypeScores, conversationTurn, discoveredArchetypes])
 
   const sortedArchetypes = discoveredArchetypes.sort((a, b) => b.confidenceScore - a.confidenceScore)
   const primaryArchetype = sortedArchetypes.find(arch => arch.confidenceScore >= 80)

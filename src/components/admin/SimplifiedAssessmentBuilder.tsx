@@ -326,7 +326,7 @@ export function SimplifiedAssessmentBuilder({
                   id="completionCriteria"
                   value={config.completionCriteria}
                   onChange={(e) => setConfig(prev => ({ ...prev, completionCriteria: e.target.value }))}
-                  placeholder="When should the assessment end? e.g., &apos;6-8 meaningful exchanges&apos; or &apos;When confidence in top archetype exceeds 80%&apos;"
+                  placeholder="When should the assessment end? e.g., 6-8 meaningful exchanges or when confidence in top archetype exceeds 80%"
                   className="mt-1"
                   rows={3}
                 />

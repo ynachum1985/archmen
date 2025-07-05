@@ -1,22 +1,18 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
 import { 
   Save, 
   Eye, 
   Upload, 
   Palette, 
-  X, 
   Volume2, 
-  Video, 
   BookOpen, 
-  Activity, 
   Heart,
   Sparkles
 } from 'lucide-react'
@@ -52,16 +48,16 @@ interface ArchetypeCardData {
 
 interface ArchetypeCardEditorProps {
   archetype?: ArchetypeCardData
-  assessmentId?: string
+  // assessmentId?: string
   onSave: (data: ArchetypeCardData) => void
-  onPreview?: () => void
+  // onPreview?: () => void
 }
 
 export function ArchetypeCardEditor({ 
   archetype,
-  assessmentId,
+  // assessmentId,
   onSave,
-  onPreview
+  // onPreview
 }: ArchetypeCardEditorProps) {
   const [cardData, setCardData] = useState<ArchetypeCardData>(archetype || {
     id: '',

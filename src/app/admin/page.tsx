@@ -86,12 +86,12 @@ interface SimplifiedAssessmentConfig {
 }
 
 export default function AdminPage() {
-  const [assessments] = useState<AssessmentOverview[]>([])
-  const [archetypes] = useState<Archetype[]>([])
-  const [linguisticPatterns] = useState<LinguisticPattern[]>([])
+  // const [assessments] = useState<AssessmentOverview[]>([])
+  // const [archetypes] = useState<Archetype[]>([])
+  // const [linguisticPatterns] = useState<LinguisticPattern[]>([])
   const [activeTab, setActiveTab] = useState('overview')
-  const [loading] = useState(true)
-  const [showCreateDialog] = useState(false)
+  // const [loading] = useState(true)
+  // const [showCreateDialog] = useState(false)
   const [assessmentMode, setAssessmentMode] = useState<'simplified' | 'advanced'>('simplified')
 
   // Data loading would be implemented here in production
