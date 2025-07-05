@@ -21,6 +21,8 @@ import { AssessmentBuilder } from '@/components/admin/AssessmentBuilder'
 import { SimplifiedAssessmentBuilder } from '@/components/admin/SimplifiedAssessmentBuilder'
 // import { CreateAssessmentDialog } from '@/components/admin/CreateAssessmentDialog'
 
+// Commented out unused interfaces for simplified version
+/*
 interface AssessmentOverview {
   id: string
   name: string
@@ -57,6 +59,7 @@ interface LinguisticPattern {
   created_at: string
   updated_at: string
 }
+*/
 
 interface AssessmentConfig {
   name: string

@@ -60,10 +60,10 @@ Your approach:
 
 Focus on understanding the person's authentic self-expression and underlying motivations.`,
   questioningStyle: `Ask questions that invite storytelling and emotional sharing:
-- "Tell me about a time when you felt most like yourself..."
-- "What kind of situations bring out your best qualities?"
-- "How do you typically respond when facing challenges?"
-- "What draws you to certain people or experiences?"
+- Tell me about a time when you felt most like yourself...
+- What kind of situations bring out your best qualities?
+- How do you typically respond when facing challenges?
+- What draws you to certain people or experiences?
 
 Follow emotional threads and explore patterns across different life areas.`,
   targetArchetypes: [],
