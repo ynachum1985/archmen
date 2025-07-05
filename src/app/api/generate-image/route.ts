@@ -54,11 +54,11 @@ export async function POST(request: Request) {
       prompt: prompt // Return the prompt for reference
     })
     
-  } catch (error: any) {
-    console.error('Image generation error:', error)
+  } catch (error: unknown) {
+    console.error('Error generating image:', error)
     
     // Handle specific OpenAI errors
-    if (error?.error?.code === 'content_policy_violation') {
+    if (error instanceof Error && error.message.includes('content_policy_violation')) {
       return NextResponse.json(
         { error: 'Content policy violation. Please try a different description.' },
         { status: 400 }
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     }
     
     return NextResponse.json(
-      { error: 'Failed to generate image: ' + (error?.message || 'Unknown error') },
+      { error: 'Failed to generate image' },
       { status: 500 }
     )
   }

@@ -1,25 +1,21 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Brain, 
-  Plus, 
   Settings, 
-  TestTube, 
   Users, 
-  MessageCircle,
   Sparkles,
-  Edit,
   BarChart3,
   FileText,
   Target
 } from 'lucide-react'
-import Link from 'next/link'
-import { archetypeService } from '@/lib/services/archetype.service'
+// import Link from 'next/link'
+// import { archetypeService } from '@/lib/services/archetype.service'
 import { ArchetypeCardManager } from '@/components/admin/ArchetypeCardManager'
 import { AssessmentBuilder } from '@/components/admin/AssessmentBuilder'
 import { SimplifiedAssessmentBuilder } from '@/components/admin/SimplifiedAssessmentBuilder'
@@ -90,52 +86,15 @@ interface SimplifiedAssessmentConfig {
 }
 
 export default function AdminPage() {
-  const [assessments, setAssessments] = useState<AssessmentOverview[]>([])
-  const [archetypes, setArchetypes] = useState<Archetype[]>([])
-  const [linguisticPatterns, setLinguisticPatterns] = useState<LinguisticPattern[]>([])
+  const [assessments] = useState<AssessmentOverview[]>([])
+  const [archetypes] = useState<Archetype[]>([])
+  const [linguisticPatterns] = useState<LinguisticPattern[]>([])
   const [activeTab, setActiveTab] = useState('overview')
-  const [loading, setLoading] = useState(true)
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [loading] = useState(true)
+  const [showCreateDialog] = useState(false)
   const [assessmentMode, setAssessmentMode] = useState<'simplified' | 'advanced'>('simplified')
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    try {
-      setLoading(true)
-      
-      // Load assessments - for now using mock data
-      const mockAssessments: AssessmentOverview[] = [
-        {
-          id: '1',
-          name: 'Relationship Patterns Assessment',
-          description: 'AI-driven discovery of relationship archetypes through linguistic analysis',
-          type: 'ai-driven',
-          status: 'active',
-          targetArchetypes: ['The Lover', 'The Caregiver', 'The Innocent', 'The Sage'],
-          sessions: 0,
-          completion: 0,
-          lastUpdated: new Date()
-        }
-      ]
-      setAssessments(mockAssessments)
-
-      // Load real archetype data from Supabase
-      const archetypeData = await archetypeService.getAllArchetypes()
-      setArchetypes(archetypeData)
-
-      // Load linguistic patterns
-      const patternsData = await archetypeService.getAllLinguisticPatterns()
-      setLinguisticPatterns(patternsData)
-
-    } catch (error) {
-      console.error('Error loading data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Data loading would be implemented here in production
 
   const handleSaveAssessment = (config: AssessmentConfig) => {
     console.log('Saving assessment:', config)
@@ -260,14 +219,14 @@ export default function AdminPage() {
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <div>
                       <p className="text-sm font-medium">Leadership Assessment completed</p>
-                      <p className="text-xs text-gray-500">User identified as "Visionary Leader" - 5 minutes ago</p>
+                      <p className="text-xs text-gray-500">User identified as &quot;Visionary Leader&quot; - 5 minutes ago</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div>
                       <p className="text-sm font-medium">New archetype card created</p>
-                      <p className="text-xs text-gray-500">"The Innovator" card added to system - 12 minutes ago</p>
+                      <p className="text-xs text-gray-500">&quot;The Innovator&quot; card added to system - 12 minutes ago</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">

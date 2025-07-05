@@ -45,16 +45,15 @@ interface ArchetypeCardProps {
       affirmations?: string[]
     }
   }
-  isRevealed: boolean
-  onReveal?: () => void
+  isRevealed?: boolean
   size?: 'compact' | 'full'
   interactive?: boolean
+  confidenceScore?: number
 }
 
 export function ArchetypeCard({ 
   archetype, 
   isRevealed, 
-  onReveal, 
   size = 'full',
   interactive = true 
 }: ArchetypeCardProps) {

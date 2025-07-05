@@ -56,12 +56,13 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([])
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
-  const [discoveredArchetypes, setDiscoveredArchetypes] = useState<string[]>([])
   const [archetypeConfidence, setArchetypeConfidence] = useState<Record<string, number>>({})
 
   const [isLoading, setIsLoading] = useState(true)
   const [quizStarted, setQuizStarted] = useState(false)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
+  // const [showResults, setShowResults] = useState(false)
+  // const [assessmentResults, setAssessmentResults] = useState<AssessmentResults | null>(null)
 
   useEffect(() => {
     loadAssessment()
@@ -89,7 +90,6 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
     setCurrentQuestion(0)
     setAnswers([])
     setSelectedOption(null)
-    setDiscoveredArchetypes([])
     setArchetypeConfidence({})
   }
 
@@ -113,7 +113,6 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
 
     // Analyze current answers to discover archetypes with confidence scores
     const { archetypes, confidence } = analyzeAnswersWithConfidence(newAnswers)
-    setDiscoveredArchetypes(archetypes)
     setArchetypeConfidence(confidence)
     onDiscoveredArchetypes(archetypes)
 
@@ -135,7 +134,6 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
       // Recalculate archetypes for previous state
       const previousAnswers = answers.slice(0, -1)
       const { archetypes, confidence } = analyzeAnswersWithConfidence(previousAnswers)
-      setDiscoveredArchetypes(archetypes)
       setArchetypeConfidence(confidence)
       onDiscoveredArchetypes(archetypes)
     }
@@ -177,11 +175,6 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
       .map(([archetype]) => archetype)
 
     return { archetypes: topArchetypes, confidence }
-  }
-
-  const analyzeAnswers = (currentAnswers: QuizAnswer[]): string[] => {
-    const { archetypes } = analyzeAnswersWithConfidence(currentAnswers)
-    return archetypes
   }
 
   const completeQuiz = (finalAnswers: QuizAnswer[], archetypes: string[]) => {

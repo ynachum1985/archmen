@@ -1,26 +1,27 @@
 "use client"
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { ArchetypeCard } from "@/components/ui/archetype-card"
+import { Separator } from "@/components/ui/separator"
 import { 
   Save, 
   Eye, 
   Upload, 
   Palette, 
-  Sparkles, 
-  Heart, 
-  Volume2,
-  Play,
-  Link,
-  Wand2
+  X, 
+  Volume2, 
+  Video, 
+  BookOpen, 
+  Activity, 
+  Heart,
+  Sparkles
 } from 'lucide-react'
+import { useState } from 'react'
+import Image from 'next/image'
 
 interface ArchetypeCardData {
   id: string
@@ -166,13 +167,12 @@ export function ArchetypeCardEditor({
         </div>
         
         <div className="max-w-md mx-auto">
-          <ArchetypeCard 
-            archetype={{
-              ...cardData,
-              confidenceScore: 85
-            }}
-            isRevealed={true}
-            interactive={false}
+          <Image
+            src={cardData.visualContent.primaryImage || '/placeholder.png'}
+            alt="Preview"
+            width={200}
+            height={200}
+            className="w-full h-full object-cover"
           />
         </div>
       </div>
@@ -349,9 +349,11 @@ export function ArchetypeCardEditor({
                   <div className="mt-2 space-y-3">
                     <div className="w-full h-32 bg-slate-200 rounded-lg flex items-center justify-center overflow-hidden">
                       {cardData.visualContent.primaryImage ? (
-                        <img 
-                          src={cardData.visualContent.primaryImage} 
-                          alt="Preview" 
+                        <Image
+                          src={cardData.visualContent.primaryImage}
+                          alt="Preview"
+                          width={128}
+                          height={128}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -366,7 +368,7 @@ export function ArchetypeCardEditor({
                         disabled={isGenerating}
                         className="flex-1 border-0 bg-white hover:bg-slate-100"
                       >
-                        <Wand2 className="w-4 h-4 mr-2" />
+                        <Sparkles className="w-4 h-4 mr-2" />
                         {isGenerating ? 'Generating...' : 'Generate AI Image'}
                       </Button>
                       <Button 
@@ -494,7 +496,7 @@ export function ArchetypeCardEditor({
           <Card className="border-0 bg-slate-50">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Link className="w-5 h-5 text-green-500" />
+                <BookOpen className="w-5 h-5 text-green-500" />
                 <h3 className="text-lg font-medium text-slate-900">Learning Resources</h3>
               </div>
             </CardHeader>

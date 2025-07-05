@@ -53,13 +53,13 @@ interface DiscoveredArchetype {
 interface ProgressiveArchetypeDiscoveryProps {
   archetypeScores: ArchetypeScore[]
   conversationTurn: number
-  onArchetypeExplore?: (archetypeId: string) => void
+  // onArchetypeExplore: (archetypeId: string) => void
 }
 
 export function ProgressiveArchetypeDiscovery({ 
   archetypeScores, 
   conversationTurn,
-  onArchetypeExplore 
+  // onArchetypeExplore 
 }: ProgressiveArchetypeDiscoveryProps) {
   const [discoveredArchetypes, setDiscoveredArchetypes] = useState<DiscoveredArchetype[]>([])
   const [recentlyRevealed, setRecentlyRevealed] = useState<string | null>(null)
@@ -178,7 +178,7 @@ export function ProgressiveArchetypeDiscovery({
     if (newDiscoveries.length > 0) {
       setDiscoveredArchetypes(prev => [...prev, ...newDiscoveries])
     }
-  }, [archetypeScores, conversationTurn])
+  }, [archetypeScores, conversationTurn, archetypeCardData, discoveredArchetypes])
 
   const sortedArchetypes = discoveredArchetypes.sort((a, b) => b.confidenceScore - a.confidenceScore)
   const primaryArchetype = sortedArchetypes.find(arch => arch.confidenceScore >= 80)

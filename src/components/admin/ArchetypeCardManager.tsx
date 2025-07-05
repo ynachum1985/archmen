@@ -2,21 +2,21 @@
 
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArchetypeCard } from "@/components/ui/archetype-card"
-import { ArchetypeCardEditor } from "./ArchetypeCardEditor"
+import { Input } from "@/components/ui/input"
 import { 
   Plus, 
-  Edit2, 
-  Eye, 
+  Search, 
+  Edit, 
   Trash2, 
-  Copy,
-  Sparkles,
-  Search
+  Copy, 
+  Eye, 
+  Image as ImageIcon, 
+  Users 
 } from 'lucide-react'
-import { Input } from "@/components/ui/input"
+import { ArchetypeCard } from "@/components/ui/archetype-card"
+import { ArchetypeCardEditor } from "./ArchetypeCardEditor"
 
 interface ArchetypeCardData {
   id: string
@@ -199,7 +199,7 @@ export function ArchetypeCardManager() {
                     onClick={() => handleEditCard(card)}
                     className="w-8 h-8 p-0 text-slate-400 hover:text-slate-600"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -283,7 +283,7 @@ export function ArchetypeCardManager() {
       {filteredCards.length === 0 && (
         <Card className="border-0 bg-slate-50">
           <CardContent className="text-center py-12">
-            <Sparkles className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+            <ImageIcon className="w-12 h-12 text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">
               {searchTerm ? 'No cards found' : 'No archetype cards yet'}
             </h3>
