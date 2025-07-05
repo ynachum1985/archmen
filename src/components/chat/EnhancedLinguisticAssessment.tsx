@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { ProgressiveArchetypeDiscovery } from './ProgressiveArchetypeDiscovery'
 import { Brain, Send, Loader2, Users, Target, MessageCircle, CheckCircle } from 'lucide-react'
 
 interface AssessmentConfig {
@@ -20,19 +21,25 @@ interface AssessmentConfig {
   completionCriteria: string
 }
 
+interface ConversationMessage {
+  role: 'user' | 'ai'
+  content: string
+  timestamp: Date
+  analysis?: ArchetypeAnalysis
+}
+
+interface ArchetypeAnalysis {
+  scores: { [archetype: string]: number }
+  reasoning: string
+  patterns: string[]
+}
+
 interface ArchetypeScore {
   name: string
   score: number
   confidence: number
   evidence: string[]
   traits: string[]
-}
-
-interface ConversationMessage {
-  role: 'ai' | 'user'
-  content: string
-  timestamp: Date
-  archetypeAnalysis?: ArchetypeScore[]
 }
 
 interface EnhancedLinguisticAssessmentProps {
@@ -88,6 +95,69 @@ Start the assessment with an engaging opening question that will reveal linguist
     generateInitialQuestion()
   }, [generateInitialQuestion])
 
+  const analyzeResponse = async (userMessage: string, conversationHistory: ConversationMessage[]) => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: conversationHistory.map(m => ({
+            role: m.role === 'ai' ? 'assistant' : 'user',
+            content: m.content
+          })),
+          systemPrompt: `You are analyzing this conversation for archetypal patterns. Based on the user's responses, provide:
+
+1. A natural follow-up question or comment
+2. Analysis of archetypal patterns in their language
+
+Focus on: ${config.targetArchetypes.join(', ')}
+
+Analysis Instructions: ${config.analysisInstructions}
+
+Respond in this format:
+RESPONSE: [your natural follow-up question or comment]
+ANALYSIS: [JSON object with archetype scores 0-1 and reasoning]
+
+Example:
+RESPONSE: That's fascinating how you approached that situation. What emotions were you experiencing in that moment?
+ANALYSIS: {"scores": {"The Caregiver": 0.7, "The Wise Mentor": 0.4}, "reasoning": "Strong emphasis on helping others, nurturing language patterns", "patterns": ["Uses inclusive language", "Focuses on others' wellbeing"]}`
+        })
+      })
+
+      const data = await response.json()
+      const content = data.message || data.content || ''
+      
+      // Parse the response to extract the AI message and analysis
+      const responsePart = content.split('ANALYSIS:')[0].replace('RESPONSE:', '').trim()
+      const analysisPart = content.split('ANALYSIS:')[1]?.trim()
+
+      let analysis: ArchetypeAnalysis | undefined
+      if (analysisPart) {
+        try {
+          const parsed = JSON.parse(analysisPart)
+          analysis = {
+            scores: parsed.scores || {},
+            reasoning: parsed.reasoning || '',
+            patterns: parsed.patterns || []
+          }
+        } catch (e) {
+          console.error('Error parsing analysis:', e)
+        }
+      }
+
+      return {
+        response: responsePart,
+        analysis
+      }
+    } catch (error) {
+      console.error('Error analyzing response:', error)
+      return {
+        response: "I'd love to hear more about that. Can you tell me what that experience was like for you?",
+        analysis: undefined
+      }
+    }
+  }
+
   const handleSendMessage = async () => {
     if (!currentInput.trim() || isLoading) return
 
@@ -97,89 +167,48 @@ Start the assessment with an engaging opening question that will reveal linguist
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
     setCurrentInput('')
     setIsLoading(true)
 
     try {
-      const conversationHistory = [...messages, userMessage]
+      const { response, analysis } = await analyzeResponse(currentInput, updatedMessages)
       
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: conversationHistory,
-          systemPrompt: `You are conducting a linguistic assessment with the following purpose: ${config.purpose}
-
-Analysis Instructions: ${config.analysisInstructions}
-
-Questioning Style: ${config.questioningStyle}
-
-Target Archetypes: ${config.targetArchetypes.join(', ')}
-
-Completion Criteria: ${config.completionCriteria}
-
-Based on the user's responses, analyze their linguistic patterns and provide:
-1. A thoughtful follow-up question OR assessment completion
-2. Current archetype scores with confidence levels
-3. Specific evidence from their language patterns
-4. Key traits observed
-
-Return your response in this JSON format:
-{
-  "message": "Your next question or completion message",
-  "isComplete": false,
-  "archetypeAnalysis": [
-    {
-      "name": "Archetype Name",
-      "score": 0.8,
-      "confidence": 0.7,
-      "evidence": ["specific language patterns observed"],
-      "traits": ["key traits identified"]
-    }
-  ]
-}`
-        })
-      })
-
-      const data = await response.json()
-      
-      let parsedData
-      try {
-        parsedData = JSON.parse(data.message)
-      } catch {
-        // Fallback if AI doesn't return JSON
-        parsedData = {
-          message: data.message,
-          isComplete: false,
-          archetypeAnalysis: []
-        }
-      }
-
       const aiMessage: ConversationMessage = {
         role: 'ai',
-        content: parsedData.message,
+        content: response,
         timestamp: new Date(),
-        archetypeAnalysis: parsedData.archetypeAnalysis
+        analysis
       }
-      
+
       setMessages(prev => [...prev, aiMessage])
-      
-      // Update discovered archetypes
-      if (parsedData.archetypeAnalysis && parsedData.archetypeAnalysis.length > 0) {
-        setDiscoveredArchetypes(parsedData.archetypeAnalysis)
-        setProgress(Math.min(95, messages.length * 15))
+
+      // Update discovered archetypes based on analysis
+      if (analysis && analysis.scores) {
+        const newArchetypes: ArchetypeScore[] = Object.entries(analysis.scores).map(([name, score]) => ({
+          name,
+          score: score as number,
+          confidence: score as number,
+          evidence: analysis.patterns || [],
+          traits: []
+        }))
+        
+        setDiscoveredArchetypes(newArchetypes)
       }
-      
-      // Check if assessment is complete
-      if (parsedData.isComplete) {
+
+      // Update progress based on conversation length
+      const newProgress = Math.min((updatedMessages.length / 14) * 100, 100)
+      setProgress(newProgress)
+
+      // Check completion criteria
+      if (updatedMessages.length >= 14 || newProgress >= 100) {
         setAssessmentComplete(true)
-        setProgress(100)
-        onComplete(parsedData.archetypeAnalysis || discoveredArchetypes)
+        onComplete(discoveredArchetypes)
       }
-      
+
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('Error in conversation:', error)
     } finally {
       setIsLoading(false)
     }
@@ -223,136 +252,80 @@ Return your response in this JSON format:
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Conversation */}
-          <div className="lg:col-span-2">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-lg text-white flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-teal-400" />
-                  Assessment Conversation
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Messages */}
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {messages.map((message, index) => (
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-lg text-white flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-teal-400" />
+                Assessment Conversation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Messages */}
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
                     <div
-                      key={index}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      className={`max-w-[80%] p-3 rounded-lg ${
+                        message.role === 'user'
+                          ? 'bg-teal-600 text-white'
+                          : 'bg-slate-700 text-gray-100'
+                      }`}
                     >
-                      <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
-                          message.role === 'user'
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-slate-700 text-gray-100'
-                        }`}
-                      >
-                        <p className="text-sm">{message.content}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {message.timestamp.toLocaleTimeString()}
-                        </p>
-                      </div>
+                      <p className="text-sm">{message.content}</p>
+                      <p className="text-xs opacity-70 mt-1">
+                        {message.timestamp.toLocaleTimeString()}
+                      </p>
                     </div>
-                  ))}
-                  
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-slate-700 text-gray-100 p-3 rounded-lg">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
+                  </div>
+                ))}
+                
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-700 text-gray-100 p-3 rounded-lg">
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
-                  )}
-                </div>
-
-                {/* Input */}
-                {!assessmentComplete && (
-                  <div className="flex gap-2">
-                    <Input
-                      value={currentInput}
-                      onChange={(e) => setCurrentInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Share your thoughts..."
-                      className="bg-slate-700 border-slate-600 text-white flex-1"
-                      disabled={isLoading}
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={isLoading || !currentInput.trim()}
-                      className="bg-teal-600 hover:bg-teal-700 text-white"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
 
-          {/* Real-time Archetype Discovery */}
-          <div className="space-y-4">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-lg text-white flex items-center gap-2">
-                  <Users className="h-5 w-5 text-teal-400" />
-                  Discovered Archetypes
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Emerging patterns from your responses
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {discoveredArchetypes.length === 0 ? (
-                  <p className="text-gray-400 text-sm text-center py-8">
-                    Archetypes will appear here as patterns emerge from your responses
-                  </p>
-                ) : (
-                  discoveredArchetypes
-                    .sort((a, b) => b.score - a.score)
-                    .map((archetype, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <h4 className="font-medium text-white">{archetype.name}</h4>
-                          <Badge 
-                            variant="outline" 
-                            className="border-teal-600 text-teal-400"
-                          >
-                            {Math.round(archetype.score * 100)}%
-                          </Badge>
-                        </div>
-                        
-                        <Progress 
-                          value={archetype.score * 100} 
-                          className="h-2"
-                        />
-                        
-                        <div className="text-xs text-gray-400">
-                          Confidence: {Math.round(archetype.confidence * 100)}%
-                        </div>
-                        
-                        {archetype.traits && archetype.traits.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {archetype.traits.slice(0, 3).map((trait, i) => (
-                              <Badge 
-                                key={i} 
-                                variant="secondary" 
-                                className="text-xs bg-slate-700 text-gray-300"
-                              >
-                                {trait}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {index < discoveredArchetypes.length - 1 && (
-                          <Separator className="bg-slate-700" />
-                        )}
-                      </div>
-                    ))
-                )}
-              </CardContent>
-            </Card>
+              {/* Input */}
+              {!assessmentComplete && (
+                <div className="flex gap-2">
+                  <Input
+                    value={currentInput}
+                    onChange={(e) => setCurrentInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Share your thoughts..."
+                    className="bg-slate-700 border-slate-600 text-white flex-1"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={isLoading || !currentInput.trim()}
+                    className="bg-teal-600 hover:bg-teal-700 text-white"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* Progressive Archetype Discovery */}
+          <div className="space-y-6">
+            <ProgressiveArchetypeDiscovery 
+              archetypeScores={discoveredArchetypes}
+              conversationTurn={Math.floor(messages.length / 2)}
+              onArchetypeExplore={(archetypeId) => {
+                console.log('Exploring archetype:', archetypeId)
+              }}
+            />
+            
             {/* Assessment Info */}
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>

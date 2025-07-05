@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { assessmentService } from '@/lib/services/assessment.service'
+import { ProgressiveArchetypeDiscovery } from './ProgressiveArchetypeDiscovery'
 import { ArrowRight, ArrowLeft, Sparkles, Heart, Shield, Brain, Users, Crown, Compass, Star } from 'lucide-react'
 import type { Database } from '@/lib/types/database'
 
@@ -55,6 +56,8 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([])
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
+  const [discoveredArchetypes, setDiscoveredArchetypes] = useState<string[]>([])
+  const [archetypeConfidence, setArchetypeConfidence] = useState<Record<string, number>>({})
 
   const [isLoading, setIsLoading] = useState(true)
   const [quizStarted, setQuizStarted] = useState(false)
@@ -86,6 +89,8 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
     setCurrentQuestion(0)
     setAnswers([])
     setSelectedOption(null)
+    setDiscoveredArchetypes([])
+    setArchetypeConfidence({})
   }
 
   const handleAnswerSelect = (optionIndex: number) => {
@@ -106,16 +111,18 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
     const newAnswers = [...answers, newAnswer]
     setAnswers(newAnswers)
 
-    // Analyze current answers to discover archetypes
-    const currentArchetypes = analyzeAnswers(newAnswers)
-    onDiscoveredArchetypes(currentArchetypes)
+    // Analyze current answers to discover archetypes with confidence scores
+    const { archetypes, confidence } = analyzeAnswersWithConfidence(newAnswers)
+    setDiscoveredArchetypes(archetypes)
+    setArchetypeConfidence(confidence)
+    onDiscoveredArchetypes(archetypes)
 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1)
       setSelectedOption(null)
     } else {
       // Quiz complete
-      completeQuiz(newAnswers, currentArchetypes)
+      completeQuiz(newAnswers, archetypes)
     }
   }
 
@@ -124,11 +131,22 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
       setCurrentQuestion(currentQuestion - 1)
       setAnswers(answers.slice(0, -1))
       setSelectedOption(null)
+      
+      // Recalculate archetypes for previous state
+      const previousAnswers = answers.slice(0, -1)
+      const { archetypes, confidence } = analyzeAnswersWithConfidence(previousAnswers)
+      setDiscoveredArchetypes(archetypes)
+      setArchetypeConfidence(confidence)
+      onDiscoveredArchetypes(archetypes)
     }
   }
 
-  const analyzeAnswers = (currentAnswers: QuizAnswer[]): string[] => {
+  const analyzeAnswersWithConfidence = (currentAnswers: QuizAnswer[]): { 
+    archetypes: string[], 
+    confidence: Record<string, number> 
+  } => {
     const archetypeScores: { [key: string]: number } = {}
+    const maxPossibleScore = currentAnswers.length * 3 // Assuming max weight is 3
     
     currentAnswers.forEach((answer, index) => {
       const question = questions[index]
@@ -145,12 +163,25 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
       }
     })
 
+    // Calculate confidence percentages
+    const confidence: Record<string, number> = {}
+    Object.entries(archetypeScores).forEach(([archetype, score]) => {
+      confidence[archetype] = Math.round((score / maxPossibleScore) * 100)
+    })
+
     // Return top 3 archetypes with scores > 0
-    return Object.entries(archetypeScores)
+    const topArchetypes = Object.entries(archetypeScores)
       .filter(([, score]) => score > 0)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([archetype]) => archetype)
+
+    return { archetypes: topArchetypes, confidence }
+  }
+
+  const analyzeAnswers = (currentAnswers: QuizAnswer[]): string[] => {
+    const { archetypes } = analyzeAnswersWithConfidence(currentAnswers)
+    return archetypes
   }
 
   const completeQuiz = (finalAnswers: QuizAnswer[], archetypes: string[]) => {
@@ -167,53 +198,68 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
 
   if (isLoading) {
     return (
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardContent className="p-8 text-center">
-          <div className="text-gray-400">Loading assessment...</div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-8 text-center">
+            <div className="text-gray-400">Loading assessment...</div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   if (!assessment || questions.length === 0) {
     return (
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardContent className="p-8 text-center">
-          <div className="text-gray-400">No assessment available</div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-8 text-center">
+            <div className="text-gray-400">No assessment available</div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   if (!quizStarted) {
     return (
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-2xl text-white flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-teal-400" />
-            {assessment.name}
-          </CardTitle>
-          <CardDescription className="text-gray-400">
-            {assessment.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="text-sm text-gray-400">
-              <p>✨ {assessment.intro_text}</p>
-              <p className="mt-2">📊 {questions.length} questions • ⏱️ {assessment.estimated_duration_minutes} minutes</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-2xl text-white flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-teal-400" />
+              {assessment.name}
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              {assessment.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="text-sm text-gray-400">
+                <p>✨ {assessment.intro_text}</p>
+                <p className="mt-2">📊 {questions.length} questions • ⏱️ {assessment.estimated_duration_minutes} minutes</p>
+              </div>
+              
+              <Button 
+                onClick={startQuiz}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                Start Assessment
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </div>
-            
-            <Button 
-              onClick={startQuiz}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white"
-            >
-              Start Assessment
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-8">
+            <div className="text-center text-gray-400">
+              <Sparkles className="h-12 w-12 mx-auto mb-4 text-slate-500" />
+              <p>Your archetype cards will appear here as you progress through the assessment</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
@@ -221,63 +267,81 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
   const options = question.options as string[]
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg text-white">
-            Question {currentQuestion + 1} of {questions.length}
-          </CardTitle>
-          <Badge variant="outline" className="border-teal-600 text-teal-400">
-            {Math.round(progress)}% Complete
-          </Badge>
-        </div>
-        <Progress value={progress} className="w-full h-2" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <h3 className="text-xl text-white font-medium leading-relaxed">
-            {question.question_text}
-          </h3>
-          
-          <div className="space-y-3">
-            {options.map((option: string, index: number) => (
-              <button
-                key={index}
-                onClick={() => handleAnswerSelect(index)}
-                className={`w-full p-4 text-left rounded-lg border-2 transition-all hover:border-teal-500 ${
-                  selectedOption === index
-                    ? 'border-teal-500 bg-teal-500/10 text-white'
-                    : 'border-slate-600 text-gray-300 hover:bg-slate-700/50'
-                }`}
-              >
-                {option}
-              </button>
-            ))}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Quiz Panel */}
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg text-white">
+              Question {currentQuestion + 1} of {questions.length}
+            </CardTitle>
+            <Badge variant="outline" className="border-teal-600 text-teal-400">
+              {Math.round(progress)}% Complete
+            </Badge>
           </div>
-
-          <div className="flex justify-between items-center pt-4">
-            <Button
-              onClick={handlePrevious}
-              disabled={currentQuestion === 0}
-              variant="outline"
-              className="border-slate-600 text-white hover:bg-slate-700"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Previous
-            </Button>
+          <Progress value={progress} className="w-full h-2" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <h3 className="text-xl text-white font-medium leading-relaxed">
+              {question.question_text}
+            </h3>
             
-            <Button
-              onClick={handleNext}
-              disabled={selectedOption === null}
-              className="bg-teal-600 hover:bg-teal-700 text-white"
-            >
-              {currentQuestion === questions.length - 1 ? 'Complete' : 'Next'}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="space-y-3">
+              {options.map((option: string, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(index)}
+                  className={`w-full p-4 text-left rounded-lg border-2 transition-all hover:border-teal-500 ${
+                    selectedOption === index
+                      ? 'border-teal-500 bg-teal-500/10 text-white'
+                      : 'border-slate-600 text-gray-300 hover:bg-slate-700/50'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center pt-4">
+              <Button
+                onClick={handlePrevious}
+                disabled={currentQuestion === 0}
+                variant="outline"
+                className="border-slate-600 text-white hover:bg-slate-700"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Previous
+              </Button>
+              
+              <Button
+                onClick={handleNext}
+                disabled={selectedOption === null}
+                className="bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                {currentQuestion === questions.length - 1 ? 'Complete' : 'Next'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Progressive Archetype Discovery Panel */}
+      <ProgressiveArchetypeDiscovery 
+        archetypeScores={Object.entries(archetypeConfidence).map(([name, confidence]) => ({
+          name,
+          score: confidence / 100, // Convert percentage to decimal
+          confidence: confidence / 100, // Convert percentage to decimal
+          evidence: [],
+          traits: []
+        }))}
+        conversationTurn={currentQuestion + 1}
+        onArchetypeExplore={(archetypeId) => {
+          console.log('Exploring archetype:', archetypeId)
+        }}
+      />
+    </div>
   )
 }
 
