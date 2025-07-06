@@ -122,7 +122,7 @@ export default function AdminPage() {
   // const [loading] = useState(true)
   // const [showCreateDialog] = useState(false)
   const [assessmentMode, setAssessmentMode] = useState<'simplified' | 'advanced'>('simplified')
-  // const [archetypes, setArchetypes] = useState<Archetype[]>([])
+  const [archetypes, setArchetypes] = useState<any[]>([])
   const [linguisticPatterns, setLinguisticPatterns] = useState<LinguisticPattern[]>([])
   const [loading, setLoading] = useState(true)
   const [dataStats, setDataStats] = useState({ archetypes: 0, patterns: 0 })
@@ -134,7 +134,7 @@ export default function AdminPage() {
         const response = await fetch('/api/check-data')
         const data = await response.json()
         
-        // setArchetypes(data.archetypes?.data || [])
+        setArchetypes(data.archetypes?.data || [])
         setLinguisticPatterns(data.patterns?.data || [])
         setDataStats({
           archetypes: data.archetypes?.count || 0,
