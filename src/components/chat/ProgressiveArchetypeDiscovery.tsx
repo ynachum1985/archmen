@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -65,7 +65,7 @@ export function ProgressiveArchetypeDiscovery({
   const [recentlyRevealed, setRecentlyRevealed] = useState<string | null>(null)
 
   // Mock archetype card data - in real app, this would come from your database/API
-  const archetypeCardData: Record<string, Omit<DiscoveredArchetype, 'confidenceScore' | 'revealedAt'>> = {
+  const archetypeCardData: Record<string, Omit<DiscoveredArchetype, 'confidenceScore' | 'revealedAt'>> = useMemo(() => ({
     'The Wise Mentor': {
       id: 'wise-mentor',
       name: 'The Wise Mentor',
@@ -137,7 +137,7 @@ export function ProgressiveArchetypeDiscovery({
         affirmations: ['I love deeply while respecting boundaries', 'My passion is a gift to the world']
       }
     }
-  }
+  }), [])
 
   // Determine which archetypes should be revealed based on confidence thresholds
   useEffect(() => {

@@ -249,7 +249,7 @@ export function SimplifiedAssessmentBuilder({
                   rows={6}
                 />
                 <p className="text-sm text-gray-500 mt-2">
-                  This defines the AI's core identity and approach to conducting assessments.
+                  This defines the AI&apos;s core identity and approach to conducting assessments.
                 </p>
               </div>
 

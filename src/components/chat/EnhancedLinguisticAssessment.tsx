@@ -321,9 +321,6 @@ ANALYSIS: {"scores": {"The Caregiver": 0.7, "The Wise Mentor": 0.4}, "reasoning"
             <ProgressiveArchetypeDiscovery 
               archetypeScores={discoveredArchetypes}
               conversationTurn={Math.floor(messages.length / 2)}
-              onArchetypeExplore={(archetypeId) => {
-                console.log('Exploring archetype:', archetypeId)
-              }}
             />
             
             {/* Assessment Info */}

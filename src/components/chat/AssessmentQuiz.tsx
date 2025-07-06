@@ -330,9 +330,6 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
           traits: []
         }))}
         conversationTurn={currentQuestion + 1}
-        onArchetypeExplore={(archetypeId) => {
-          console.log('Exploring archetype:', archetypeId)
-        }}
       />
     </div>
   )
