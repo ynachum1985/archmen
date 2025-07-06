@@ -139,11 +139,11 @@ export default function AdminPage() {
         const response = await fetch('/api/check-data')
         const data = await response.json()
         
-        if (data.linguisticPatterns) {
-          setLinguisticPatterns(data.linguisticPatterns)
+        if (data.patterns?.data) {
+          setLinguisticPatterns(data.patterns.data)
         }
-        if (data.archetypes) {
-          setArchetypes(data.archetypes)
+        if (data.archetypes?.data) {
+          setArchetypes(data.archetypes.data)
         }
       } catch (error) {
         console.error('Error loading data:', error)
