@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -91,6 +91,113 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
   const [availableArchetypes, setAvailableArchetypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Theme configurations
+  const themeConfigs = {
+    'career': {
+      name: 'Career & Professional Development',
+      description: 'Focus on professional archetypes, leadership patterns, and career-related behaviors',
+      systemPrompt: `You are an expert career assessment specialist focusing on professional archetype identification. 
+
+FOCUS AREAS:
+- Leadership styles and management approaches
+- Professional communication patterns
+- Career motivation and decision-making
+- Workplace relationship dynamics
+- Professional goal-setting and achievement patterns
+
+RECOMMENDED ARCHETYPES: The Ruler, The Achiever, The Sage, The Creator, The Caregiver, The Hero`,
+      questioningStyle: 'Focus on professional experiences, leadership situations, workplace challenges, and career aspirations',
+      suggestedDuration: 15
+    },
+    'relationships': {
+      name: 'Relationships & Social Dynamics',
+      description: 'Explore interpersonal patterns, attachment styles, and relationship archetypes',
+      systemPrompt: `You are an expert relationship dynamics assessor specializing in interpersonal archetype identification.
+
+FOCUS AREAS:
+- Attachment styles and relationship patterns
+- Communication in intimate relationships
+- Conflict resolution approaches
+- Emotional expression and vulnerability
+- Love languages and connection styles
+
+RECOMMENDED ARCHETYPES: The Lover, The Caregiver, The Innocent, The Sage, The Jester, The Rebel`,
+      questioningStyle: 'Ask about relationship experiences, emotional responses, communication styles, and interpersonal dynamics',
+      suggestedDuration: 18
+    },
+    'personal-growth': {
+      name: 'Personal Growth & Self-Discovery',
+      description: 'Comprehensive archetypal assessment for personal development and self-awareness',
+      systemPrompt: `You are an expert personal development specialist focusing on comprehensive archetype identification.
+
+FOCUS AREAS:
+- Core personality patterns and traits
+- Personal values and life philosophy
+- Growth mindset and learning patterns
+- Self-perception and identity
+- Life purpose and meaning-making
+
+RECOMMENDED ARCHETYPES: The Seeker, The Sage, The Innocent, The Creator, The Magician, The Hero`,
+      questioningStyle: 'Explore personal values, life experiences, growth challenges, and self-reflection patterns',
+      suggestedDuration: 20
+    },
+    'leadership': {
+      name: 'Leadership & Influence',
+      description: 'Identify leadership archetypes and influence patterns in various contexts',
+      systemPrompt: `You are an expert leadership assessment specialist focusing on influence and leadership archetype identification.
+
+FOCUS AREAS:
+- Leadership philosophy and approach
+- Decision-making under pressure
+- Team dynamics and influence strategies
+- Vision creation and communication
+- Power dynamics and authority styles
+
+RECOMMENDED ARCHETYPES: The Ruler, The Hero, The Sage, The Magician, The Caregiver, The Rebel`,
+      questioningStyle: 'Focus on leadership experiences, decision-making processes, team interactions, and influence strategies',
+      suggestedDuration: 16
+    },
+    'creativity': {
+      name: 'Creativity & Innovation',
+      description: 'Explore creative archetypes and innovation patterns in thinking and expression',
+      systemPrompt: `You are an expert creativity assessment specialist focusing on creative archetype identification.
+
+FOCUS AREAS:
+- Creative process and inspiration patterns
+- Innovation and problem-solving approaches
+- Artistic expression and aesthetic preferences
+- Risk-taking in creative endeavors
+- Relationship with originality and tradition
+
+RECOMMENDED ARCHETYPES: The Creator, The Magician, The Jester, The Rebel, The Explorer, The Innocent`,
+      questioningStyle: 'Explore creative processes, artistic preferences, innovation approaches, and creative challenges',
+      suggestedDuration: 14
+    },
+    'shadow-work': {
+      name: 'Shadow Work & Integration',
+      description: 'Advanced assessment focusing on shadow aspects and psychological integration',
+      systemPrompt: `You are an expert depth psychology specialist focusing on shadow archetype identification and integration.
+
+FOCUS AREAS:
+- Unconscious patterns and blind spots
+- Rejected or denied aspects of self
+- Projection and defense mechanisms
+- Integration of opposite traits
+- Relationship with dark or difficult emotions
+
+RECOMMENDED ARCHETYPES: The Shadow, The Destroyer, The Rebel, The Trickster, The Wounded Healer, The Sage`,
+      questioningStyle: 'Carefully explore difficult emotions, rejected aspects, unconscious patterns, and integration challenges',
+      suggestedDuration: 25
+    },
+    'custom': {
+      name: 'Custom Theme',
+      description: 'Create your own custom assessment theme with specific focus areas',
+      systemPrompt: 'You are an expert archetype assessment specialist. Customize your approach based on the specific focus areas defined below.',
+      questioningStyle: 'Adapt your questioning style based on the custom theme requirements',
+      suggestedDuration: 15
+    }
+  }
+
   // Load archetypes from database
   useEffect(() => {
     const loadArchetypes = async () => {
@@ -159,7 +266,7 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="theme" className="text-gray-700 font-medium text-sm">Primary Focus Area</Label>
-                                         <Select value={config.theme} onValueChange={(value: 'career' | 'relationships' | 'personal-growth' | 'leadership' | 'creativity' | 'shadow-work' | 'custom') => setConfig(prev => ({ ...prev, theme: value }))}>
+                    <Select value={config.theme} onValueChange={(value: string) => setConfig(prev => ({ ...prev, theme: value as typeof config.theme }))}>
                        <SelectTrigger className="mt-2">
                          <SelectValue placeholder="Select a theme" />
                        </SelectTrigger>
@@ -177,7 +284,7 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
                   
                   <div>
                     <Label htmlFor="difficulty" className="text-gray-700 font-medium text-sm">Complexity Level</Label>
-                                         <Select value={config.difficultyLevel} onValueChange={(value: 'beginner' | 'intermediate' | 'advanced' | 'expert') => setConfig(prev => ({ ...prev, difficultyLevel: value }))}>
+                    <Select value={config.difficultyLevel} onValueChange={(value: string) => setConfig(prev => ({ ...prev, difficultyLevel: value as typeof config.difficultyLevel }))}>
                        <SelectTrigger className="mt-2">
                          <SelectValue placeholder="Select difficulty" />
                        </SelectTrigger>
@@ -231,6 +338,76 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
                 </CardContent>
               </Card>
             </div>
+
+            {/* Theme Configuration Details */}
+            {config.theme && themeConfigs[config.theme] && (
+              <Card className="bg-blue-50 border border-blue-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-medium text-blue-900 flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    {themeConfigs[config.theme].name} Configuration
+                  </CardTitle>
+                  <CardDescription className="text-blue-700">
+                    {themeConfigs[config.theme].description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label className="text-blue-900 font-medium text-sm">Recommended AI System Prompt</Label>
+                    <Textarea
+                      value={config.systemPrompt || themeConfigs[config.theme].systemPrompt}
+                      onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                      className="mt-2 bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                      rows={8}
+                    />
+                    <p className="text-xs text-blue-600 mt-2">
+                      This prompt will be used as the AI&apos;s system instructions. You can customize it for your specific needs.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-blue-900 font-medium text-sm">Questioning Style</Label>
+                    <Textarea
+                      value={config.questioningStyle || themeConfigs[config.theme].questioningStyle}
+                      onChange={(e) => setConfig(prev => ({ ...prev, questioningStyle: e.target.value }))}
+                      className="mt-2 bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-blue-900 font-medium text-sm">Suggested Duration</Label>
+                      <Input
+                        type="number"
+                        value={config.expectedDuration || themeConfigs[config.theme].suggestedDuration}
+                        onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+                        className="mt-2 bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-blue-600 mt-1">Minutes</p>
+                    </div>
+                    <div>
+                      <Label className="text-blue-900 font-medium text-sm">Auto-populate from Theme</Label>
+                      <Button 
+                        onClick={() => {
+                          const theme = themeConfigs[config.theme]
+                          setConfig(prev => ({
+                            ...prev,
+                            systemPrompt: theme.systemPrompt,
+                            questioningStyle: theme.questioningStyle,
+                            expectedDuration: theme.suggestedDuration
+                          }))
+                        }}
+                        variant="outline"
+                        className="w-full mt-2 border-blue-200 text-blue-700 hover:bg-blue-100"
+                      >
+                        Use Theme Defaults
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )
       
