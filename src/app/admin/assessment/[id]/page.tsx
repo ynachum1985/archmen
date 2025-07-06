@@ -24,6 +24,12 @@ interface AssessmentConfig {
   conversationFlow: string
   archetypeMapping: string
   reportGeneration: string
+  // New fields for enhanced configuration
+  theme: 'career' | 'relationships' | 'personal-growth' | 'leadership' | 'creativity' | 'shadow-work' | 'custom'
+  difficultyLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  focusedArchetypes: string[]
+  useGlobalLinguistics: boolean
+  customLinguisticFocus: string
 }
 
 interface ArchetypeScore {
@@ -74,7 +80,12 @@ export default function AssessmentDetailPage() {
         systemPrompt: "You are an expert psychological assessor specializing in relationship archetype identification through linguistic analysis. Your role is to conduct natural, engaging conversations that reveal deep emotional and relational patterns through language use, metaphors, and communication styles.",
         conversationFlow: "Start with warm questions about recent relationship experiences, then explore deeper patterns through follow-up questions about emotional responses and attachment behaviors.",
         archetypeMapping: "The Lover: Uses passionate, intimate language with metaphors of connection. The Caregiver: Focuses on nurturing and support language. The Innocent: Uses optimistic, trusting language patterns.",
-        reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores."
+        reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores.",
+        theme: "relationships",
+        difficultyLevel: "intermediate",
+        focusedArchetypes: [],
+        useGlobalLinguistics: true,
+        customLinguisticFocus: ""
       }
       
       setAssessmentConfig(mockConfig)

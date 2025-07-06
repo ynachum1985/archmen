@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Brain, 
   Save, 
@@ -19,8 +20,11 @@ import {
   Users, 
   Sparkles,
   FileText,
-  CheckCircle
+  CheckCircle,
+  Palette,
+  Filter
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface AssessmentConfig {
   name: string
@@ -35,6 +39,12 @@ interface AssessmentConfig {
   conversationFlow: string
   archetypeMapping: string
   reportGeneration: string
+  // New fields for enhanced configuration
+  theme: 'career' | 'relationships' | 'personal-growth' | 'leadership' | 'creativity' | 'shadow-work' | 'custom'
+  difficultyLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  focusedArchetypes: string[]
+  useGlobalLinguistics: boolean
+  customLinguisticFocus: string
 }
 
 interface AssessmentBuilderProps {
@@ -45,10 +55,11 @@ interface AssessmentBuilderProps {
 
 const navigationItems = [
   { id: 'overview', label: 'Overview', icon: Settings, description: 'Basic information and setup' },
+  { id: 'theme', label: 'Theme & Focus', icon: Palette, description: 'Archetypal themes and focus areas' },
   { id: 'purpose', label: 'Purpose & Goals', icon: Target, description: 'Define assessment objectives' },
   { id: 'ai-instructions', label: 'AI Instructions', icon: Brain, description: 'Core AI behavior and analysis' },
   { id: 'conversation', label: 'Conversation Flow', icon: MessageCircle, description: 'Question style and interaction' },
-  { id: 'archetypes', label: 'Archetype Mapping', icon: Users, description: 'Target archetypes and patterns' },
+  { id: 'archetypes', label: 'Archetype Selection', icon: Filter, description: 'Choose specific archetypes to focus on' },
   { id: 'analysis', label: 'Analysis Engine', icon: Sparkles, description: 'Linguistic analysis parameters' },
   { id: 'reporting', label: 'Report Generation', icon: FileText, description: 'Output format and insights' },
   { id: 'completion', label: 'Completion Criteria', icon: CheckCircle, description: 'When to end assessment' },
@@ -67,28 +78,60 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
     systemPrompt: '',
     conversationFlow: '',
     archetypeMapping: '',
-    reportGeneration: ''
+    reportGeneration: '',
+    theme: 'personal-growth',
+    difficultyLevel: 'intermediate',
+    focusedArchetypes: [],
+    useGlobalLinguistics: true,
+    customLinguisticFocus: ''
   })
 
   const [activeSection, setActiveSection] = useState('overview')
-  const [newArchetype, setNewArchetype] = useState('')
+  // const [newArchetype, setNewArchetype] = useState('')
+  const [availableArchetypes, setAvailableArchetypes] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleAddArchetype = () => {
-    if (newArchetype.trim() && !config.targetArchetypes.includes(newArchetype.trim())) {
-      setConfig(prev => ({
-        ...prev,
-        targetArchetypes: [...prev.targetArchetypes, newArchetype.trim()]
-      }))
-      setNewArchetype('')
+  // Load archetypes from database
+  useEffect(() => {
+    const loadArchetypes = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('enhanced_archetypes')
+          .select('name')
+          .order('name')
+        
+        if (error) {
+          console.error('Error loading archetypes:', error)
+        } else {
+          setAvailableArchetypes(data?.map(item => item.name) || [])
+        }
+      } catch (error) {
+        console.error('Error loading archetypes:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    
+    loadArchetypes()
+  }, [])
 
-  const handleRemoveArchetype = (archetype: string) => {
-    setConfig(prev => ({
-      ...prev,
-      targetArchetypes: prev.targetArchetypes.filter(a => a !== archetype)
-    }))
-  }
+  // const handleAddArchetype = () => {
+  //   if (newArchetype.trim() && !config.targetArchetypes.includes(newArchetype.trim())) {
+  //     setConfig(prev => ({
+  //       ...prev,
+  //       targetArchetypes: [...prev.targetArchetypes, newArchetype.trim()]
+  //     }))
+  //     setNewArchetype('')
+  //   }
+  // }
+
+  // const handleRemoveArchetype = (archetype: string) => {
+  //   setConfig(prev => ({
+  //     ...prev,
+  //     targetArchetypes: prev.targetArchetypes.filter(a => a !== archetype)
+  //   }))
+  // }
 
   const handleSave = () => {
     onSave(config)
@@ -100,6 +143,97 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
 
   const renderContent = () => {
     switch (activeSection) {
+      case 'theme':
+        return (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-light text-gray-900 mb-3">Theme & Focus</h2>
+              <p className="text-gray-600 mb-8">Choose the archetypal theme and difficulty level for this assessment.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-medium text-gray-900">Assessment Theme</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="theme" className="text-gray-700 font-medium text-sm">Primary Focus Area</Label>
+                                         <Select value={config.theme} onValueChange={(value: 'career' | 'relationships' | 'personal-growth' | 'leadership' | 'creativity' | 'shadow-work' | 'custom') => setConfig(prev => ({ ...prev, theme: value }))}>
+                       <SelectTrigger className="mt-2">
+                         <SelectValue placeholder="Select a theme" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="career">Career & Professional Development</SelectItem>
+                         <SelectItem value="relationships">Relationships & Social Dynamics</SelectItem>
+                         <SelectItem value="personal-growth">Personal Growth & Self-Discovery</SelectItem>
+                         <SelectItem value="leadership">Leadership & Influence</SelectItem>
+                         <SelectItem value="creativity">Creativity & Innovation</SelectItem>
+                         <SelectItem value="shadow-work">Shadow Work & Integration</SelectItem>
+                         <SelectItem value="custom">Custom Theme</SelectItem>
+                       </SelectContent>
+                     </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="difficulty" className="text-gray-700 font-medium text-sm">Complexity Level</Label>
+                                         <Select value={config.difficultyLevel} onValueChange={(value: 'beginner' | 'intermediate' | 'advanced' | 'expert') => setConfig(prev => ({ ...prev, difficultyLevel: value }))}>
+                       <SelectTrigger className="mt-2">
+                         <SelectValue placeholder="Select difficulty" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="beginner">Beginner - Surface patterns</SelectItem>
+                         <SelectItem value="intermediate">Intermediate - Behavioral insights</SelectItem>
+                         <SelectItem value="advanced">Advanced - Deep psychological patterns</SelectItem>
+                         <SelectItem value="expert">Expert - Unconscious dynamics</SelectItem>
+                       </SelectContent>
+                     </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-medium text-gray-900">Linguistic Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="useGlobalLinguistics"
+                      checked={config.useGlobalLinguistics}
+                      onChange={(e) => setConfig(prev => ({ ...prev, useGlobalLinguistics: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="useGlobalLinguistics" className="text-sm text-gray-700">
+                      Use Global Archetype Database
+                    </Label>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {config.useGlobalLinguistics 
+                      ? "AI will analyze against all 55 archetypes and their linguistic patterns from the database." 
+                      : "AI will use only the specific archetypes you select below."}
+                  </p>
+                  
+                  {!config.useGlobalLinguistics && (
+                    <div>
+                      <Label htmlFor="customLinguisticFocus" className="text-gray-700 font-medium text-sm">Custom Linguistic Focus</Label>
+                      <Textarea
+                        id="customLinguisticFocus"
+                        value={config.customLinguisticFocus}
+                        onChange={(e) => setConfig(prev => ({ ...prev, customLinguisticFocus: e.target.value }))}
+                        placeholder="Describe specific linguistic patterns, word choices, or communication styles to analyze..."
+                        className="mt-2"
+                        rows={4}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )
+      
       case 'overview':
         return (
           <div className="space-y-8">
@@ -200,32 +334,106 @@ export function AssessmentBuilder({ assessment, onSave, onTest }: AssessmentBuil
                     id="systemPrompt"
                     value={config.systemPrompt}
                     onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                    placeholder="You are an expert psychological assessor specializing in archetype identification through linguistic analysis. Your role is to:
+                    placeholder={`You are an expert psychological assessor specializing in archetype identification through linguistic analysis. 
 
-1. Conduct natural, engaging conversations that reveal deep psychological patterns
-2. Analyze language use, metaphors, emotional expressions, and communication styles
-3. Identify archetypal patterns through subtle linguistic cues
-4. Maintain a warm, professional, and curious demeanor
+CONTEXT & KNOWLEDGE BASE:
+- You have access to ${availableArchetypes.length} comprehensive archetype profiles with detailed linguistic patterns
+- Each archetype has specific keywords, communication styles, and behavioral indicators
+- You can analyze conversations against the full database or focus on specific archetypes
+
+ASSESSMENT THEME: ${config.theme.toUpperCase().replace('-', ' ')}
+COMPLEXITY LEVEL: ${config.difficultyLevel.toUpperCase()}
+${config.focusedArchetypes.length > 0 ? `FOCUSED ARCHETYPES: ${config.focusedArchetypes.join(', ')}` : 'ANALYSIS SCOPE: All available archetypes'}
+
+YOUR ROLE:
+1. Conduct ${config.theme}-focused conversations that reveal archetypal patterns
+2. Analyze responses against the comprehensive database of linguistic patterns
+3. Identify subtle patterns through word choice, metaphors, and communication styles
+4. Maintain warmth and professionalism while gathering deep insights
 5. Ask follow-up questions that explore underlying motivations and patterns
 
-Your analysis should focus on..."
+ANALYSIS APPROACH:
+- Cross-reference responses against database patterns
+- Look for consistency across multiple exchanges
+- Weight recent responses more heavily
+- Track evidence for each potential archetype match`}
                     className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm leading-relaxed"
-                    rows={15}
+                    rows={18}
                   />
                   <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-                    Define the AI&rsquo;s core identity, role, and behavioral guidelines. This sets the foundation for all interactions.
+                    This system prompt dynamically incorporates your theme, difficulty level, and archetype selection to provide contextual AI behavior.
                   </p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <Label htmlFor="analysisInstructions" className="text-gray-700 font-medium text-base mb-3 block">Linguistic Analysis Instructions</Label>
+                  <Label htmlFor="analysisInstructions" className="text-gray-700 font-medium text-base mb-3 block">Analysis Instructions</Label>
+                  
+                  {config.useGlobalLinguistics ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Brain className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">Using Global Archetype Database</span>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        The AI will automatically analyze responses against all {availableArchetypes.length} archetypes and their linguistic patterns from your database. 
+                        {config.focusedArchetypes.length > 0 && ` It will prioritize the ${config.focusedArchetypes.length} selected archetypes while considering others as secondary matches.`}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-800">Custom Analysis Focus</span>
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        The AI will use your custom linguistic focus instructions below instead of the global database.
+                      </p>
+                    </div>
+                  )}
+
                   <Textarea
                     id="analysisInstructions"
                     value={config.analysisInstructions}
                     onChange={(e) => setConfig(prev => ({ ...prev, analysisInstructions: e.target.value }))}
-                    placeholder="For each user response, analyze the following linguistic elements:
+                    placeholder={config.useGlobalLinguistics ? `GLOBAL DATABASE ANALYSIS INSTRUCTIONS:
+
+ANALYSIS FRAMEWORK:
+- Access the comprehensive database of ${availableArchetypes.length} archetype profiles
+- Each archetype has specific linguistic patterns, keywords, and behavioral indicators
+- Cross-reference user responses against database patterns
+- Generate confidence scores for each potential archetype match
+
+SCORING METHODOLOGY:
+1. KEYWORD MATCHING (25% weight)
+   - Direct matches with archetype-specific vocabulary from database
+   - Frequency and contextual usage of key terms
+   - Emotional intensity and linguistic markers
+
+2. COMMUNICATION STYLE (35% weight)
+   - Reference database patterns for communication styles
+   - Analyze direct vs indirect communication patterns
+   - Power dynamics and authority markers in language
+   - Collaborative vs competitive expressions
+
+3. PSYCHOLOGICAL INDICATORS (40% weight)
+   - Decision-making language patterns from database
+   - Risk tolerance and values-based expressions
+   - Emotional regulation and expression styles
+   - Temporal orientation and thinking patterns
+
+FOCUS AREAS FOR ${config.theme.toUpperCase().replace('-', ' ')} THEME:
+- Look for ${config.theme}-specific linguistic patterns in database
+- Weight theme-relevant indicators more heavily
+- Cross-reference with difficulty level: ${config.difficultyLevel}
+
+EVIDENCE TRACKING:
+- Maintain specific quotes supporting each archetype match
+- Track confidence evolution across conversation
+- Note contradictions or complexity in patterns` : `CUSTOM LINGUISTIC ANALYSIS INSTRUCTIONS:
+
+For each user response, analyze the following linguistic elements:
 
 LANGUAGE PATTERNS:
 - Word choice and vocabulary sophistication
@@ -245,12 +453,18 @@ PSYCHOLOGICAL INDICATORS:
 - Values and priorities revealed through language
 - Emotional regulation and expression styles
 
-Look for recurring patterns across multiple responses..."
+Look for recurring patterns across multiple responses...
+
+${config.customLinguisticFocus ? `CUSTOM FOCUS: ${config.customLinguisticFocus}` : ''}`}
                     className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm leading-relaxed"
-                    rows={20}
+                    rows={config.useGlobalLinguistics ? 25 : 20}
+                    disabled={config.useGlobalLinguistics}
                   />
                   <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-                    Specify exactly what linguistic elements the AI should analyze and how to interpret them for archetype identification.
+                    {config.useGlobalLinguistics 
+                      ? "These instructions are automatically generated based on your database and configuration. The AI will use your 55 archetypes and their linguistic patterns."
+                      : "Define specific linguistic elements to analyze when not using the global database."
+                    }
                   </p>
                 </div>
               </CardContent>
@@ -318,87 +532,148 @@ TONE AND APPROACH:
         return (
           <div className="space-y-8">
             <div>
-              <h2 className="text-2xl font-light text-gray-900 mb-3">Archetype Mapping</h2>
-              <p className="text-gray-600 mb-8">Define which archetypes this assessment can identify and their characteristics.</p>
+              <h2 className="text-2xl font-light text-gray-900 mb-3">Archetype Selection</h2>
+              <p className="text-gray-600 mb-8">Choose specific archetypes to focus on, or use the global database for comprehensive analysis.</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-medium text-gray-900">Available Archetypes</CardTitle>
+                  <p className="text-sm text-gray-600">Select from your database of {availableArchetypes.length} archetypes</p>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-96">
+                      <div className="space-y-2">
+                        {availableArchetypes.map((archetype) => (
+                          <div 
+                            key={archetype}
+                            className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                              config.focusedArchetypes.includes(archetype)
+                                ? 'bg-blue-50 border-blue-200 text-blue-900'
+                                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                            }`}
+                            onClick={() => {
+                              setConfig(prev => ({
+                                ...prev,
+                                focusedArchetypes: prev.focusedArchetypes.includes(archetype)
+                                  ? prev.focusedArchetypes.filter(a => a !== archetype)
+                                  : [...prev.focusedArchetypes, archetype]
+                              }))
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{archetype}</span>
+                              {config.focusedArchetypes.includes(archetype) && (
+                                <Badge variant="outline" className="bg-blue-100 text-blue-700 text-xs">
+                                  Selected
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-medium text-gray-900">Selected Archetypes</CardTitle>
+                  <p className="text-sm text-gray-600">
+                    {config.focusedArchetypes.length === 0 
+                      ? "No specific selection - using global database"
+                      : `${config.focusedArchetypes.length} archetypes selected`
+                    }
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {config.focusedArchetypes.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <Users className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                        <p className="text-sm">No specific archetypes selected.</p>
+                        <p className="text-xs mt-1">AI will analyze against all available archetypes.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {config.focusedArchetypes.map((archetype) => (
+                          <div 
+                            key={archetype}
+                            className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
+                          >
+                            <span className="text-sm font-medium text-blue-900">{archetype}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setConfig(prev => ({
+                                  ...prev,
+                                  focusedArchetypes: prev.focusedArchetypes.filter(a => a !== archetype)
+                                }))
+                              }}
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                        
+                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-600">
+                            <strong>Analysis Focus:</strong> The AI will primarily analyze responses against these {config.focusedArchetypes.length} selected archetypes, 
+                            using their specific linguistic patterns and behavioral indicators from the database.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-8 space-y-8">
-                <div>
-                  <Label className="text-gray-700 font-medium text-base mb-3 block">Target Archetypes</Label>
-                  <div className="flex gap-3 mb-4">
-                    <Input
-                      value={newArchetype}
-                      onChange={(e) => setNewArchetype(e.target.value)}
-                      placeholder="e.g., The Visionary Leader"
-                      className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddArchetype()}
-                    />
-                    <Button 
-                      onClick={handleAddArchetype}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-6"
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {config.targetArchetypes.map((archetype) => (
-                      <Badge 
-                        key={archetype}
-                        variant="outline" 
-                        className="bg-blue-50 text-blue-700 border-blue-200 cursor-pointer hover:bg-blue-100 px-3 py-2 text-sm"
-                        onClick={() => handleRemoveArchetype(archetype)}
-                      >
-                        {archetype} ×
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <Label htmlFor="archetypeMapping" className="text-gray-700 font-medium text-base mb-3 block">Archetype Characteristics & Patterns</Label>
-                  <Textarea
-                    id="archetypeMapping"
-                    value={config.archetypeMapping}
-                    onChange={(e) => setConfig(prev => ({ ...prev, archetypeMapping: e.target.value }))}
-                    placeholder="Define each archetype with specific linguistic and behavioral patterns:
-
-THE VISIONARY LEADER:
-Linguistic Patterns:
-- Uses future-oriented language (&lsquo;imagine&rsquo;, &lsquo;envision&rsquo;, &lsquo;transform&rsquo;)
-- Speaks in big picture terms and metaphors
-- Expresses confidence in possibilities and change
-- Uses inspirational and motivational language
-
-Communication Style:
-- Speaks with passion and conviction
-- Focuses on potential and opportunity
-- Uses inclusive language (&lsquo;we can&rsquo;, &lsquo;together&rsquo;)
-- Comfortable with ambiguity and uncertainty
-
-Decision-Making Patterns:
-- Considers long-term impact over short-term gains
-- Willing to take calculated risks
-- Values innovation and creativity
-- Seeks input but makes decisive choices
-
-THE ANALYTICAL STRATEGIST:
-Linguistic Patterns:
-- Uses precise, data-driven language
-- Breaks down complex ideas systematically
-- References facts, metrics, and evidence
-- Speaks in logical sequences and frameworks
-
-[Continue for each archetype...]"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm leading-relaxed"
-                    rows={20}
-                  />
-                  <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-                    Provide detailed descriptions of each archetype&rsquo;s linguistic patterns, communication style, and behavioral indicators.
-                  </p>
+              <CardHeader>
+                <CardTitle className="text-lg font-medium text-gray-900">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setConfig(prev => ({ ...prev, focusedArchetypes: [] }))}
+                  >
+                    Clear All
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setConfig(prev => ({ ...prev, focusedArchetypes: availableArchetypes.slice(0, 12) }))}
+                  >
+                    Select Core 12
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setConfig(prev => ({ ...prev, focusedArchetypes: availableArchetypes.filter(a => a.toLowerCase().includes('leader')) }))}
+                  >
+                    Leadership Focus
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setConfig(prev => ({ ...prev, focusedArchetypes: availableArchetypes.filter(a => a.toLowerCase().includes('creative') || a.toLowerCase().includes('artist')) }))}
+                  >
+                    Creative Focus
+                  </Button>
                 </div>
               </CardContent>
             </Card>

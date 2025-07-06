@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,8 @@ import {
   Sparkles,
   BarChart3,
   FileText,
-  Target
+  Target,
+  MessageSquare
 } from 'lucide-react'
 // import Link from 'next/link'
 // import { archetypeService } from '@/lib/services/archetype.service'
@@ -88,6 +89,31 @@ interface SimplifiedAssessmentConfig {
   reportGeneration: string
 }
 
+// interface Archetype {
+//   id: string
+//   name: string
+//   category: string
+//   description: string
+//   impact_score: number
+//   traits: unknown
+//   psychology_profile: unknown
+//   is_active: boolean | null
+//   created_at: string
+//   updated_at: string
+// }
+
+interface LinguisticPattern {
+  id: string
+  archetype_name: string
+  category: string
+  keywords: string[] | null
+  phrases: string[] | null
+  emotional_indicators: string[] | null
+  behavioral_patterns: string[] | null
+  created_at: string
+  updated_at: string
+}
+
 export default function AdminPage() {
   // const [assessments] = useState<AssessmentOverview[]>([])
   // const [archetypes] = useState<Archetype[]>([])
@@ -96,8 +122,33 @@ export default function AdminPage() {
   // const [loading] = useState(true)
   // const [showCreateDialog] = useState(false)
   const [assessmentMode, setAssessmentMode] = useState<'simplified' | 'advanced'>('simplified')
+  // const [archetypes, setArchetypes] = useState<Archetype[]>([])
+  const [linguisticPatterns, setLinguisticPatterns] = useState<LinguisticPattern[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dataStats, setDataStats] = useState({ archetypes: 0, patterns: 0 })
 
-  // Data loading would be implemented here in production
+  // Load data from database
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const response = await fetch('/api/check-data')
+        const data = await response.json()
+        
+        // setArchetypes(data.archetypes?.data || [])
+        setLinguisticPatterns(data.patterns?.data || [])
+        setDataStats({
+          archetypes: data.archetypes?.count || 0,
+          patterns: data.patterns?.count || 0
+        })
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadData()
+  }, [])
 
   const handleSaveAssessment = (config: AssessmentConfig) => {
     console.log('Saving assessment:', config)
@@ -153,6 +204,13 @@ export default function AdminPage() {
             >
               <Users className="mr-2 h-4 w-4" />
               Archetypes
+            </TabsTrigger>
+            <TabsTrigger 
+              value="linguistics"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-600 px-6 py-3 rounded-md font-medium"
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Linguistics
             </TabsTrigger>
             <TabsTrigger 
               value="analytics"
@@ -211,35 +269,37 @@ export default function AdminPage() {
               </Card>
             </div>
 
+            {/* Data Overview */}
             <Card>
               <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Latest assessment completions and user interactions</CardDescription>
+                <CardTitle>Database Overview</CardTitle>
+                <CardDescription>Current data in your Supabase database</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium">Leadership Assessment completed</p>
-                      <p className="text-xs text-gray-500">User identified as &quot;Visionary Leader&quot; - 5 minutes ago</p>
+                      <p className="text-sm font-medium text-gray-900">Archetypes</p>
+                      <p className="text-2xl font-bold text-blue-600">{dataStats.archetypes}</p>
                     </div>
+                    <Users className="h-8 w-8 text-blue-500" />
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium">New archetype card created</p>
-                      <p className="text-xs text-gray-500">&quot;The Innovator&quot; card added to system - 12 minutes ago</p>
+                      <p className="text-sm font-medium text-gray-900">Linguistic Patterns</p>
+                      <p className="text-2xl font-bold text-green-600">{dataStats.patterns}</p>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <div>
-                      <p className="text-sm font-medium">Assessment configuration updated</p>
-                      <p className="text-xs text-gray-500">Relationship Assessment modified - 1 hour ago</p>
-                    </div>
+                    <MessageSquare className="h-8 w-8 text-green-500" />
                   </div>
                 </div>
+                {dataStats.archetypes < 20 && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Notice:</strong> You have {dataStats.archetypes} archetypes in your database. 
+                      You mentioned expecting 55 archetypes. Would you like me to populate the missing ones?
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -306,6 +366,147 @@ export default function AdminPage() {
           {/* Archetype Content Tab */}
           <TabsContent value="archetypes" className="space-y-8">
             <ArchetypeCardManager />
+          </TabsContent>
+
+          {/* Linguistics Tab */}
+          <TabsContent value="linguistics" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Archetype Linguistics
+                </CardTitle>
+                <CardDescription>
+                  Manage linguistic patterns, keywords, and behavioral indicators for each archetype
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Total Patterns</p>
+                              <p className="text-2xl font-bold">{linguisticPatterns.length}</p>
+                            </div>
+                            <MessageSquare className="h-6 w-6 text-blue-500" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Covered Archetypes</p>
+                              <p className="text-2xl font-bold">
+                                {new Set(linguisticPatterns.map(p => p.archetype_name)).size}
+                              </p>
+                            </div>
+                            <Users className="h-6 w-6 text-green-500" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Categories</p>
+                              <p className="text-2xl font-bold">
+                                {new Set(linguisticPatterns.map(p => p.category)).size}
+                              </p>
+                            </div>
+                            <Target className="h-6 w-6 text-purple-500" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Patterns List */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Linguistic Patterns by Archetype</h3>
+                      {linguisticPatterns.length === 0 ? (
+                        <Card>
+                          <CardContent className="p-8 text-center">
+                            <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <h4 className="text-lg font-medium text-gray-900 mb-2">No Linguistic Patterns Found</h4>
+                            <p className="text-gray-600 mb-4">
+                              Your database doesn&apos;t contain any linguistic patterns yet. 
+                              These patterns help the AI identify archetypal traits in user responses.
+                            </p>
+                            <Button className="bg-blue-600 hover:bg-blue-700">
+                              Add First Pattern
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {linguisticPatterns.map((pattern) => (
+                            <Card key={pattern.id}>
+                              <CardHeader>
+                                <CardTitle className="text-lg">{pattern.archetype_name}</CardTitle>
+                                <CardDescription>
+                                  <Badge variant="outline">{pattern.category}</Badge>
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-3">
+                                  {pattern.keywords && pattern.keywords.length > 0 && (
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-700">Keywords:</p>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {pattern.keywords.slice(0, 5).map((keyword, idx) => (
+                                          <Badge key={idx} variant="secondary" className="text-xs">
+                                            {keyword}
+                                          </Badge>
+                                        ))}
+                                        {pattern.keywords.length > 5 && (
+                                          <Badge variant="outline" className="text-xs">
+                                            +{pattern.keywords.length - 5} more
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {pattern.emotional_indicators && pattern.emotional_indicators.length > 0 && (
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-700">Emotional Indicators:</p>
+                                      <p className="text-sm text-gray-600">
+                                        {pattern.emotional_indicators.slice(0, 2).join(', ')}
+                                        {pattern.emotional_indicators.length > 2 && '...'}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {pattern.behavioral_patterns && pattern.behavioral_patterns.length > 0 && (
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-700">Behavioral Patterns:</p>
+                                      <p className="text-sm text-gray-600">
+                                        {pattern.behavioral_patterns.slice(0, 1).join(', ')}
+                                        {pattern.behavioral_patterns.length > 1 && '...'}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Analytics Tab */}
