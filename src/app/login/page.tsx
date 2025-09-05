@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,14 +10,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AuthService } from '@/lib/services/auth.service'
 import { Github, Mail, Eye, EyeOff } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const authService = new AuthService()
+
+  useEffect(() => {
+    const message = searchParams.get('message')
+    const errorParam = searchParams.get('error')
+
+    if (message === 'email_confirmed') {
+      setSuccess('Email confirmed successfully! You can now sign in.')
+    } else if (errorParam) {
+      setError('Authentication failed. Please try again.')
+    }
+  }, [searchParams])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,6 +73,12 @@ export default function LoginPage() {
           {error && (
             <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
+              {success}
             </div>
           )}
 
@@ -158,5 +177,21 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-white px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Loading...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

@@ -12,10 +12,11 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       const supabase = createClient()
-      
+
       try {
+        // Handle the auth callback (for OAuth and email confirmations)
         const { data, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           console.error('Auth callback error:', error)
           router.push('/login?error=auth_callback_failed')
@@ -23,7 +24,7 @@ export default function AuthCallbackPage() {
         }
 
         if (data.session) {
-          // Ensure profile exists for OAuth users
+          // Ensure profile exists for all authenticated users
           if (data.session.user) {
             try {
               const { AuthService } = await import('@/lib/services/auth.service')
@@ -31,15 +32,15 @@ export default function AuthCallbackPage() {
               // This will create profile if it doesn't exist
               await authService.getCurrentUser()
             } catch (profileError) {
-              console.error('Error creating profile for OAuth user:', profileError)
+              console.error('Error creating profile for user:', profileError)
               // Continue to dashboard even if profile creation fails
             }
           }
           // User is authenticated, redirect to dashboard
           router.push('/dashboard')
         } else {
-          // No session, redirect to login
-          router.push('/login')
+          // No session, redirect to login with success message for email confirmation
+          router.push('/login?message=email_confirmed')
         }
       } catch (error) {
         console.error('Unexpected error during auth callback:', error)
