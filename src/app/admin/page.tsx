@@ -12,12 +12,11 @@ import {
   Plus,
   Search
 } from 'lucide-react'
-import { AssessmentBuilder } from '@/components/admin/AssessmentBuilder'
-import { SimplifiedAssessmentBuilder } from '@/components/admin/SimplifiedAssessmentBuilder'
-// import { CreateAssessmentDialog } from '@/components/admin/CreateAssessmentDialog'
+
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
+import AssessmentBuilderForm from "@/components/AssessmentBuilderForm"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -59,32 +58,7 @@ interface LinguisticPattern {
 }
 */
 
-interface AssessmentConfig {
-  name: string
-  description: string
-  purpose: string
-  targetArchetypes: string[]
-  analysisInstructions: string
-  questioningStyle: string
-  expectedDuration: number
-  completionCriteria: string
-  systemPrompt: string
-  conversationFlow: string
-  archetypeMapping: string
-  reportGeneration: string
-}
 
-interface SimplifiedAssessmentConfig {
-  name: string
-  description: string
-  purpose: string
-  expectedDuration: number
-  systemPrompt: string
-  questioningStyle: string
-  targetArchetypes: string[]
-  completionCriteria: string
-  reportGeneration: string
-}
 
 interface LinguisticPattern {
   id: string
@@ -113,10 +87,6 @@ interface Archetype {
 }
 
 export default function AdminPage() {
-  // const [assessments] = useState<AssessmentOverview[]>([])
-  // const [archetypes] = useState<Archetype[]>([])
-  // const [linguisticPatterns] = useState<LinguisticPattern[]>([])
-  const [isSimplifiedMode, setIsSimplifiedMode] = useState(true)
   const [archetypes, setArchetypes] = useState<Archetype[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -156,20 +126,7 @@ export default function AdminPage() {
     loadData()
   }, [])
 
-  const handleSaveAssessment = (config: AssessmentConfig) => {
-    console.log('Saving assessment:', config)
-    // In a real app, this would save to your database
-  }
 
-  const handleSaveSimplifiedAssessment = (config: SimplifiedAssessmentConfig) => {
-    console.log('Saving simplified assessment:', config)
-    // In a real app, this would save to your database
-  }
-
-  const handleTestAssessment = (config: AssessmentConfig | SimplifiedAssessmentConfig) => {
-    console.log('Testing assessment:', config)
-    // In a real app, this would open a test interface
-  }
 
 
 
@@ -183,6 +140,64 @@ export default function AdminPage() {
 
   // Get unique categories
   const archetypeCategories = [...new Set(archetypes.map(a => a.category))].filter(Boolean)
+
+  // Assessment categories for specialized assessments
+  const assessmentCategories = [
+    {
+      id: 'sexuality-intimacy',
+      name: 'Sexuality & Intimacy',
+      description: 'Explore sexual archetypes and intimacy patterns in relationships',
+      status: 'Draft',
+      archetypeCount: 12,
+      questionCount: 15,
+      completionRate: 0
+    },
+    {
+      id: 'monogamy-polyamory',
+      name: 'Monogamy vs. Polyamory',
+      description: 'Assess relationship structure preferences and patterns',
+      status: 'Active',
+      archetypeCount: 8,
+      questionCount: 12,
+      completionRate: 78
+    },
+    {
+      id: 'relationship-patterns',
+      name: 'Relationship Patterns',
+      description: 'Identify recurring relationship dynamics and complexes',
+      status: 'Draft',
+      archetypeCount: 15,
+      questionCount: 18,
+      completionRate: 0
+    },
+    {
+      id: 'patriarchy-influence',
+      name: 'Patriarchy\'s Influence',
+      description: 'Examine how patriarchal conditioning affects relational dynamics',
+      status: 'Draft',
+      archetypeCount: 10,
+      questionCount: 14,
+      completionRate: 0
+    },
+    {
+      id: 'consent-boundaries',
+      name: 'Consent & Boundaries',
+      description: 'Assess understanding and practice of consent and emotional safety',
+      status: 'Draft',
+      archetypeCount: 9,
+      questionCount: 16,
+      completionRate: 0
+    },
+    {
+      id: 'modern-dating',
+      name: 'Modern Dating',
+      description: 'Navigate contemporary dating challenges and patterns',
+      status: 'Active',
+      archetypeCount: 11,
+      questionCount: 13,
+      completionRate: 45
+    }
+  ]
 
   const handleToggleArchetype = (archetypeId: string) => {
     if (expandedArchetype === archetypeId) {
@@ -205,6 +220,15 @@ export default function AdminPage() {
       console.log('Archetype saved:', updatedArchetype)
     } catch (error) {
       console.error('Error saving archetype:', error)
+    }
+  }
+
+  const handleSaveAssessment = async (assessmentData: unknown) => {
+    try {
+      console.log('Assessment saved:', assessmentData)
+      // Here you would save to database
+    } catch (error) {
+      console.error('Error saving assessment:', error)
     }
   }
 
@@ -234,40 +258,62 @@ export default function AdminPage() {
 
           {/* Assessment Tab */}
           <TabsContent value="assessment" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Assessment Configuration</CardTitle>
-                <CardDescription>Configure AI-powered archetype assessments</CardDescription>
-                <div className="flex items-center gap-4 mt-4">
-                                      <Button
-                      variant={isSimplifiedMode ? "default" : "outline"}
-                      onClick={() => setIsSimplifiedMode(true)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      Simple Mode
-                    </Button>
-                    <Button
-                      variant={!isSimplifiedMode ? "default" : "outline"}
-                      onClick={() => setIsSimplifiedMode(false)}
-                    >
-                      Advanced Mode
-                    </Button>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-medium">Assessment Builder</h2>
+                  <p className="text-gray-600 text-sm">Create specialized archetype assessments for different relationship categories</p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {isSimplifiedMode ? (
-                  <SimplifiedAssessmentBuilder 
-                    onSave={handleSaveSimplifiedAssessment}
-                    onTest={handleTestAssessment}
-                  />
-                ) : (
-                  <AssessmentBuilder 
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Assessment
+                </Button>
+              </div>
+
+              {/* Assessment Categories */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {assessmentCategories.map((category) => (
+                  <Card key={category.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{category.name}</CardTitle>
+                        <Badge variant="secondary">{category.status}</Badge>
+                      </div>
+                      <CardDescription className="text-sm">{category.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div>Target Archetypes: {category.archetypeCount}</div>
+                        <div>Questions: {category.questionCount}</div>
+                        <div>Completion Rate: {category.completionRate}%</div>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button size="sm" variant="outline" className="flex-1">
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1">
+                          Test
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Assessment Builder Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create New Assessment</CardTitle>
+                  <CardDescription>Build a specialized assessment for a specific relationship category</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AssessmentBuilderForm
+                    archetypes={archetypes}
                     onSave={handleSaveAssessment}
-                    onTest={handleTestAssessment}
                   />
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Archetypes Tab */}
