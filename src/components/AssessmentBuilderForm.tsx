@@ -27,44 +27,20 @@ interface AssessmentData {
   selectedArchetypes: string[]
   estimatedDuration: number
   // AI Analysis Configuration
-  languageIndicators: LanguageIndicator[]
   responseRequirements: ResponseRequirements
   adaptiveLogic: AdaptiveLogic
-  archetypeMapping: ArchetypeMapping[]
-}
-
-interface LanguageIndicator {
-  pattern: string
-  archetypeSignal: string
-  weight: number
-  description: string
 }
 
 interface ResponseRequirements {
   minSentences: number
   maxSentences: number
-  requiredElements: string[]
   followUpPrompts: string[]
 }
 
 interface AdaptiveLogic {
   minQuestions: number
   maxQuestions: number
-  branchingRules: BranchingRule[]
-  contradictionHandling: string[]
-}
-
-interface BranchingRule {
-  condition: string
-  nextQuestionType: string
-  reasoning: string
-}
-
-interface ArchetypeMapping {
-  archetypeId: string
-  triggerPatterns: string[]
-  requiredEvidence: number
-  conflictingPatterns: string[]
+  evidenceThreshold: number
 }
 
 interface ReferenceItem {
@@ -140,20 +116,16 @@ export default function AssessmentBuilderForm({ archetypes, onSave }: Assessment
     referenceData: [],
     selectedArchetypes: [],
     estimatedDuration: 15,
-    languageIndicators: [],
     responseRequirements: {
       minSentences: 2,
       maxSentences: 8,
-      requiredElements: [],
       followUpPrompts: []
     },
     adaptiveLogic: {
       minQuestions: 8,
       maxQuestions: 15,
-      branchingRules: [],
-      contradictionHandling: []
-    },
-    archetypeMapping: []
+      evidenceThreshold: 3
+    }
   })
 
   const [newQuestionType, setNewQuestionType] = useState('')
@@ -175,20 +147,16 @@ export default function AssessmentBuilderForm({ archetypes, onSave }: Assessment
       referenceData: [],
       selectedArchetypes: [],
       estimatedDuration: 15,
-      languageIndicators: [],
       responseRequirements: {
         minSentences: 2,
         maxSentences: 8,
-        requiredElements: [],
         followUpPrompts: []
       },
       adaptiveLogic: {
         minQuestions: 8,
         maxQuestions: 15,
-        branchingRules: [],
-        contradictionHandling: []
-      },
-      archetypeMapping: []
+        evidenceThreshold: 3
+      }
     })
   }
 
@@ -411,7 +379,7 @@ export default function AssessmentBuilderForm({ archetypes, onSave }: Assessment
         <p className="text-sm text-gray-600">Configure how the AI analyzes responses and determines archetypes</p>
 
         {/* Response Requirements */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Min Sentences</label>
             <Input
@@ -462,8 +430,9 @@ export default function AssessmentBuilderForm({ archetypes, onSave }: Assessment
                   }
                 }))}
                 placeholder="Min"
-                className="w-full"
+                className="w-16"
               />
+              <span className="text-sm text-gray-500 self-center">to</span>
               <Input
                 type="number"
                 min="8"
@@ -477,28 +446,27 @@ export default function AssessmentBuilderForm({ archetypes, onSave }: Assessment
                   }
                 }))}
                 placeholder="Max"
-                className="w-full"
+                className="w-16"
               />
             </div>
           </div>
-        </div>
-
-        {/* Language Pattern Analysis */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Language Patterns to Detect</label>
-          <p className="text-xs text-gray-500 mb-3">Add specific language patterns that indicate certain archetypes</p>
-          <div className="space-y-2">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-              <Input placeholder="Language pattern (e.g., 'she made me')" className="text-sm" />
-              <Input placeholder="Archetype signal (e.g., 'Victim mentality')" className="text-sm" />
-              <Input placeholder="Weight (1-10)" type="number" min="1" max="10" className="text-sm" />
-              <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="text-xs text-gray-500">
-              Examples: &quot;I can&apos;t help it&quot; → Avoidant patterns | &quot;She should know&quot; → Communication issues | &quot;All women are&quot; → Generalization patterns
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Evidence Threshold</label>
+            <Input
+              type="number"
+              min="1"
+              max="10"
+              value={formData.adaptiveLogic.evidenceThreshold}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                adaptiveLogic: {
+                  ...prev.adaptiveLogic,
+                  evidenceThreshold: parseInt(e.target.value) || 3
+                }
+              }))}
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 mt-1">How many indicators needed to identify an archetype</p>
           </div>
         </div>
 
@@ -520,27 +488,11 @@ export default function AssessmentBuilderForm({ archetypes, onSave }: Assessment
           </div>
         </div>
 
-        {/* Archetype Detection Rules */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Archetype Detection Rules</label>
-          <p className="text-xs text-gray-500 mb-3">Define what evidence is needed to identify each archetype</p>
-          <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2">
-            {formData.selectedArchetypes.map((archetypeId) => {
-              const archetype = archetypes.find(a => a.id === archetypeId)
-              return (
-                <div key={archetypeId} className="flex items-center justify-between p-2 bg-white rounded border">
-                  <span className="text-sm font-medium">{archetype?.name}</span>
-                  <div className="flex gap-2 text-xs">
-                    <Input placeholder="Required evidence count" type="number" min="1" max="10" className="w-20" />
-                    <Button size="sm" variant="outline">Configure</Button>
-                  </div>
-                </div>
-              )
-            })}
-            {formData.selectedArchetypes.length === 0 && (
-              <p className="text-sm text-gray-500 italic">Select archetypes above to configure detection rules</p>
-            )}
-          </div>
+        <div className="p-3 bg-blue-50 rounded border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> Language patterns and archetype indicators are configured in the Archetypes tab.
+            The AI will automatically reference those patterns when analyzing responses for the selected archetypes.
+          </p>
         </div>
       </div>
 

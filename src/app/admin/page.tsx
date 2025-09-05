@@ -10,7 +10,8 @@ import {
   Users,
   BarChart3,
   Plus,
-  Search
+  Search,
+  FileText
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
@@ -240,11 +241,15 @@ export default function AdminPage() {
           <p className="text-gray-600 mt-2">Manage assessments, archetypes, and linguistic patterns</p>
         </div>
 
-        <Tabs defaultValue="assessment" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-50 p-1">
-            <TabsTrigger value="assessment" className="flex items-center gap-2">
+        <Tabs defaultValue="assessments" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
+            <TabsTrigger value="assessments" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Assessments
+            </TabsTrigger>
+            <TabsTrigger value="builder" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              Assessment
+              Builder
             </TabsTrigger>
             <TabsTrigger value="archetypes" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -256,13 +261,13 @@ export default function AdminPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Assessment Tab */}
-          <TabsContent value="assessment" className="mt-6">
+          {/* Assessments Tab - Overview of existing assessments */}
+          <TabsContent value="assessments" className="mt-6">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-medium">Assessment Builder</h2>
-                  <p className="text-gray-600 text-sm">Create specialized archetype assessments for different relationship categories</p>
+                  <h2 className="text-xl font-medium">Assessment Overview</h2>
+                  <p className="text-gray-600 text-sm">Manage and monitor your specialized archetype assessments</p>
                 </div>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-4 h-4 mr-2" />
@@ -298,6 +303,16 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Builder Tab - Assessment creation form */}
+          <TabsContent value="builder" className="mt-6">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-medium">Assessment Builder</h2>
+                <p className="text-gray-600 text-sm">Create specialized archetype assessments for different relationship categories</p>
               </div>
 
               {/* Assessment Builder Form */}
