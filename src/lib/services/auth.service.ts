@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/client'
-import { createClient as createServerClient } from '@/lib/supabase/server'
 import { ProfileRepository } from '@/lib/repositories/profile.repository'
 import type { Database } from '@/lib/types/database'
 
@@ -70,20 +69,20 @@ export class AuthService {
   }
 
   async getCurrentUser() {
-    const supabase = await createServerClient()
+    const supabase = createClient()
     const { data: { user }, error } = await supabase.auth.getUser()
-    
+
     if (error || !user) return null
-    
+
     // Get profile data
     const profileRepo = new ProfileRepository(supabase)
     const profile = await profileRepo.findById(user.id)
-    
+
     return { user, profile }
   }
 
   async updateProfile(userId: string, data: Partial<Profile>) {
-    const supabase = await createServerClient()
+    const supabase = createClient()
     const profileRepo = new ProfileRepository(supabase)
     return profileRepo.update(userId, data)
   }
@@ -109,12 +108,12 @@ export class AuthService {
   }
 
   async checkSubscriptionStatus(userId: string): Promise<Profile['subscription_status']> {
-    const supabase = await createServerClient()
+    const supabase = createClient()
     const profileRepo = new ProfileRepository(supabase)
     const profile = await profileRepo.findById(userId)
-    
+
     if (!profile) throw new Error('Profile not found')
-    
+
     // Check if subscription has expired
     if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) {
       // Update to free if expired
@@ -124,7 +123,7 @@ export class AuthService {
       })
       return 'free'
     }
-    
+
     return profile.subscription_status
   }
 } 
