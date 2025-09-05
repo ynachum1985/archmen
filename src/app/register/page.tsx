@@ -44,6 +44,7 @@ export default function RegisterPage() {
       setSuccess('Account created successfully! Please check your email to verify your account.')
       // Don't redirect immediately - let user verify email first
     } catch (err: unknown) {
+      console.error('Signup error:', err)
       setError(err instanceof Error ? err.message : 'Failed to create account')
     } finally {
       setIsLoading(false)
@@ -126,6 +127,7 @@ export default function RegisterPage() {
                 placeholder="Enter your full name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
                 required
                 disabled={isLoading}
               />
@@ -138,6 +140,7 @@ export default function RegisterPage() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
                 disabled={isLoading}
               />
@@ -151,6 +154,7 @@ export default function RegisterPage() {
                   placeholder="Create a password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
                   required
                   disabled={isLoading}
                 />
@@ -179,6 +183,7 @@ export default function RegisterPage() {
                   placeholder="Confirm your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
                   required
                   disabled={isLoading}
                 />

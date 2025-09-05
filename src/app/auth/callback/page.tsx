@@ -23,6 +23,18 @@ export default function AuthCallbackPage() {
         }
 
         if (data.session) {
+          // Ensure profile exists for OAuth users
+          if (data.session.user) {
+            try {
+              const { AuthService } = await import('@/lib/services/auth.service')
+              const authService = new AuthService()
+              // This will create profile if it doesn't exist
+              await authService.getCurrentUser()
+            } catch (profileError) {
+              console.error('Error creating profile for OAuth user:', profileError)
+              // Continue to dashboard even if profile creation fails
+            }
+          }
           // User is authenticated, redirect to dashboard
           router.push('/dashboard')
         } else {
