@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { AssessmentBuilder } from '@/components/admin/AssessmentBuilder'
+import { EnhancedAssessmentBuilder } from '@/components/admin/EnhancedAssessmentBuilder'
 import { EnhancedLinguisticAssessment } from '@/components/chat/EnhancedLinguisticAssessment'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,25 +11,47 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Settings, TestTube, BarChart3, Users } from 'lucide-react'
 import Link from 'next/link'
 
-interface AssessmentConfig {
+interface EnhancedAssessmentConfig {
   name: string
   description: string
+  category: string
   purpose: string
-  targetArchetypes: string[]
-  analysisInstructions: string
-  questioningStyle: string
   expectedDuration: number
-  completionCriteria: string
+
+  // AI Configuration
   systemPrompt: string
-  conversationFlow: string
-  archetypeMapping: string
+  questioningStrategy: 'adaptive' | 'progressive' | 'exploratory' | 'focused'
+  questioningDepth: 'surface' | 'moderate' | 'deep' | 'profound'
+
+  // Questioning Examples
+  questionExamples: {
+    openEnded: string[]
+    followUp: string[]
+    clarifying: string[]
+    deepening: string[]
+  }
+
+  // Response Requirements
+  responseRequirements: {
+    minSentences: number
+    maxSentences: number
+    followUpPrompts: string[]
+  }
+
+  // Adaptive Logic
+  adaptiveLogic: {
+    minQuestions: number
+    maxQuestions: number
+    evidenceThreshold: number
+    adaptationTriggers: string[]
+  }
+
+  // Files and References
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  referenceFiles: any[]
+
+  // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
-  // New fields for enhanced configuration
-  theme: 'career' | 'relationships' | 'personal-growth' | 'leadership' | 'creativity' | 'shadow-work' | 'custom'
-  difficultyLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert'
-  focusedArchetypes: string[]
-  useGlobalLinguistics: boolean
-  customLinguisticFocus: string
 }
 
 interface ArchetypeScore {
@@ -45,7 +67,7 @@ export default function AssessmentDetailPage() {
   const assessmentId = params.id as string
   
   const [activeTab, setActiveTab] = useState('builder')
-  const [assessmentConfig, setAssessmentConfig] = useState<AssessmentConfig | null>(null)
+  const [assessmentConfig, setAssessmentConfig] = useState<EnhancedAssessmentConfig | null>(null)
   const [testResults, setTestResults] = useState<ArchetypeScore[] | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -59,33 +81,59 @@ export default function AssessmentDetailPage() {
     try {
       // For now, load the existing "Relationship Patterns Assessment" data
       // In a real app, this would fetch from the database
-      const mockConfig: AssessmentConfig = {
+      const mockConfig: EnhancedAssessmentConfig = {
         name: "Relationship Patterns Assessment",
         description: "Discover your main archetype patterns in relationships and explore your shadow aspects.",
+        category: "Relationships",
         purpose: "Discover the user's dominant relationship archetypes by analyzing their communication patterns, emotional expression, attachment styles, and interpersonal dynamics. Focus on how they navigate intimacy, conflict, and emotional connection.",
-        targetArchetypes: [
-          "The Lover",
-          "The Caregiver", 
-          "The Innocent",
-          "The Sage",
-          "The Hero",
-          "The Rebel",
-          "The Magician",
-          "The Explorer"
-        ],
-        analysisInstructions: "Focus on emotional language, attachment patterns, communication about relationships, conflict resolution approaches, and expressions of intimacy. Look for patterns in how they describe love, trust, vulnerability, and connection. Analyze their metaphors for relationships and emotional processing style.",
-        questioningStyle: "Ask open-ended questions that invite storytelling about relationships and emotional experiences. Start with recent relationship dynamics, then explore deeper patterns. Use follow-up questions that explore emotional responses, attachment behaviors, and relationship values. Maintain a warm, non-judgmental tone that encourages vulnerability.",
         expectedDuration: 15,
-        completionCriteria: "Continue until you have high confidence in identifying the top 2-3 relationship archetypes, with at least 6-8 meaningful exchanges that reveal deep emotional and relational patterns. Look for consistent themes in their language about love, trust, intimacy, and emotional expression.",
         systemPrompt: "You are an expert psychological assessor specializing in relationship archetype identification through linguistic analysis. Your role is to conduct natural, engaging conversations that reveal deep emotional and relational patterns through language use, metaphors, and communication styles.",
-        conversationFlow: "Start with warm questions about recent relationship experiences, then explore deeper patterns through follow-up questions about emotional responses and attachment behaviors.",
-        archetypeMapping: "The Lover: Uses passionate, intimate language with metaphors of connection. The Caregiver: Focuses on nurturing and support language. The Innocent: Uses optimistic, trusting language patterns.",
-        reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores.",
-        theme: "relationships",
-        difficultyLevel: "intermediate",
-        focusedArchetypes: [],
-        useGlobalLinguistics: true,
-        customLinguisticFocus: ""
+        questioningStrategy: "adaptive",
+        questioningDepth: "moderate",
+        questionExamples: {
+          openEnded: [
+            "Tell me about a recent relationship experience that felt significant to you. What made it meaningful?",
+            "How do you typically express love or care for someone important to you?",
+            "Describe a time when you had to navigate conflict in a relationship. What was your approach?"
+          ],
+          followUp: [
+            "What emotions came up for you in that moment?",
+            "How did that experience shape how you view relationships?",
+            "What do you think drove that particular response?"
+          ],
+          clarifying: [
+            "When you say 'connection,' what does that look like for you?",
+            "How would you define intimacy in your own words?",
+            "What does trust mean to you in a relationship context?"
+          ],
+          deepening: [
+            "What patterns do you notice in how you approach relationships?",
+            "What fears or hopes influence how you connect with others?",
+            "How do you think your past experiences shape your current relationship style?"
+          ]
+        },
+        responseRequirements: {
+          minSentences: 2,
+          maxSentences: 8,
+          followUpPrompts: [
+            "I'd love to hear more about that feeling. Can you expand on what you experienced?",
+            "That sounds important. Can you give me a specific example?",
+            "Help me understand that better - what did that look like in your relationship?"
+          ]
+        },
+        adaptiveLogic: {
+          minQuestions: 8,
+          maxQuestions: 15,
+          evidenceThreshold: 3,
+          adaptationTriggers: [
+            "Strong relationship archetype pattern emerges",
+            "User shows emotional vulnerability or resistance",
+            "Attachment patterns become clear",
+            "Communication style patterns are evident"
+          ]
+        },
+        referenceFiles: [],
+        reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores. The AI should freely choose from all available archetypes based on the evidence gathered."
       }
       
       setAssessmentConfig(mockConfig)
@@ -96,7 +144,7 @@ export default function AssessmentDetailPage() {
     }
   }
 
-  const handleSaveAssessment = async (config: AssessmentConfig) => {
+  const handleSaveAssessment = async (config: EnhancedAssessmentConfig) => {
     try {
       // In a real app, this would save to the database
       console.log('Saving assessment config:', config)
@@ -110,7 +158,7 @@ export default function AssessmentDetailPage() {
     }
   }
 
-  const handleTestAssessment = (config: AssessmentConfig) => {
+  const handleTestAssessment = (config: EnhancedAssessmentConfig) => {
     setAssessmentConfig(config)
     setActiveTab('test')
   }
@@ -186,7 +234,7 @@ export default function AssessmentDetailPage() {
           {/* Builder Tab */}
           <TabsContent value="builder">
             {assessmentConfig && (
-              <AssessmentBuilder
+              <EnhancedAssessmentBuilder
                 assessment={assessmentConfig}
                 onSave={handleSaveAssessment}
                 onTest={handleTestAssessment}
@@ -198,7 +246,16 @@ export default function AssessmentDetailPage() {
           <TabsContent value="test">
             {assessmentConfig && (
               <EnhancedLinguisticAssessment
-                config={assessmentConfig}
+                config={{
+                  name: assessmentConfig.name,
+                  description: assessmentConfig.description,
+                  purpose: assessmentConfig.purpose,
+                  targetArchetypes: [], // AI chooses freely from all archetypes
+                  analysisInstructions: assessmentConfig.systemPrompt,
+                  questioningStyle: assessmentConfig.questioningStrategy,
+                  expectedDuration: assessmentConfig.expectedDuration,
+                  completionCriteria: `Use ${assessmentConfig.questioningStrategy} questioning with ${assessmentConfig.questioningDepth} depth. Ask ${assessmentConfig.adaptiveLogic.minQuestions}-${assessmentConfig.adaptiveLogic.maxQuestions} questions.`
+                }}
                 onComplete={handleTestComplete}
               />
             )}
