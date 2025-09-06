@@ -38,16 +38,28 @@ export class FileUploadService {
         .from(this.bucketName)
         .getPublicUrl(filePath)
 
-      // For now, simulate file metadata storage until database is updated
-      const fileRecord = {
-        id: `file-${Date.now()}`,
-        name: file.name,
-        file_path: filePath,
-        file_url: urlData.publicUrl,
-        file_size: file.size,
-        file_type: file.type,
-        assessment_id: assessmentId,
-        uploaded_at: new Date().toISOString()
+      // Store file metadata in database
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: fileRecord, error: dbError } = await (this.supabase as any)
+        .from('assessment_files')
+        .insert({
+          name: file.name,
+          file_path: filePath,
+          file_url: urlData.publicUrl,
+          file_size: file.size,
+          file_type: file.type,
+          assessment_id: assessmentId,
+          uploaded_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (dbError) {
+        // Clean up uploaded file if database insert fails
+        await this.supabase.storage
+          .from(this.bucketName)
+          .remove([filePath])
+        throw dbError
       }
 
       return {
@@ -67,9 +79,37 @@ export class FileUploadService {
 
   async deleteFile(fileId: string): Promise<void> {
     try {
-      // For now, simulate file deletion until database is updated
-      console.log('File deleted:', fileId)
-      // In a real implementation, we would delete from both storage and database
+      // Get file record to get the file path
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: fileRecord, error: fetchError } = await (this.supabase as any)
+        .from('assessment_files')
+        .select('file_path')
+        .eq('id', fileId)
+        .single()
+
+      if (fetchError) {
+        throw fetchError
+      }
+
+      // Delete from storage
+      const { error: storageError } = await this.supabase.storage
+        .from(this.bucketName)
+        .remove([fileRecord.file_path])
+
+      if (storageError) {
+        console.error('Error deleting from storage:', storageError)
+      }
+
+      // Delete from database
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: dbError } = await (this.supabase as any)
+        .from('assessment_files')
+        .delete()
+        .eq('id', fileId)
+
+      if (dbError) {
+        throw dbError
+      }
     } catch (error) {
       console.error('Error deleting file:', error)
       throw error
@@ -77,9 +117,28 @@ export class FileUploadService {
   }
 
   async getFilesByAssessment(assessmentId: string): Promise<UploadedFile[]> {
-    // For now, return empty array until database is updated
-    console.log('Getting files for assessment:', assessmentId)
-    return []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('assessment_files')
+      .select('*')
+      .eq('assessment_id', assessmentId)
+      .order('uploaded_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching files:', error)
+      throw error
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return data.map((file: any) => ({
+      id: file.id,
+      name: file.name,
+      url: file.file_url,
+      size: file.file_size,
+      type: file.file_type,
+      assessment_id: file.assessment_id,
+      uploaded_at: file.uploaded_at
+    }))
   }
 
   async ensureBucketExists(): Promise<void> {

@@ -15,47 +15,72 @@ export class CategoryService {
   private supabase = createClient()
 
   async getAllCategories(): Promise<AssessmentCategory[]> {
-    // For now, return default categories until database is updated
-    const defaultCategories = await this.getDefaultCategories()
-    return defaultCategories.map((name, index) => ({
-      id: `default-${index}`,
-      name,
-      description: `Assessment category for ${name.toLowerCase()}`,
-      color: ['blue', 'green', 'purple', 'orange', 'red', 'indigo', 'pink', 'teal', 'yellow', 'gray'][index % 10],
-      icon: ['Heart', 'Briefcase', 'TrendingUp', 'Moon', 'Palette', 'Compass', 'MessageCircle', 'Shield', 'Brain', 'Star'][index % 10],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      is_active: true
-    }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('assessment_categories')
+      .select('*')
+      .eq('is_active', true)
+      .order('name')
+
+    if (error) {
+      console.error('Error fetching categories:', error)
+      throw error
+    }
+
+    return data || []
   }
 
   async createCategory(category: Omit<AssessmentCategory, 'id' | 'created_at' | 'updated_at'>): Promise<AssessmentCategory> {
-    // For now, simulate category creation until database is updated
-    return {
-      id: `custom-${Date.now()}`,
-      ...category,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('assessment_categories')
+      .insert({
+        ...category,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating category:', error)
+      throw error
     }
+
+    return data
   }
 
   async updateCategory(id: string, updates: Partial<AssessmentCategory>): Promise<AssessmentCategory> {
-    // For now, simulate category update until database is updated
-    const categories = await this.getAllCategories()
-    const category = categories.find(c => c.id === id)
-    if (!category) {
-      throw new Error('Category not found')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('assessment_categories')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating category:', error)
+      throw error
     }
-    return {
-      ...category,
-      ...updates,
-      updated_at: new Date().toISOString()
-    }
+
+    return data
   }
 
   async deleteCategory(id: string): Promise<void> {
-    // For now, simulate category deletion until database is updated
-    console.log('Category deleted:', id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('assessment_categories')
+      .update({ is_active: false })
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting category:', error)
+      throw error
+    }
   }
 
   // Get default categories if none exist
