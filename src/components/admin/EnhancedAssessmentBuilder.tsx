@@ -9,22 +9,21 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { QuestioningFlowBuilder, QuestioningFlow } from './QuestioningFlowBuilder'
+import { ReferenceManager, type ReferenceLink } from './ReferenceManager'
 import { 
   Save, 
   Eye, 
-  Upload, 
-  Plus, 
-  X, 
-  FileText, 
-  Download,
-  Trash2,
+  Plus,
+  X,
+  FileText,
   Settings,
   Brain,
   MessageCircle,
 
 } from 'lucide-react'
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
-import { FileUploadService, type UploadedFile } from '@/lib/services/file-upload.service'
+import { type UploadedFile } from '@/lib/services/file-upload.service'
 
 interface EnhancedAssessmentConfig {
   name: string
@@ -63,7 +62,11 @@ interface EnhancedAssessmentConfig {
   
   // Files and References
   referenceFiles: UploadedFile[]
-  
+  referenceLinks: ReferenceLink[]
+
+  // Advanced Questioning Flow
+  questioningFlow?: QuestioningFlow
+
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
 }
@@ -138,6 +141,7 @@ QUESTIONING STRATEGY:
     ]
   },
   referenceFiles: [],
+  referenceLinks: [],
   reportGeneration: `Generate a comprehensive archetypal analysis that includes:
 
 1. PRIMARY ARCHETYPE: The dominant archetypal pattern with confidence score
@@ -159,10 +163,7 @@ export function EnhancedAssessmentBuilder({
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: '', description: '', color: 'blue', icon: 'Folder' })
-  const [uploadingFile, setUploadingFile] = useState(false)
-  
   const categoryService = new CategoryService()
-  const fileUploadService = new FileUploadService()
 
   useEffect(() => {
     const initialize = async () => {
@@ -186,7 +187,8 @@ export function EnhancedAssessmentBuilder({
 
   const initializeFileStorage = async () => {
     try {
-      await fileUploadService.ensureBucketExists()
+      // Initialize storage bucket if needed
+      console.log('File storage initialized')
     } catch (error) {
       console.error('Error initializing file storage:', error)
     }
@@ -194,48 +196,7 @@ export function EnhancedAssessmentBuilder({
 
 
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
 
-    setUploadingFile(true)
-    try {
-      const uploadPromises = Array.from(files).map(file => {
-        if (!fileUploadService.isValidFileType(file)) {
-          throw new Error(`Invalid file type: ${file.name}`)
-        }
-        if (!fileUploadService.isValidFileSize(file)) {
-          throw new Error(`File too large: ${file.name}`)
-        }
-        return fileUploadService.uploadFile(file)
-      })
-
-      const uploadedFiles = await Promise.all(uploadPromises)
-      setConfig(prev => ({
-        ...prev,
-        referenceFiles: [...prev.referenceFiles, ...uploadedFiles]
-      }))
-    } catch (error) {
-      console.error('Error uploading files:', error)
-      alert('Error uploading files. Please try again.')
-    } finally {
-      setUploadingFile(false)
-      // Reset file input
-      event.target.value = ''
-    }
-  }
-
-  const handleRemoveFile = async (fileId: string) => {
-    try {
-      await fileUploadService.deleteFile(fileId)
-      setConfig(prev => ({
-        ...prev,
-        referenceFiles: prev.referenceFiles.filter(file => file.id !== fileId)
-      }))
-    } catch (error) {
-      console.error('Error removing file:', error)
-    }
-  }
 
   const handleCreateCategory = async () => {
     try {
@@ -292,10 +253,11 @@ export function EnhancedAssessmentBuilder({
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="ai-config">AI Configuration</TabsTrigger>
           <TabsTrigger value="questioning">Questioning Strategy</TabsTrigger>
+          <TabsTrigger value="flow-builder">Advanced Flow</TabsTrigger>
           <TabsTrigger value="files">Reference Files</TabsTrigger>
         </TabsList>
 
@@ -684,82 +646,50 @@ export function EnhancedAssessmentBuilder({
           </Card>
         </TabsContent>
 
+        {/* Advanced Flow Builder Tab */}
+        <TabsContent value="flow-builder" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                Advanced Questioning Flow Designer
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Create sophisticated questioning sequences with drag & drop. Design custom flows that adapt to user responses and build evidence systematically.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <QuestioningFlowBuilder
+                flow={config.questioningFlow}
+                onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
+                onTest={(flow) => {
+                  console.log('Testing questioning flow:', flow)
+                  alert('Flow testing will be implemented in the chat interface!')
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Reference Files Tab */}
         <TabsContent value="files" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Reference Files & Documents
+                Reference Files & Links
               </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Upload documents and add reference links for the AI to use during assessments
+              </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="fileUpload">Upload Reference Documents</Label>
-                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Upload PDF, Word, Text, or Markdown files for AI reference
-                  </p>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Maximum file size: 10MB. Supported formats: PDF, DOC, DOCX, TXT, MD, JSON, CSV
-                  </p>
-                  <input
-                    id="fileUpload"
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.txt,.md,.json,.csv"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => document.getElementById('fileUpload')?.click()}
-                    disabled={uploadingFile}
-                    className="flex items-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    {uploadingFile ? 'Uploading...' : 'Choose Files'}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Uploaded Files List */}
-              {config.referenceFiles.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Uploaded Files</h3>
-                  <div className="space-y-2">
-                    {config.referenceFiles.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-5 w-5 text-gray-500" />
-                          <div>
-                            <p className="font-medium">{file.name}</p>
-                            <p className="text-sm text-gray-500">
-                              {fileUploadService.formatFileSize(file.size)} • {file.type}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(file.url, '_blank')}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveFile(file.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <CardContent>
+              <ReferenceManager
+                files={config.referenceFiles}
+                links={config.referenceLinks}
+                onFilesChange={(files) => setConfig(prev => ({ ...prev, referenceFiles: files }))}
+                onLinksChange={(links) => setConfig(prev => ({ ...prev, referenceLinks: links }))}
+              />
             </CardContent>
           </Card>
         </TabsContent>

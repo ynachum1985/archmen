@@ -49,6 +49,8 @@ interface EnhancedAssessmentConfig {
   // Files and References
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   referenceFiles: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  referenceLinks: any[]
 
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
@@ -133,6 +135,7 @@ export default function AssessmentDetailPage() {
           ]
         },
         referenceFiles: [],
+        referenceLinks: [],
         reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores. The AI should freely choose from all available archetypes based on the evidence gathered."
       }
       
