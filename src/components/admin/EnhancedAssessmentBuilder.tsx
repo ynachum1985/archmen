@@ -7,9 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { 
   Save, 
   Eye, 
@@ -193,19 +192,7 @@ export function EnhancedAssessmentBuilder({
     }
   }
 
-  const handleCreateCategory = async () => {
-    try {
-      const category = await categoryService.createCategory({
-        ...newCategory,
-        is_active: true
-      })
-      setCategories(prev => [...prev, category])
-      setNewCategory({ name: '', description: '', color: 'blue', icon: 'Folder' })
-      setShowNewCategoryDialog(false)
-    } catch (error) {
-      console.error('Error creating category:', error)
-    }
-  }
+
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
@@ -247,6 +234,25 @@ export function EnhancedAssessmentBuilder({
       }))
     } catch (error) {
       console.error('Error removing file:', error)
+    }
+  }
+
+  const handleCreateCategory = async () => {
+    try {
+      const createdCategory = await categoryService.createCategory({
+        name: newCategory.name,
+        description: newCategory.description,
+        color: newCategory.color,
+        icon: newCategory.icon,
+        is_active: true
+      })
+
+      setCategories(prev => [...prev, createdCategory])
+      setConfig(prev => ({ ...prev, category: createdCategory.name }))
+      setNewCategory({ name: '', description: '', color: 'blue', icon: 'Folder' })
+      setShowNewCategoryDialog(false)
+    } catch (error) {
+      console.error('Error creating category:', error)
     }
   }
 
@@ -384,22 +390,33 @@ export function EnhancedAssessmentBuilder({
                     </DialogContent>
                   </Dialog>
                 </div>
-                <Select 
-                  value={config.category} 
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, category: value }))}
+                <Select
+                  value={config.category}
+                  onValueChange={(value) => {
+                    if (value === 'create-new') {
+                      setShowNewCategoryDialog(true)
+                    } else {
+                      setConfig(prev => ({ ...prev, category: value }))
+                    }
+                  }}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                     {isLoadingCategories ? (
                       <SelectItem value="loading" disabled>Loading categories...</SelectItem>
                     ) : (
-                      categories.map(category => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
+                      <>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.name} className="hover:bg-gray-50">
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="create-new" className="text-blue-600 font-medium hover:bg-blue-50">
+                          + Create New Category
                         </SelectItem>
-                      ))
+                      </>
                     )}
                   </SelectContent>
                 </Select>
@@ -444,36 +461,36 @@ export function EnhancedAssessmentBuilder({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="questioningStrategy">Questioning Strategy</Label>
-                  <Select 
-                    value={config.questioningStrategy} 
+                  <Select
+                    value={config.questioningStrategy}
                     onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
                   >
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="adaptive">Adaptive - Adjusts based on responses</SelectItem>
-                      <SelectItem value="progressive">Progressive - Builds complexity gradually</SelectItem>
-                      <SelectItem value="exploratory">Exploratory - Wide-ranging discovery</SelectItem>
-                      <SelectItem value="focused">Focused - Targeted deep-dive</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectItem value="adaptive" className="hover:bg-gray-50">Adaptive - Adjusts based on responses</SelectItem>
+                      <SelectItem value="progressive" className="hover:bg-gray-50">Progressive - Builds complexity gradually</SelectItem>
+                      <SelectItem value="exploratory" className="hover:bg-gray-50">Exploratory - Wide-ranging discovery</SelectItem>
+                      <SelectItem value="focused" className="hover:bg-gray-50">Focused - Targeted deep-dive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
                   <Label htmlFor="questioningDepth">Questioning Depth</Label>
-                  <Select 
-                    value={config.questioningDepth} 
+                  <Select
+                    value={config.questioningDepth}
                     onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
                   >
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="surface">Surface - Basic patterns</SelectItem>
-                      <SelectItem value="moderate">Moderate - Behavioral insights</SelectItem>
-                      <SelectItem value="deep">Deep - Psychological patterns</SelectItem>
-                      <SelectItem value="profound">Profound - Unconscious dynamics</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectItem value="surface" className="hover:bg-gray-50">Surface - Basic patterns</SelectItem>
+                      <SelectItem value="moderate" className="hover:bg-gray-50">Moderate - Behavioral insights</SelectItem>
+                      <SelectItem value="deep" className="hover:bg-gray-50">Deep - Psychological patterns</SelectItem>
+                      <SelectItem value="profound" className="hover:bg-gray-50">Profound - Unconscious dynamics</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -747,6 +764,79 @@ export function EnhancedAssessmentBuilder({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* New Category Dialog */}
+      <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Category</DialogTitle>
+            <DialogDescription>
+              Add a new assessment category with custom styling.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category-name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="category-name"
+                value={newCategory.name}
+                onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
+                placeholder="e.g., Career Development"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category-description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="category-description"
+                value={newCategory.description}
+                onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                className="col-span-3"
+                placeholder="Brief description of the category"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category-color" className="text-right">
+                Color
+              </Label>
+              <Select
+                value={newCategory.color}
+                onValueChange={(value) => setNewCategory(prev => ({ ...prev, color: value }))}
+              >
+                <SelectTrigger className="col-span-3 bg-white border-gray-300 shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                  <SelectItem value="blue" className="hover:bg-gray-50">Blue</SelectItem>
+                  <SelectItem value="green" className="hover:bg-gray-50">Green</SelectItem>
+                  <SelectItem value="purple" className="hover:bg-gray-50">Purple</SelectItem>
+                  <SelectItem value="orange" className="hover:bg-gray-50">Orange</SelectItem>
+                  <SelectItem value="red" className="hover:bg-gray-50">Red</SelectItem>
+                  <SelectItem value="indigo" className="hover:bg-gray-50">Indigo</SelectItem>
+                  <SelectItem value="pink" className="hover:bg-gray-50">Pink</SelectItem>
+                  <SelectItem value="teal" className="hover:bg-gray-50">Teal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateCategory}
+              disabled={!newCategory.name.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Create Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
