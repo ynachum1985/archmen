@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
-import AssessmentBuilderForm from "@/components/AssessmentBuilderForm"
+import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -224,12 +224,24 @@ export default function AdminPage() {
     }
   }
 
-  const handleSaveAssessment = async (assessmentData: unknown) => {
+  const handleSaveEnhancedAssessment = async (assessmentData: unknown) => {
     try {
-      console.log('Assessment saved:', assessmentData)
+      console.log('Enhanced Assessment saved:', assessmentData)
       // Here you would save to database
+      alert('Assessment saved successfully!')
     } catch (error) {
-      console.error('Error saving assessment:', error)
+      console.error('Error saving enhanced assessment:', error)
+      alert('Error saving assessment. Please try again.')
+    }
+  }
+
+  const handleTestEnhancedAssessment = async (assessmentData: unknown) => {
+    try {
+      console.log('Testing Enhanced Assessment:', assessmentData)
+      // Here you would navigate to test page or open test modal
+      alert('Test functionality will be implemented soon!')
+    } catch (error) {
+      console.error('Error testing enhanced assessment:', error)
     }
   }
 
@@ -322,9 +334,9 @@ export default function AdminPage() {
                   <CardDescription>Build a specialized assessment for a specific relationship category</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <AssessmentBuilderForm
-                    archetypes={archetypes}
-                    onSave={handleSaveAssessment}
+                  <EnhancedAssessmentBuilder
+                    onSave={handleSaveEnhancedAssessment}
+                    onTest={handleTestEnhancedAssessment}
                   />
                 </CardContent>
               </Card>
