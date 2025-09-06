@@ -230,7 +230,7 @@ export function EnhancedAssessmentBuilder({
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Enhanced Assessment Builder</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Assessment Builder</h1>
           <p className="text-gray-600 mt-1">Create AI-powered archetype assessments with advanced questioning strategies</p>
         </div>
         <div className="flex gap-3">
@@ -253,11 +253,9 @@ export function EnhancedAssessmentBuilder({
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="ai-config">AI Configuration</TabsTrigger>
-          <TabsTrigger value="questioning">Questioning Strategy</TabsTrigger>
-          <TabsTrigger value="flow-builder">Advanced Flow</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview & AI Setup</TabsTrigger>
+          <TabsTrigger value="questioning">Questioning & Flow</TabsTrigger>
           <TabsTrigger value="files">Reference Files</TabsTrigger>
         </TabsList>
 
@@ -397,10 +395,8 @@ export function EnhancedAssessmentBuilder({
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* AI Configuration Tab */}
-        <TabsContent value="ai-config" className="space-y-6">
+          {/* AI Configuration Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -472,109 +468,18 @@ export function EnhancedAssessmentBuilder({
           </Card>
         </TabsContent>
 
-        {/* Questioning Strategy Tab */}
+
+
+        {/* Questioning & Flow Tab */}
         <TabsContent value="questioning" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
-                Questioning Strategy & Examples
+                Question Examples
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Response Requirements */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Response Requirements</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="minSentences">Minimum Sentences</Label>
-                    <Input
-                      id="minSentences"
-                      type="number"
-                      value={config.responseRequirements.minSentences}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        responseRequirements: {
-                          ...prev.responseRequirements,
-                          minSentences: parseInt(e.target.value) || 2
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="maxSentences">Maximum Sentences</Label>
-                    <Input
-                      id="maxSentences"
-                      type="number"
-                      value={config.responseRequirements.maxSentences}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        responseRequirements: {
-                          ...prev.responseRequirements,
-                          maxSentences: parseInt(e.target.value) || 8
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Adaptive Logic */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Adaptive Logic</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="minQuestions">Min Questions</Label>
-                    <Input
-                      id="minQuestions"
-                      type="number"
-                      value={config.adaptiveLogic.minQuestions}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        adaptiveLogic: {
-                          ...prev.adaptiveLogic,
-                          minQuestions: parseInt(e.target.value) || 8
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="maxQuestions">Max Questions</Label>
-                    <Input
-                      id="maxQuestions"
-                      type="number"
-                      value={config.adaptiveLogic.maxQuestions}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        adaptiveLogic: {
-                          ...prev.adaptiveLogic,
-                          maxQuestions: parseInt(e.target.value) || 15
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="evidenceThreshold">Evidence Threshold</Label>
-                    <Input
-                      id="evidenceThreshold"
-                      type="number"
-                      value={config.adaptiveLogic.evidenceThreshold}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        adaptiveLogic: {
-                          ...prev.adaptiveLogic,
-                          evidenceThreshold: parseInt(e.target.value) || 3
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
 
               {/* Question Examples */}
               <div>
@@ -644,10 +549,8 @@ export function EnhancedAssessmentBuilder({
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Advanced Flow Builder Tab */}
-        <TabsContent value="flow-builder" className="space-y-6">
+          {/* Advanced Flow Builder Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
