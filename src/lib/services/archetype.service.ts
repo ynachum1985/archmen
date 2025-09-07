@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/database'
 
 type Archetype = Database['public']['Tables']['enhanced_archetypes']['Row']
@@ -7,10 +7,7 @@ type NewArchetype = Database['public']['Tables']['enhanced_archetypes']['Insert'
 type NewLinguisticPattern = Database['public']['Tables']['linguistic_patterns']['Insert']
 
 export class ArchetypeService {
-  private supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  private supabase = createClient()
 
   async getAllArchetypes(): Promise<Archetype[]> {
     const { data, error } = await this.supabase
@@ -168,6 +165,135 @@ export class ArchetypeService {
 
     const categories = [...new Set(data?.map((item: { category: string }) => item.category) || [])]
     return categories
+  }
+
+  // Assessment-specific methods
+
+  // Get archetype by name for assessment results
+  async getArchetypeByName(name: string): Promise<Archetype | null> {
+    try {
+      const { data, error } = await this.supabase
+        .from('enhanced_archetypes')
+        .select('*')
+        .eq('name', name)
+        .eq('is_active', true)
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error fetching archetype by name:', error)
+      return null
+    }
+  }
+
+  // Analyze text for archetype patterns using linguistic patterns
+  async analyzeTextForArchetypes(text: string): Promise<Record<string, number>> {
+    try {
+      const patterns = await this.getAllLinguisticPatterns()
+      const scores: Record<string, number> = {}
+
+      // Initialize scores
+      const archetypes = [...new Set(patterns.map(p => p.archetype_name))]
+      archetypes.forEach(archetype => {
+        scores[archetype] = 0
+      })
+
+      const lowerText = text.toLowerCase()
+
+      // Score based on keyword matches
+      patterns.forEach(pattern => {
+        let archetypeScore = 0
+
+        // Check keywords
+        if (pattern.keywords) {
+          pattern.keywords.forEach(keyword => {
+            if (lowerText.includes(keyword.toLowerCase())) {
+              archetypeScore += 0.1
+            }
+          })
+        }
+
+        // Check phrases
+        if (pattern.phrases) {
+          pattern.phrases.forEach(phrase => {
+            if (lowerText.includes(phrase.toLowerCase())) {
+              archetypeScore += 0.2
+            }
+          })
+        }
+
+        // Check emotional indicators
+        if (pattern.emotional_indicators) {
+          pattern.emotional_indicators.forEach(indicator => {
+            if (lowerText.includes(indicator.toLowerCase())) {
+              archetypeScore += 0.15
+            }
+          })
+        }
+
+        // Check behavioral patterns
+        if (pattern.behavioral_patterns) {
+          pattern.behavioral_patterns.forEach(behavior => {
+            if (lowerText.includes(behavior.toLowerCase())) {
+              archetypeScore += 0.25
+            }
+          })
+        }
+
+        scores[pattern.archetype_name] = Math.max(scores[pattern.archetype_name], archetypeScore)
+      })
+
+      // Normalize scores to 0-1 range
+      const maxScore = Math.max(...Object.values(scores))
+      if (maxScore > 0) {
+        Object.keys(scores).forEach(archetype => {
+          scores[archetype] = Math.min(1, scores[archetype] / maxScore)
+        })
+      }
+
+      return scores
+    } catch (error) {
+      console.error('Error analyzing text for archetypes:', error)
+      return {}
+    }
+  }
+
+  // Get archetype recommendations based on scores
+  async getArchetypeRecommendations(scores: Record<string, number>): Promise<{
+    primary: Archetype | null
+    secondary: Archetype | null
+    recommendations: string[]
+  }> {
+    try {
+      const sortedScores = Object.entries(scores)
+        .sort(([,a], [,b]) => b - a)
+        .filter(([,score]) => score > 0.3)
+
+      const primary = sortedScores[0] ? await this.getArchetypeByName(sortedScores[0][0]) : null
+      const secondary = sortedScores[1] ? await this.getArchetypeByName(sortedScores[1][0]) : null
+
+      const recommendations: string[] = []
+
+      if (primary) {
+        recommendations.push(`Embrace your ${primary.name} energy by focusing on ${primary.description.toLowerCase()}`)
+
+        // Add shadow work recommendations
+        const shadowInfo = primary.psychology_profile as any
+        if (shadowInfo?.shadow) {
+          recommendations.push(`Be aware of your shadow tendency toward ${shadowInfo.shadow.toLowerCase()}`)
+        }
+      }
+
+      if (secondary) {
+        recommendations.push(`Develop your ${secondary.name} qualities to balance your primary archetype`)
+      }
+
+      return { primary, secondary, recommendations }
+    } catch (error) {
+      console.error('Error getting archetype recommendations:', error)
+      return { primary: null, secondary: null, recommendations: [] }
+    }
   }
 }
 

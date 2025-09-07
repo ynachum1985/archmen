@@ -6,8 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { linguisticAssessmentService } from '@/lib/services/linguistic-assessment.service'
-import { Sparkles, Brain, Send, Loader2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { Sparkles, Brain, Send, Loader2, UserPlus, AlertCircle } from 'lucide-react'
 
 interface AssessmentTheme {
   id: string
@@ -51,23 +53,45 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
   const [userResponse, setUserResponse] = useState('')
   const [conversation, setConversation] = useState<ConversationTurn[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [sessionId, setSessionId] = useState<string | undefined>()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [requiresAuth, setRequiresAuth] = useState(false)
+  const [freeQuestionsRemaining, setFreeQuestionsRemaining] = useState(2)
 
   const [isComplete, setIsComplete] = useState(false)
   const [finalReport, setFinalReport] = useState('')
 
+  const supabase = createClient()
+
   useEffect(() => {
-    // Load available themes
-    const availableThemes = linguisticAssessmentService.getAvailableThemes()
-    setThemes(availableThemes)
+    // Load available themes and check auth status
+    const initializeComponent = async () => {
+      const availableThemes = await linguisticAssessmentService.getAvailableThemes()
+      setThemes(availableThemes)
+      await checkAuthStatus()
+    }
+
+    initializeComponent()
   }, [])
+
+  const checkAuthStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    setIsAuthenticated(!!user)
+  }
 
   const startAssessment = async (themeId: string) => {
     try {
-      const { theme, initialQuestion } = await linguisticAssessmentService.startAssessment(themeId)
+      const { theme, initialQuestion, sessionId: newSessionId, isAuthenticated: authStatus } =
+        await linguisticAssessmentService.startAssessment(themeId)
+
       setSelectedTheme(theme)
       setCurrentQuestion(initialQuestion)
       setAssessmentStarted(true)
       setConversation([])
+      setSessionId(newSessionId)
+      setIsAuthenticated(authStatus)
+      setFreeQuestionsRemaining(2)
+      setRequiresAuth(false)
     } catch (error) {
       console.error('Error starting assessment:', error)
     }
@@ -82,8 +106,21 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
       const result = await linguisticAssessmentService.analyzeResponse(
         userResponse,
         conversation,
-        selectedTheme
+        selectedTheme,
+        sessionId
       )
+
+      // Update state with result
+      setRequiresAuth(result.requiresAuth)
+      setFreeQuestionsRemaining(result.freeQuestionsRemaining)
+
+      if (result.requiresAuth) {
+        // Show authentication prompt
+        setCurrentQuestion(result.nextQuestion)
+        setUserResponse('')
+        setIsAnalyzing(false)
+        return
+      }
 
       // Add this turn to conversation history
       const newTurn: ConversationTurn = {
@@ -102,7 +139,7 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
         .slice(0, 3)
         .filter(([,score]) => score > 0.3)
         .map(([archetype]) => archetype)
-      
+
       onDiscoveredArchetypes(topArchetypes)
 
       if (result.isComplete) {
@@ -110,12 +147,13 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
         const report = await linguisticAssessmentService.generateFinalReport(
           updatedConversation,
           result.archetypeScores,
-          selectedTheme
+          selectedTheme,
+          sessionId
         )
-        
+
         setFinalReport(report)
         setIsComplete(true)
-        
+
         onAssessmentComplete({
           theme: selectedTheme.name,
           conversation: updatedConversation,
@@ -135,9 +173,14 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.metaKey) {
+    if (e.key === 'Enter' && e.metaKey && !requiresAuth) {
       submitResponse()
     }
+  }
+
+  const handleSignUp = () => {
+    // Redirect to sign up page
+    window.location.href = '/register'
   }
 
   const progress = selectedTheme ? Math.min(100, (conversation.length / 7) * 100) : 0
@@ -162,6 +205,15 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
                 <p>🎯 <strong>What&apos;s different:</strong> No multiple choice - just natural conversation that adapts to your responses.</p>
                 <p>🧠 <strong>Focus:</strong> Your language reveals deep patterns about how you show up in different areas of life.</p>
               </div>
+
+              {!isAuthenticated && (
+                <Alert className="border-teal-600 bg-teal-950/20">
+                  <AlertCircle className="h-4 w-4 text-teal-400" />
+                  <AlertDescription className="text-teal-300">
+                    <strong>Free Trial:</strong> Try 2 questions for free! Create a free account to continue your assessment and receive your personalized archetype analysis.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -244,9 +296,16 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
           <CardTitle className="text-lg text-white">
             {selectedTheme?.name} Assessment
           </CardTitle>
-          <Badge variant="outline" className="border-teal-600 text-teal-400">
-            {conversation.length}/7 exchanges
-          </Badge>
+          <div className="flex items-center gap-2">
+            {!isAuthenticated && (
+              <Badge variant="outline" className="border-orange-600 text-orange-400">
+                Free: {freeQuestionsRemaining} left
+              </Badge>
+            )}
+            <Badge variant="outline" className="border-teal-600 text-teal-400">
+              {conversation.length}/7 exchanges
+            </Badge>
+          </div>
         </div>
         <Progress value={progress} className="w-full h-2" />
       </CardHeader>
@@ -273,40 +332,73 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
             <div className="text-white font-medium leading-relaxed">
               {currentQuestion}
             </div>
-            
-            <div className="space-y-3">
-              <Textarea
-                value={userResponse}
-                onChange={(e) => setUserResponse(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Share your thoughts naturally... Press Cmd+Enter to submit"
-                className="bg-slate-700 border-slate-600 text-white min-h-[120px] resize-none"
-                disabled={isAnalyzing}
-              />
-              
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-gray-400">
-                  Tip: Speak naturally - I&apos;m analyzing your language patterns, not looking for &quot;right&quot; answers
+
+            {requiresAuth ? (
+              // Authentication required prompt
+              <div className="space-y-4">
+                <Alert className="border-orange-600 bg-orange-950/20">
+                  <UserPlus className="h-4 w-4 text-orange-400" />
+                  <AlertDescription className="text-orange-300">
+                    You&apos;ve completed your free trial questions! Create a free account to continue your assessment and receive your personalized archetype analysis.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSignUp}
+                    className="bg-teal-600 hover:bg-teal-700 text-white flex-1"
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Create Free Account
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setAssessmentStarted(false)
+                      setRequiresAuth(false)
+                    }}
+                    variant="outline"
+                    className="border-slate-600 text-white hover:bg-slate-700"
+                  >
+                    Try Different Theme
+                  </Button>
                 </div>
-                <Button
-                  onClick={submitResponse}
-                  disabled={!userResponse.trim() || isAnalyzing}
-                  className="bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Submit Response
-                    </>
-                  )}
-                </Button>
               </div>
-            </div>
+            ) : (
+              // Normal response interface
+              <div className="space-y-3">
+                <Textarea
+                  value={userResponse}
+                  onChange={(e) => setUserResponse(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Share your thoughts naturally... Press Cmd+Enter to submit"
+                  className="bg-slate-700 border-slate-600 text-white min-h-[120px] resize-none"
+                  disabled={isAnalyzing}
+                />
+
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-gray-400">
+                    Tip: Speak naturally - I&apos;m analyzing your language patterns, not looking for &quot;right&quot; answers
+                  </div>
+                  <Button
+                    onClick={submitResponse}
+                    disabled={!userResponse.trim() || isAnalyzing}
+                    className="bg-teal-600 hover:bg-teal-700 text-white"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Submit Response
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

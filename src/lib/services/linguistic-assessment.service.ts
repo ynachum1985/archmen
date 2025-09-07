@@ -1,13 +1,22 @@
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/client'
+import type { Database } from '@/lib/types/database'
+import { archetypeService } from './archetype.service'
 
 // Initialize OpenAI client
-const openai = process.env.NEXT_PUBLIC_OPENAI_API_KEY 
+const openai = process.env.NEXT_PUBLIC_OPENAI_API_KEY
   ? new OpenAI({
       apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
       dangerouslyAllowBrowser: true
     })
   : null
+
+type AssessmentSession = Database['public']['Tables']['assessment_sessions']['Row']
+type AssessmentSessionInsert = Database['public']['Tables']['assessment_sessions']['Insert']
+type AssessmentResponse = Database['public']['Tables']['assessment_responses']['Row']
+type AssessmentResponseInsert = Database['public']['Tables']['assessment_responses']['Insert']
+type Conversation = Database['public']['Tables']['conversations']['Row']
+type ConversationInsert = Database['public']['Tables']['conversations']['Insert']
 
 interface LinguisticIndicators {
   emotionalTone: string[]
@@ -35,6 +44,7 @@ interface ConversationTurn {
 
 export class LinguisticAssessmentService {
   private supabase = createClient()
+  private readonly FREE_QUESTION_LIMIT = 2
 
   // Assessment themes for different areas of life
   private themes: AssessmentTheme[] = [
@@ -74,33 +84,91 @@ export class LinguisticAssessmentService {
     }
   ]
 
-  async startAssessment(themeId: string): Promise<{ theme: AssessmentTheme; initialQuestion: string }> {
+  async startAssessment(themeId: string, userId?: string): Promise<{
+    theme: AssessmentTheme;
+    initialQuestion: string;
+    sessionId?: string;
+    isAuthenticated: boolean;
+  }> {
     const theme = this.themes.find(t => t.id === themeId)
     if (!theme) throw new Error('Theme not found')
 
+    let sessionId: string | undefined
+    let isAuthenticated = false
+
+    // Check if user is authenticated
+    const { data: { user } } = await this.supabase.auth.getUser()
+    isAuthenticated = !!user
+
+    // Create session if user is authenticated
+    if (user) {
+      const { data: session, error } = await this.supabase
+        .from('assessment_sessions')
+        .insert({
+          user_id: user.id,
+          template_id: themeId, // Using theme ID as template ID for now
+          status: 'in_progress',
+          current_question_index: 0,
+          progress_percentage: 0,
+          session_data: { theme: theme.name, started_at: new Date().toISOString() }
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error creating assessment session:', error)
+      } else {
+        sessionId = session.id
+      }
+    }
+
     return {
       theme,
-      initialQuestion: theme.initialPrompt
+      initialQuestion: theme.initialPrompt,
+      sessionId,
+      isAuthenticated
     }
   }
 
   async analyzeResponse(
-    response: string, 
+    response: string,
     conversationHistory: ConversationTurn[],
-    theme: AssessmentTheme
+    theme: AssessmentTheme,
+    sessionId?: string
   ): Promise<{
     linguisticAnalysis: LinguisticIndicators
     nextQuestion: string
     archetypeScores: Record<string, number>
     isComplete: boolean
+    requiresAuth: boolean
+    freeQuestionsRemaining: number
   }> {
     if (!openai) {
       throw new Error('OpenAI not configured')
     }
 
+    // Check authentication status
+    const { data: { user } } = await this.supabase.auth.getUser()
+    const isAuthenticated = !!user
+    const currentQuestionCount = conversationHistory.length + 1
+    const freeQuestionsRemaining = Math.max(0, this.FREE_QUESTION_LIMIT - currentQuestionCount)
+    const requiresAuth = !isAuthenticated && currentQuestionCount >= this.FREE_QUESTION_LIMIT
+
+    // If user has exceeded free limit and is not authenticated, return early
+    if (requiresAuth) {
+      return {
+        linguisticAnalysis: {} as LinguisticIndicators,
+        nextQuestion: "To continue your assessment and receive your personalized archetype analysis, please create a free account. This helps us save your progress and provide you with detailed insights.",
+        archetypeScores: {},
+        isComplete: false,
+        requiresAuth: true,
+        freeQuestionsRemaining: 0
+      }
+    }
+
     // Analyze the linguistic patterns in the response
     const analysisPrompt = this.buildAnalysisPrompt(response, conversationHistory, theme)
-    
+
     const analysisCompletion = await openai.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [{ role: 'user', content: analysisPrompt }],
@@ -110,9 +178,14 @@ export class LinguisticAssessmentService {
 
     const analysis = JSON.parse(analysisCompletion.choices[0]?.message?.content || '{}')
 
+    // Save response to database if user is authenticated
+    if (user && sessionId) {
+      await this.saveAssessmentResponse(user.id, sessionId, response, analysis, theme.id)
+    }
+
     // Generate next question based on analysis
     const nextQuestionPrompt = this.buildNextQuestionPrompt(analysis, conversationHistory, theme)
-    
+
     const questionCompletion = await openai.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [{ role: 'user', content: nextQuestionPrompt }],
@@ -123,16 +196,23 @@ export class LinguisticAssessmentService {
     const nextQuestion = questionCompletion.choices[0]?.message?.content || ''
 
     // Calculate archetype scores based on linguistic patterns
-    const archetypeScores = this.calculateArchetypeScores(analysis, theme)
+    const archetypeScores = await this.calculateArchetypeScores(analysis, theme)
 
     // Determine if assessment is complete (after 5-8 exchanges or high confidence)
     const isComplete = conversationHistory.length >= 5 && this.hasHighConfidenceScores(archetypeScores)
+
+    // Update session progress if authenticated
+    if (user && sessionId) {
+      await this.updateSessionProgress(sessionId, conversationHistory.length + 1, archetypeScores, isComplete)
+    }
 
     return {
       linguisticAnalysis: analysis,
       nextQuestion,
       archetypeScores,
-      isComplete
+      isComplete,
+      requiresAuth: false,
+      freeQuestionsRemaining
     }
   }
 
@@ -192,9 +272,9 @@ Return only the question, no additional text.
 `
   }
 
-  private calculateArchetypeScores(analysis: Record<string, unknown>, theme: AssessmentTheme): Record<string, number> {
+  private async calculateArchetypeScores(analysis: Record<string, unknown>, theme: AssessmentTheme): Promise<Record<string, number>> {
     const scores: Record<string, number> = {}
-    
+
     // Initialize all archetypes with base score
     Object.keys(theme.archetypeMapping).forEach(archetype => {
       scores[archetype] = 0
@@ -219,6 +299,26 @@ Return only the question, no additional text.
       })
     }
 
+    // Use archetype service for additional pattern matching
+    try {
+      const responseText = Array.isArray(analysis.keyPhrases)
+        ? (analysis.keyPhrases as string[]).join(' ')
+        : ''
+
+      if (responseText) {
+        const archetypeScores = await archetypeService.analyzeTextForArchetypes(responseText)
+
+        // Merge scores from archetype service
+        Object.entries(archetypeScores).forEach(([archetype, score]) => {
+          if (scores.hasOwnProperty(archetype)) {
+            scores[archetype] = Math.max(scores[archetype], score * 0.5) // Weight database patterns at 50%
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error using archetype service for scoring:', error)
+    }
+
     // Normalize scores to 0-1 range
     Object.keys(scores).forEach(archetype => {
       scores[archetype] = Math.min(1, scores[archetype])
@@ -235,7 +335,8 @@ Return only the question, no additional text.
   async generateFinalReport(
     conversationHistory: ConversationTurn[],
     finalScores: Record<string, number>,
-    theme: AssessmentTheme
+    theme: AssessmentTheme,
+    sessionId?: string
   ): Promise<string> {
     if (!openai) {
       throw new Error('OpenAI not configured')
@@ -267,11 +368,209 @@ Write in a warm, insightful tone that helps the person understand themselves bet
       max_tokens: 1500
     })
 
-    return completion.choices[0]?.message?.content || 'Unable to generate report'
+    const report = completion.choices[0]?.message?.content || 'Unable to generate report'
+
+    // Save final results to database if user is authenticated
+    const { data: { user } } = await this.supabase.auth.getUser()
+    if (user && sessionId) {
+      await this.saveFinalResults(user.id, sessionId, theme.id, finalScores, report, conversationHistory)
+    }
+
+    return report
   }
 
-  getAvailableThemes(): AssessmentTheme[] {
+  // Save final assessment results
+  private async saveFinalResults(
+    userId: string,
+    sessionId: string,
+    themeId: string,
+    archetypeScores: Record<string, number>,
+    finalReport: string,
+    conversationHistory: ConversationTurn[]
+  ): Promise<void> {
+    try {
+      await this.supabase.from('assessment_results').insert({
+        user_id: userId,
+        session_id: sessionId,
+        theme_id: themeId,
+        archetype_scores: archetypeScores,
+        final_report: finalReport,
+        conversation_summary: {
+          total_turns: conversationHistory.length,
+          themes_discussed: conversationHistory.map(turn => turn.linguisticAnalysis.dominantThemes || []).flat(),
+          linguistic_patterns: conversationHistory.map(turn => turn.linguisticAnalysis.languagePatterns || []).flat()
+        }
+      })
+    } catch (error) {
+      console.error('Error saving final results:', error)
+      // Don't throw - assessment can complete without saving
+    }
+  }
+
+  async getAvailableThemes(): Promise<AssessmentTheme[]> {
+    try {
+      const { data, error } = await this.supabase
+        .from('assessment_themes')
+        .select('*')
+        .eq('is_active', true)
+
+      if (error) {
+        console.error('Error fetching themes from database:', error)
+        // Fallback to hardcoded themes
+        return this.themes
+      }
+
+      // Convert database themes to AssessmentTheme format
+      const dbThemes: AssessmentTheme[] = data?.map(theme => ({
+        id: theme.id,
+        name: theme.name,
+        description: theme.description || '',
+        focusAreas: theme.focus_areas || [],
+        initialPrompt: theme.initial_prompt,
+        archetypeMapping: theme.archetype_mapping as Record<string, string[]> || {}
+      })) || []
+
+      // Return database themes if available, otherwise fallback to hardcoded
+      return dbThemes.length > 0 ? dbThemes : this.themes
+    } catch (error) {
+      console.error('Error in getAvailableThemes:', error)
+      return this.themes
+    }
+  }
+
+  // Keep the synchronous version for backward compatibility
+  getAvailableThemesSync(): AssessmentTheme[] {
     return this.themes
+  }
+
+  // Helper method to save assessment response to database
+  private async saveAssessmentResponse(
+    userId: string,
+    sessionId: string,
+    response: string,
+    analysis: LinguisticIndicators,
+    templateId: string
+  ): Promise<void> {
+    try {
+      // Save to assessment_responses table
+      await this.supabase.from('assessment_responses').insert({
+        user_id: userId,
+        session_id: sessionId,
+        template_id: templateId,
+        question_id: `question_${Date.now()}`, // Generate unique question ID
+        response_value: response,
+        response_data: {
+          linguistic_analysis: analysis,
+          timestamp: new Date().toISOString()
+        }
+      })
+
+      // Also save to conversations table for chat history
+      await this.supabase.from('conversations').insert({
+        user_id: userId,
+        assessment_id: sessionId,
+        messages: [{
+          role: 'user',
+          content: response,
+          timestamp: new Date().toISOString(),
+          analysis
+        }],
+        metadata: {
+          type: 'linguistic_assessment',
+          template_id: templateId
+        }
+      })
+    } catch (error) {
+      console.error('Error saving assessment response:', error)
+      // Don't throw error - continue assessment even if save fails
+    }
+  }
+
+  // Helper method to update session progress
+  private async updateSessionProgress(
+    sessionId: string,
+    questionIndex: number,
+    archetypeScores: Record<string, number>,
+    isComplete: boolean
+  ): Promise<void> {
+    try {
+      const progressPercentage = Math.min(100, (questionIndex / 8) * 100)
+
+      const updateData: any = {
+        current_question_index: questionIndex,
+        progress_percentage: progressPercentage,
+        discovered_archetypes: archetypeScores,
+        updated_at: new Date().toISOString()
+      }
+
+      if (isComplete) {
+        updateData.status = 'completed'
+        updateData.completed_at = new Date().toISOString()
+      }
+
+      await this.supabase
+        .from('assessment_sessions')
+        .update(updateData)
+        .eq('id', sessionId)
+    } catch (error) {
+      console.error('Error updating session progress:', error)
+    }
+  }
+
+  // Method to get user's assessment history
+  async getUserAssessmentHistory(userId: string): Promise<AssessmentSession[]> {
+    try {
+      const { data, error } = await this.supabase
+        .from('assessment_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching assessment history:', error)
+      return []
+    }
+  }
+
+  // Method to resume an existing session
+  async resumeSession(sessionId: string): Promise<{
+    session: AssessmentSession | null;
+    conversationHistory: ConversationTurn[];
+  }> {
+    try {
+      // Get session details
+      const { data: session, error: sessionError } = await this.supabase
+        .from('assessment_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single()
+
+      if (sessionError) throw sessionError
+
+      // Get conversation history
+      const { data: responses, error: responsesError } = await this.supabase
+        .from('assessment_responses')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true })
+
+      if (responsesError) throw responsesError
+
+      // Convert responses to conversation turns
+      const conversationHistory: ConversationTurn[] = responses?.map(response => ({
+        question: 'Previous question', // We'd need to store questions too
+        response: response.response_value,
+        timestamp: response.created_at || '',
+        linguisticAnalysis: (response.response_data as any)?.linguistic_analysis || {}
+      })) || []
+
+      return { session, conversationHistory }
+    } catch (error) {
+      console.error('Error resuming session:', error)
+      return { session: null, conversationHistory: [] }
+    }
   }
 }
 
