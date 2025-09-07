@@ -64,6 +64,15 @@ interface EnhancedAssessmentConfig {
 
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
+
+  // Report and Answers Configuration
+  reportAnswers: {
+    theoreticalUnderstanding: string
+    embodimentPractices: string
+    integrationPractices: string
+    resourceLinks: string[]
+    archetypeCards: string[]
+  }
 }
 
 interface EnhancedAssessmentBuilderProps {
@@ -145,7 +154,26 @@ QUESTIONING STRATEGY:
 4. SHADOW PATTERNS: Potential blind spots or underdeveloped aspects
 5. INTEGRATION RECOMMENDATIONS: Specific suggestions for growth and development
 
-The AI should freely choose from all available archetypes based on the evidence gathered, without being constrained to a predefined list.`
+The AI should freely choose from all available archetypes based on the evidence gathered, without being constrained to a predefined list.`,
+  reportAnswers: {
+    theoreticalUnderstanding: `Provide deep theoretical context about the discovered archetype(s):
+- Historical and mythological origins
+- Psychological foundations and core motivations
+- How this archetype manifests in modern life
+- Common patterns and behaviors associated with this archetype`,
+    embodimentPractices: `Suggest specific embodiment practices to help integrate the archetype:
+- Physical practices (movement, posture, breathing)
+- Visualization and meditation techniques
+- Daily rituals and habits
+- Creative expression methods`,
+    integrationPractices: `Recommend integration practices for balanced development:
+- Shadow work exercises
+- Journaling prompts and reflection questions
+- Relationship and communication practices
+- Professional and life application strategies`,
+    resourceLinks: [],
+    archetypeCards: []
+  }
 }
 
 export function EnhancedAssessmentBuilder({ 
@@ -242,9 +270,10 @@ export function EnhancedAssessmentBuilder({
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview & AI Setup</TabsTrigger>
           <TabsTrigger value="questioning">Questioning & Flow</TabsTrigger>
+          <TabsTrigger value="reports">Report & Answers</TabsTrigger>
           <TabsTrigger value="files">Reference Files</TabsTrigger>
         </TabsList>
 
@@ -393,16 +422,7 @@ export function EnhancedAssessmentBuilder({
               />
             </div>
 
-            <div>
-              <Label htmlFor="reportGeneration">Report Generation Instructions</Label>
-              <Textarea
-                id="reportGeneration"
-                value={config.reportGeneration}
-                onChange={(e) => setConfig(prev => ({ ...prev, reportGeneration: e.target.value }))}
-                className="mt-1"
-                rows={8}
-              />
-            </div>
+
           </div>
         </TabsContent>
 
@@ -529,6 +549,210 @@ export function EnhancedAssessmentBuilder({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Report & Answers Tab */}
+        <TabsContent value="reports" className="space-y-8">
+          {/* Report Generation */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Report Generation Instructions</h3>
+            <Textarea
+              value={config.reportGeneration}
+              onChange={(e) => setConfig(prev => ({ ...prev, reportGeneration: e.target.value }))}
+              className="font-mono text-sm"
+              rows={8}
+              placeholder="Define how the AI should generate assessment reports..."
+            />
+          </div>
+
+          {/* Theoretical Understanding */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Theoretical Understanding</h3>
+            <p className="text-sm text-gray-600">
+              Provide deep theoretical context about discovered archetypes
+            </p>
+            <Textarea
+              value={config.reportAnswers.theoreticalUnderstanding}
+              onChange={(e) => setConfig(prev => ({
+                ...prev,
+                reportAnswers: {
+                  ...prev.reportAnswers,
+                  theoreticalUnderstanding: e.target.value
+                }
+              }))}
+              className="text-sm"
+              rows={6}
+              placeholder="Define theoretical context and background information..."
+            />
+          </div>
+
+          {/* Embodiment Practices */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Embodiment Practices</h3>
+            <p className="text-sm text-gray-600">
+              Specific practices to help users embody their discovered archetype
+            </p>
+            <Textarea
+              value={config.reportAnswers.embodimentPractices}
+              onChange={(e) => setConfig(prev => ({
+                ...prev,
+                reportAnswers: {
+                  ...prev.reportAnswers,
+                  embodimentPractices: e.target.value
+                }
+              }))}
+              className="text-sm"
+              rows={6}
+              placeholder="Define embodiment practices and exercises..."
+            />
+          </div>
+
+          {/* Integration Practices */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Integration Practices</h3>
+            <p className="text-sm text-gray-600">
+              Practices to help integrate archetypal knowledge into daily life
+            </p>
+            <Textarea
+              value={config.reportAnswers.integrationPractices}
+              onChange={(e) => setConfig(prev => ({
+                ...prev,
+                reportAnswers: {
+                  ...prev.reportAnswers,
+                  integrationPractices: e.target.value
+                }
+              }))}
+              className="text-sm"
+              rows={6}
+              placeholder="Define integration practices and strategies..."
+            />
+          </div>
+
+          {/* Resource Links */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Resource Links</h3>
+            <p className="text-sm text-gray-600">
+              Additional resources and links for deeper exploration
+            </p>
+            <div className="space-y-2">
+              {config.reportAnswers.resourceLinks.map((link, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={link}
+                    onChange={(e) => {
+                      const newLinks = [...config.reportAnswers.resourceLinks]
+                      newLinks[index] = e.target.value
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          resourceLinks: newLinks
+                        }
+                      }))
+                    }}
+                    placeholder="https://example.com/resource"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newLinks = config.reportAnswers.resourceLinks.filter((_, i) => i !== index)
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          resourceLinks: newLinks
+                        }
+                      }))
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setConfig(prev => ({
+                    ...prev,
+                    reportAnswers: {
+                      ...prev.reportAnswers,
+                      resourceLinks: [...prev.reportAnswers.resourceLinks, '']
+                    }
+                  }))
+                }}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                Add Resource Link
+              </Button>
+            </div>
+          </div>
+
+          {/* Archetype Cards */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Archetype Cards</h3>
+            <p className="text-sm text-gray-600">
+              Reference cards with archetype information and guidance
+            </p>
+            <div className="space-y-2">
+              {config.reportAnswers.archetypeCards.map((card, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={card}
+                    onChange={(e) => {
+                      const newCards = [...config.reportAnswers.archetypeCards]
+                      newCards[index] = e.target.value
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          archetypeCards: newCards
+                        }
+                      }))
+                    }}
+                    placeholder="Archetype card name or reference"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newCards = config.reportAnswers.archetypeCards.filter((_, i) => i !== index)
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          archetypeCards: newCards
+                        }
+                      }))
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setConfig(prev => ({
+                    ...prev,
+                    reportAnswers: {
+                      ...prev.reportAnswers,
+                      archetypeCards: [...prev.reportAnswers.archetypeCards, '']
+                    }
+                  }))
+                }}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                Add Archetype Card
+              </Button>
             </div>
           </div>
         </TabsContent>
