@@ -279,8 +279,8 @@ export class ArchetypeService {
         recommendations.push(`Embrace your ${primary.name} energy by focusing on ${primary.description.toLowerCase()}`)
 
         // Add shadow work recommendations
-        const shadowInfo = primary.psychology_profile as any
-        if (shadowInfo?.shadow) {
+        const shadowInfo = primary.psychology_profile as Record<string, unknown>
+        if (shadowInfo?.shadow && typeof shadowInfo.shadow === 'string') {
           recommendations.push(`Be aware of your shadow tendency toward ${shadowInfo.shadow.toLowerCase()}`)
         }
       }

@@ -104,8 +104,8 @@ export class AssessmentIntegrationService {
     
     // Try to extract from adaptive logic or create default mapping
     if (assessment.adaptive_logic && typeof assessment.adaptive_logic === 'object') {
-      const adaptiveLogic = assessment.adaptive_logic as any
-      if (adaptiveLogic.archetypeMapping) {
+      const adaptiveLogic = assessment.adaptive_logic as Record<string, unknown>
+      if (adaptiveLogic.archetypeMapping && typeof adaptiveLogic.archetypeMapping === 'object') {
         Object.assign(archetypeMapping, adaptiveLogic.archetypeMapping)
       }
     }
@@ -126,8 +126,8 @@ export class AssessmentIntegrationService {
     // Extract focus areas from question examples or use defaults
     const focusAreas: string[] = []
     if (assessment.question_examples && typeof assessment.question_examples === 'object') {
-      const questionExamples = assessment.question_examples as any
-      if (questionExamples.focusAreas) {
+      const questionExamples = assessment.question_examples as Record<string, unknown>
+      if (questionExamples.focusAreas && Array.isArray(questionExamples.focusAreas)) {
         focusAreas.push(...questionExamples.focusAreas)
       }
     }
@@ -182,8 +182,8 @@ export class AssessmentIntegrationService {
     const archetypeMapping: Record<string, string[]> = {}
     
     if (template.metadata && typeof template.metadata === 'object') {
-      const metadata = template.metadata as any
-      if (metadata.archetypeMapping) {
+      const metadata = template.metadata as Record<string, unknown>
+      if (metadata.archetypeMapping && typeof metadata.archetypeMapping === 'object') {
         Object.assign(archetypeMapping, metadata.archetypeMapping)
       }
     }
@@ -214,7 +214,7 @@ export class AssessmentIntegrationService {
   }
 
   // Create a main assessment from the Assessment Builder
-  async createMainAssessment(assessmentConfig: any): Promise<string> {
+  async createMainAssessment(assessmentConfig: Record<string, unknown>): Promise<string> {
     try {
       const { data, error } = await this.supabase
         .from('enhanced_assessments')
@@ -248,7 +248,7 @@ export class AssessmentIntegrationService {
   }
 
   // Extract archetype mapping from assessment config
-  private extractArchetypeMapping(config: any): Record<string, string[]> {
+  private extractArchetypeMapping(_config: Record<string, unknown>): Record<string, string[]> {
     // This would extract archetype mapping from the assessment builder config
     // For now, return a default mapping
     return {

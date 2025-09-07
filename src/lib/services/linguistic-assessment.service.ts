@@ -13,11 +13,6 @@ const openai = process.env.NEXT_PUBLIC_OPENAI_API_KEY
   : null
 
 type AssessmentSession = Database['public']['Tables']['assessment_sessions']['Row']
-type AssessmentSessionInsert = Database['public']['Tables']['assessment_sessions']['Insert']
-type AssessmentResponse = Database['public']['Tables']['assessment_responses']['Row']
-type AssessmentResponseInsert = Database['public']['Tables']['assessment_responses']['Insert']
-type Conversation = Database['public']['Tables']['conversations']['Row']
-type ConversationInsert = Database['public']['Tables']['conversations']['Insert']
 
 interface LinguisticIndicators {
   emotionalTone: string[]
@@ -79,7 +74,7 @@ export class LinguisticAssessmentService {
     }
   ]
 
-  async startAssessment(themeId: string, userId?: string): Promise<{
+  async startAssessment(themeId: string): Promise<{
     theme: AssessmentTheme;
     initialQuestion: string;
     sessionId?: string;
@@ -526,7 +521,7 @@ Write in a warm, insightful tone that helps the person understand themselves bet
     try {
       const progressPercentage = Math.min(100, (questionIndex / 8) * 100)
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         current_question_index: questionIndex,
         progress_percentage: progressPercentage,
         discovered_archetypes: archetypeScores,
@@ -593,7 +588,7 @@ Write in a warm, insightful tone that helps the person understand themselves bet
         question: 'Previous question', // We'd need to store questions too
         response: response.response_value,
         timestamp: response.created_at || '',
-        linguisticAnalysis: (response.response_data as any)?.linguistic_analysis || {}
+        linguisticAnalysis: (response.response_data as Record<string, unknown>)?.linguistic_analysis as LinguisticIndicators || {}
       })) || []
 
       return { session, conversationHistory }

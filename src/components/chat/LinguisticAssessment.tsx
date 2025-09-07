@@ -76,7 +76,7 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
     }
 
     initializeComponent()
-  }, [])
+  }, [checkAuthStatus])
 
   const checkAuthStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
