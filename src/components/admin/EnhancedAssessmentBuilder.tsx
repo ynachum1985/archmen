@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,16 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { QuestioningFlowBuilder, QuestioningFlow } from './QuestioningFlowBuilder'
 import { ReferenceManager, type ReferenceLink } from './ReferenceManager'
-import { 
-  Save, 
-  Eye, 
+import {
+  Save,
+  Eye,
   Plus,
-  X,
-  FileText,
-  Settings,
-  Brain,
-  MessageCircle,
-
+  X
 } from 'lucide-react'
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
 import { type UploadedFile } from '@/lib/services/file-upload.service'
