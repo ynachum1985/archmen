@@ -227,29 +227,23 @@ export function EnhancedAssessmentBuilder({
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Assessment Builder</h1>
-          <p className="text-gray-600 mt-1">Create AI-powered archetype assessments with advanced questioning strategies</p>
-        </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={handleTest}
-            className="flex items-center gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            Test Assessment
-          </Button>
-          <Button 
-            onClick={handleSave}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-          >
-            <Save className="h-4 w-4" />
-            Save Assessment
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3">
+        <Button
+          variant="outline"
+          onClick={handleTest}
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          Test Assessment
+        </Button>
+        <Button
+          onClick={handleSave}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+        >
+          <Save className="h-4 w-4" />
+          Save Assessment
+        </Button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
@@ -260,341 +254,304 @@ export function EnhancedAssessmentBuilder({
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Assessment Name</Label>
-                  <Input
-                    id="name"
-                    value={config.name}
-                    onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Leadership Archetype Discovery"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="duration">Expected Duration (minutes)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    value={config.expectedDuration}
-                    onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-              
+        <TabsContent value="overview" className="space-y-8">
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={config.description}
-                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe what this assessment aims to discover..."
+                <Label htmlFor="name">Assessment Name</Label>
+                <Input
+                  id="name"
+                  value={config.name}
+                  onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., Leadership Archetype Discovery"
                   className="mt-1"
-                  rows={3}
                 />
               </div>
-
               <div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="category">Category</Label>
-                  <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
-                        <Plus className="h-3 w-3" />
-                        New Category
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create New Category</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="categoryName">Category Name</Label>
-                          <Input
-                            id="categoryName"
-                            value={newCategory.name}
-                            onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                            placeholder="e.g., Spiritual Development"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="categoryDescription">Description</Label>
-                          <Textarea
-                            id="categoryDescription"
-                            value={newCategory.description}
-                            onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Describe this category..."
-                            rows={2}
-                          />
-                        </div>
-                        <div className="flex gap-4">
-                          <Button onClick={handleCreateCategory} className="flex-1">
-                            Create Category
-                          </Button>
-                          <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
-                            Cancel
-                          </Button>
-                        </div>
+                <Label htmlFor="duration">Expected Duration (minutes)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={config.expectedDuration}
+                  onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={config.description}
+                onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Describe what this assessment aims to discover..."
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="category">Category</Label>
+                <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex items-center gap-1">
+                      <Plus className="h-3 w-3" />
+                      New Category
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Category</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="categoryName">Category Name</Label>
+                        <Input
+                          id="categoryName"
+                          value={newCategory.name}
+                          onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="e.g., Spiritual Development"
+                        />
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <Select
-                  value={config.category}
-                  onValueChange={(value) => {
-                    if (value === 'create-new') {
-                      setShowNewCategoryDialog(true)
-                    } else {
-                      setConfig(prev => ({ ...prev, category: value }))
-                    }
-                  }}
-                >
-                  <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                    {isLoadingCategories ? (
-                      <SelectItem value="loading" disabled>Loading categories...</SelectItem>
-                    ) : (
-                      <>
-                        {categories.map(category => (
-                          <SelectItem key={category.id} value={category.name} className="hover:bg-gray-50">
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="create-new" className="text-blue-600 font-medium hover:bg-blue-50">
-                          + Create New Category
+                      <div>
+                        <Label htmlFor="categoryDescription">Description</Label>
+                        <Textarea
+                          id="categoryDescription"
+                          value={newCategory.description}
+                          onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Describe this category..."
+                          rows={2}
+                        />
+                      </div>
+                      <div className="flex gap-4">
+                        <Button onClick={handleCreateCategory} className="flex-1">
+                          Create Category
+                        </Button>
+                        <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <Select
+                value={config.category}
+                onValueChange={(value) => {
+                  if (value === 'create-new') {
+                    setShowNewCategoryDialog(true)
+                  } else {
+                    setConfig(prev => ({ ...prev, category: value }))
+                  }
+                }}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingCategories ? (
+                    <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                  ) : (
+                    <>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
                         </SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+                      ))}
+                      <SelectItem value="create-new" className="text-blue-600 font-medium">
+                        + Create New Category
+                      </SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div>
-                <Label htmlFor="purpose">Assessment Purpose</Label>
-                <Textarea
-                  id="purpose"
-                  value={config.purpose}
-                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                  placeholder="What specific insights should this assessment provide?"
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            <div>
+              <Label htmlFor="purpose">Assessment Purpose</Label>
+              <Textarea
+                id="purpose"
+                value={config.purpose}
+                onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
+                placeholder="What specific insights should this assessment provide?"
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+          </div>
 
-          {/* AI Configuration Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                AI System Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="systemPrompt">System Prompt</Label>
-                <Textarea
-                  id="systemPrompt"
-                  value={config.systemPrompt}
-                  onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                  className="mt-1 font-mono text-sm"
-                  rows={12}
-                />
-              </div>
+          {/* AI Configuration */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">AI Configuration</h3>
+            <div>
+              <Label htmlFor="systemPrompt">System Prompt</Label>
+              <Textarea
+                id="systemPrompt"
+                value={config.systemPrompt}
+                onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                className="mt-1 font-mono text-sm"
+                rows={12}
+              />
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="questioningStrategy">Questioning Strategy</Label>
-                  <Select
-                    value={config.questioningStrategy}
-                    onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
-                  >
-                    <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectItem value="adaptive" className="hover:bg-gray-50">Adaptive - Adjusts based on responses</SelectItem>
-                      <SelectItem value="progressive" className="hover:bg-gray-50">Progressive - Builds complexity gradually</SelectItem>
-                      <SelectItem value="exploratory" className="hover:bg-gray-50">Exploratory - Wide-ranging discovery</SelectItem>
-                      <SelectItem value="focused" className="hover:bg-gray-50">Focused - Targeted deep-dive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="questioningDepth">Questioning Depth</Label>
-                  <Select
-                    value={config.questioningDepth}
-                    onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
-                  >
-                    <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectItem value="surface" className="hover:bg-gray-50">Surface - Basic patterns</SelectItem>
-                      <SelectItem value="moderate" className="hover:bg-gray-50">Moderate - Behavioral insights</SelectItem>
-                      <SelectItem value="deep" className="hover:bg-gray-50">Deep - Psychological patterns</SelectItem>
-                      <SelectItem value="profound" className="hover:bg-gray-50">Profound - Unconscious dynamics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="reportGeneration">Report Generation Instructions</Label>
-                <Textarea
-                  id="reportGeneration"
-                  value={config.reportGeneration}
-                  onChange={(e) => setConfig(prev => ({ ...prev, reportGeneration: e.target.value }))}
-                  className="mt-1"
-                  rows={8}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            <div>
+              <Label htmlFor="reportGeneration">Report Generation Instructions</Label>
+              <Textarea
+                id="reportGeneration"
+                value={config.reportGeneration}
+                onChange={(e) => setConfig(prev => ({ ...prev, reportGeneration: e.target.value }))}
+                className="mt-1"
+                rows={8}
+              />
+            </div>
+          </div>
         </TabsContent>
 
 
 
         {/* Questioning & Flow Tab */}
-        <TabsContent value="questioning" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Question Examples
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-
-              {/* Question Examples */}
+        <TabsContent value="questioning" className="space-y-8">
+          {/* Questioning Strategy */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Questioning Strategy</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-lg font-medium mb-4">Question Examples</h3>
-                <div className="space-y-4">
-                  {Object.entries(config.questionExamples).map(([type, examples]) => (
-                    <div key={type}>
-                      <Label className="capitalize">{type.replace(/([A-Z])/g, ' $1')} Questions</Label>
-                      <div className="mt-2 space-y-2">
-                        {examples.map((example, index) => (
-                          <div key={index} className="flex gap-2">
-                            <Textarea
-                              value={example}
-                              onChange={(e) => {
-                                const newExamples = [...examples]
-                                newExamples[index] = e.target.value
-                                setConfig(prev => ({
-                                  ...prev,
-                                  questionExamples: {
-                                    ...prev.questionExamples,
-                                    [type]: newExamples
-                                  }
-                                }))
-                              }}
-                              className="flex-1"
-                              rows={2}
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newExamples = examples.filter((_, i) => i !== index)
-                                setConfig(prev => ({
-                                  ...prev,
-                                  questionExamples: {
-                                    ...prev.questionExamples,
-                                    [type]: newExamples
-                                  }
-                                }))
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
+                <Label htmlFor="questioningStrategy">Strategy</Label>
+                <Select
+                  value={config.questioningStrategy}
+                  onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="adaptive">Adaptive - Adjusts based on responses</SelectItem>
+                    <SelectItem value="progressive">Progressive - Builds complexity gradually</SelectItem>
+                    <SelectItem value="exploratory">Exploratory - Wide-ranging discovery</SelectItem>
+                    <SelectItem value="focused">Focused - Targeted deep-dive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="questioningDepth">Depth</Label>
+                <Select
+                  value={config.questioningDepth}
+                  onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="surface">Surface - Basic patterns</SelectItem>
+                    <SelectItem value="moderate">Moderate - Behavioral insights</SelectItem>
+                    <SelectItem value="deep">Deep - Psychological patterns</SelectItem>
+                    <SelectItem value="profound">Profound - Unconscious dynamics</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Flow Builder */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Flow Builder</h3>
+            <QuestioningFlowBuilder
+              flow={config.questioningFlow}
+              onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
+              onTest={(flow) => {
+                console.log('Testing questioning flow:', flow)
+                alert('Flow testing will be implemented in the chat interface!')
+              }}
+            />
+          </div>
+
+          {/* Question Examples */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Question Examples</h3>
+            <div className="space-y-4">
+              {Object.entries(config.questionExamples).map(([type, examples]) => (
+                <div key={type}>
+                  <Label className="capitalize">{type.replace(/([A-Z])/g, ' $1')} Questions</Label>
+                  <div className="mt-2 space-y-2">
+                    {examples.map((example, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Textarea
+                          value={example}
+                          onChange={(e) => {
+                            const newExamples = [...examples]
+                            newExamples[index] = e.target.value
                             setConfig(prev => ({
                               ...prev,
                               questionExamples: {
                                 ...prev.questionExamples,
-                                [type]: [...examples, '']
+                                [type]: newExamples
                               }
                             }))
                           }}
-                          className="flex items-center gap-1"
+                          className="flex-1"
+                          rows={2}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newExamples = examples.filter((_, i) => i !== index)
+                            setConfig(prev => ({
+                              ...prev,
+                              questionExamples: {
+                                ...prev.questionExamples,
+                                [type]: newExamples
+                              }
+                            }))
+                          }}
                         >
-                          <Plus className="h-3 w-3" />
-                          Add Example
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setConfig(prev => ({
+                          ...prev,
+                          questionExamples: {
+                            ...prev.questionExamples,
+                            [type]: [...examples, '']
+                          }
+                        }))
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add Example
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Advanced Flow Builder Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Advanced Questioning Flow Designer
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Create sophisticated questioning sequences with drag & drop. Design custom flows that adapt to user responses and build evidence systematically.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <QuestioningFlowBuilder
-                flow={config.questioningFlow}
-                onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
-                onTest={(flow) => {
-                  console.log('Testing questioning flow:', flow)
-                  alert('Flow testing will be implemented in the chat interface!')
-                }}
-              />
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </div>
         </TabsContent>
 
         {/* Reference Files Tab */}
         <TabsContent value="files" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Reference Files & Links
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Upload documents and add reference links for the AI to use during assessments
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ReferenceManager
-                files={config.referenceFiles}
-                links={config.referenceLinks}
-                onFilesChange={(files) => setConfig(prev => ({ ...prev, referenceFiles: files }))}
-                onLinksChange={(links) => setConfig(prev => ({ ...prev, referenceLinks: links }))}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Reference Files & Links</h3>
+            <p className="text-sm text-gray-600">
+              Upload documents and add reference links for the AI to use during assessments
+            </p>
+            <ReferenceManager
+              files={config.referenceFiles}
+              links={config.referenceLinks}
+              onFilesChange={(files) => setConfig(prev => ({ ...prev, referenceFiles: files }))}
+              onLinksChange={(links) => setConfig(prev => ({ ...prev, referenceLinks: links }))}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
