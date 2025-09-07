@@ -66,7 +66,7 @@ interface EnhancedAssessmentConfig {
   reportGeneration: string
 
   // Report and Answers Configuration
-  reportAnswers: {
+  reportAnswers?: {
     theoreticalUnderstanding: string
     embodimentPractices: string
     integrationPractices: string
@@ -574,12 +574,16 @@ export function EnhancedAssessmentBuilder({
               Provide deep theoretical context about discovered archetypes
             </p>
             <Textarea
-              value={config.reportAnswers.theoreticalUnderstanding}
+              value={config.reportAnswers?.theoreticalUnderstanding || ''}
               onChange={(e) => setConfig(prev => ({
                 ...prev,
                 reportAnswers: {
                   ...prev.reportAnswers,
-                  theoreticalUnderstanding: e.target.value
+                  theoreticalUnderstanding: e.target.value,
+                  embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                  integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                  resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                  archetypeCards: prev.reportAnswers?.archetypeCards || []
                 }
               }))}
               className="text-sm"
@@ -595,12 +599,16 @@ export function EnhancedAssessmentBuilder({
               Specific practices to help users embody their discovered archetype
             </p>
             <Textarea
-              value={config.reportAnswers.embodimentPractices}
+              value={config.reportAnswers?.embodimentPractices || ''}
               onChange={(e) => setConfig(prev => ({
                 ...prev,
                 reportAnswers: {
                   ...prev.reportAnswers,
-                  embodimentPractices: e.target.value
+                  theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                  embodimentPractices: e.target.value,
+                  integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                  resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                  archetypeCards: prev.reportAnswers?.archetypeCards || []
                 }
               }))}
               className="text-sm"
@@ -616,12 +624,16 @@ export function EnhancedAssessmentBuilder({
               Practices to help integrate archetypal knowledge into daily life
             </p>
             <Textarea
-              value={config.reportAnswers.integrationPractices}
+              value={config.reportAnswers?.integrationPractices || ''}
               onChange={(e) => setConfig(prev => ({
                 ...prev,
                 reportAnswers: {
                   ...prev.reportAnswers,
-                  integrationPractices: e.target.value
+                  theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                  embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                  integrationPractices: e.target.value,
+                  resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                  archetypeCards: prev.reportAnswers?.archetypeCards || []
                 }
               }))}
               className="text-sm"
@@ -637,18 +649,23 @@ export function EnhancedAssessmentBuilder({
               Additional resources and links for deeper exploration
             </p>
             <div className="space-y-2">
-              {config.reportAnswers.resourceLinks.map((link, index) => (
+              {(config.reportAnswers?.resourceLinks || []).map((link, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
                     value={link}
                     onChange={(e) => {
-                      const newLinks = [...config.reportAnswers.resourceLinks]
+                      const currentLinks = config.reportAnswers?.resourceLinks || []
+                      const newLinks = [...currentLinks]
                       newLinks[index] = e.target.value
                       setConfig(prev => ({
                         ...prev,
                         reportAnswers: {
                           ...prev.reportAnswers,
-                          resourceLinks: newLinks
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: newLinks,
+                          archetypeCards: prev.reportAnswers?.archetypeCards || []
                         }
                       }))
                     }}
@@ -659,12 +676,17 @@ export function EnhancedAssessmentBuilder({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const newLinks = config.reportAnswers.resourceLinks.filter((_, i) => i !== index)
+                      const currentLinks = config.reportAnswers?.resourceLinks || []
+                      const newLinks = currentLinks.filter((_, i) => i !== index)
                       setConfig(prev => ({
                         ...prev,
                         reportAnswers: {
                           ...prev.reportAnswers,
-                          resourceLinks: newLinks
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: newLinks,
+                          archetypeCards: prev.reportAnswers?.archetypeCards || []
                         }
                       }))
                     }}
@@ -681,7 +703,11 @@ export function EnhancedAssessmentBuilder({
                     ...prev,
                     reportAnswers: {
                       ...prev.reportAnswers,
-                      resourceLinks: [...prev.reportAnswers.resourceLinks, '']
+                      theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                      embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                      integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                      resourceLinks: [...(prev.reportAnswers?.resourceLinks || []), ''],
+                      archetypeCards: prev.reportAnswers?.archetypeCards || []
                     }
                   }))
                 }}
@@ -700,17 +726,22 @@ export function EnhancedAssessmentBuilder({
               Reference cards with archetype information and guidance
             </p>
             <div className="space-y-2">
-              {config.reportAnswers.archetypeCards.map((card, index) => (
+              {(config.reportAnswers?.archetypeCards || []).map((card, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
                     value={card}
                     onChange={(e) => {
-                      const newCards = [...config.reportAnswers.archetypeCards]
+                      const currentCards = config.reportAnswers?.archetypeCards || []
+                      const newCards = [...currentCards]
                       newCards[index] = e.target.value
                       setConfig(prev => ({
                         ...prev,
                         reportAnswers: {
                           ...prev.reportAnswers,
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: prev.reportAnswers?.resourceLinks || [],
                           archetypeCards: newCards
                         }
                       }))
@@ -722,11 +753,16 @@ export function EnhancedAssessmentBuilder({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const newCards = config.reportAnswers.archetypeCards.filter((_, i) => i !== index)
+                      const currentCards = config.reportAnswers?.archetypeCards || []
+                      const newCards = currentCards.filter((_, i) => i !== index)
                       setConfig(prev => ({
                         ...prev,
                         reportAnswers: {
                           ...prev.reportAnswers,
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: prev.reportAnswers?.resourceLinks || [],
                           archetypeCards: newCards
                         }
                       }))
@@ -744,7 +780,11 @@ export function EnhancedAssessmentBuilder({
                     ...prev,
                     reportAnswers: {
                       ...prev.reportAnswers,
-                      archetypeCards: [...prev.reportAnswers.archetypeCards, '']
+                      theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                      embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                      integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                      resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                      archetypeCards: [...(prev.reportAnswers?.archetypeCards || []), '']
                     }
                   }))
                 }}
