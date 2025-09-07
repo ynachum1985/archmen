@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/database'
 import { archetypeService } from './archetype.service'
+import { type HomepageAssessmentTheme } from './assessment-integration.service'
 
 // Initialize OpenAI client
 const openai = process.env.NEXT_PUBLIC_OPENAI_API_KEY
@@ -26,14 +27,8 @@ interface LinguisticIndicators {
   [key: string]: unknown
 }
 
-interface AssessmentTheme {
-  id: string
-  name: string
-  description: string
-  focusAreas: string[]
-  initialPrompt: string
-  archetypeMapping: Record<string, string[]>
-}
+// Use the HomepageAssessmentTheme from integration service
+type AssessmentTheme = HomepageAssessmentTheme
 
 interface ConversationTurn {
   question: string
@@ -90,7 +85,30 @@ export class LinguisticAssessmentService {
     sessionId?: string;
     isAuthenticated: boolean;
   }> {
-    const theme = this.themes.find(t => t.id === themeId)
+    // First check if theme is in the hardcoded themes
+    let theme = this.themes.find(t => t.id === themeId)
+
+    // If not found in hardcoded themes, it might be from the database
+    if (!theme) {
+      // Try to get from database via assessment themes table
+      const { data, error } = await this.supabase
+        .from('assessment_themes')
+        .select('*')
+        .eq('id', themeId)
+        .single()
+
+      if (data && !error) {
+        theme = {
+          id: data.id,
+          name: data.name,
+          description: data.description || '',
+          focusAreas: data.focus_areas || [],
+          initialPrompt: data.initial_prompt,
+          archetypeMapping: data.archetype_mapping as Record<string, string[]> || {}
+        }
+      }
+    }
+
     if (!theme) throw new Error('Theme not found')
 
     let sessionId: string | undefined
@@ -217,7 +235,19 @@ export class LinguisticAssessmentService {
   }
 
   private buildAnalysisPrompt(response: string, history: ConversationTurn[], theme: AssessmentTheme): string {
+    // Use enhanced system prompt if available
+    const basePrompt = theme.systemPrompt || `
+You are an expert archetypal analyst with deep knowledge of human psychology and behavioral patterns. Your role is to identify archetypal patterns through natural conversation.
+
+ANALYSIS APPROACH:
+- Draw from the complete database of 55+ archetypes
+- Analyze language patterns, emotional vocabulary, responsibility patterns, and power dynamics
+- Use adaptive questioning to gather sufficient evidence
+- Remain curious, non-judgmental, and focused on helping the person understand themselves`
+
     return `
+${basePrompt}
+
 Analyze the following response for linguistic patterns that reveal archetypal tendencies in the context of ${theme.name}.
 
 Response to analyze: "${response}"

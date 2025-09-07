@@ -8,17 +8,12 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { linguisticAssessmentService } from '@/lib/services/linguistic-assessment.service'
+import { assessmentIntegrationService, type HomepageAssessmentTheme } from '@/lib/services/assessment-integration.service'
 import { createClient } from '@/lib/supabase/client'
 import { Sparkles, Brain, Send, Loader2, UserPlus, AlertCircle } from 'lucide-react'
 
-interface AssessmentTheme {
-  id: string
-  name: string
-  description: string
-  focusAreas: string[]
-  initialPrompt: string
-  archetypeMapping: Record<string, string[]>
-}
+// Use the HomepageAssessmentTheme from integration service
+type AssessmentTheme = HomepageAssessmentTheme
 
 interface LinguisticIndicators {
   emotionalTone: string[]
@@ -66,8 +61,17 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
   useEffect(() => {
     // Load available themes and check auth status
     const initializeComponent = async () => {
-      const availableThemes = await linguisticAssessmentService.getAvailableThemes()
-      setThemes(availableThemes)
+      // First try to get assessments from the Assessment Builder
+      const builderAssessments = await assessmentIntegrationService.getAvailableAssessments()
+
+      if (builderAssessments.length > 0) {
+        setThemes(builderAssessments)
+      } else {
+        // Fallback to hardcoded themes from linguistic assessment service
+        const fallbackThemes = await linguisticAssessmentService.getAvailableThemes()
+        setThemes(fallbackThemes)
+      }
+
       await checkAuthStatus()
     }
 
