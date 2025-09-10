@@ -47,14 +47,6 @@ interface EnhancedAssessmentConfig {
     followUpPrompts: string[]
   }
   
-  // Adaptive Logic
-  adaptiveLogic: {
-    minQuestions: number
-    maxQuestions: number
-    evidenceThreshold: number
-    adaptationTriggers: string[]
-  }
-  
   // Files and References
   referenceFiles: UploadedFile[]
   referenceLinks: ReferenceLink[]
@@ -131,17 +123,6 @@ QUESTIONING STRATEGY:
       "I'd love to hear more about that. Can you expand on what you mean?",
       "That's interesting. Can you give me a specific example?",
       "Help me understand that better - what did that look like for you?"
-    ]
-  },
-  adaptiveLogic: {
-    minQuestions: 8,
-    maxQuestions: 15,
-    evidenceThreshold: 3,
-    adaptationTriggers: [
-      "Strong archetypal pattern emerges",
-      "User shows resistance or discomfort",
-      "Response patterns become repetitive",
-      "Emotional depth increases significantly"
     ]
   },
   referenceFiles: [],
@@ -271,8 +252,8 @@ export function EnhancedAssessmentBuilder({
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview & AI Setup</TabsTrigger>
-          <TabsTrigger value="questioning">Questioning & Flow</TabsTrigger>
+          <TabsTrigger value="overview">Overview & AI Configuration</TabsTrigger>
+          <TabsTrigger value="questioning">Questioning Strategy & Flow</TabsTrigger>
           <TabsTrigger value="reports">Report & Answers</TabsTrigger>
           <TabsTrigger value="files">Reference Files</TabsTrigger>
         </TabsList>
@@ -472,9 +453,111 @@ export function EnhancedAssessmentBuilder({
             </div>
           </div>
 
+          {/* Response Requirements */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Response Requirements</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="minSentences">Minimum Sentences</Label>
+                <Input
+                  id="minSentences"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={config.responseRequirements.minSentences}
+                  onChange={(e) => setConfig(prev => ({
+                    ...prev,
+                    responseRequirements: {
+                      ...prev.responseRequirements,
+                      minSentences: parseInt(e.target.value) || 2
+                    }
+                  }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxSentences">Maximum Sentences</Label>
+                <Input
+                  id="maxSentences"
+                  type="number"
+                  min="2"
+                  max="20"
+                  value={config.responseRequirements.maxSentences}
+                  onChange={(e) => setConfig(prev => ({
+                    ...prev,
+                    responseRequirements: {
+                      ...prev.responseRequirements,
+                      maxSentences: parseInt(e.target.value) || 8
+                    }
+                  }))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Follow-up Prompts</Label>
+              <div className="mt-2 space-y-2">
+                {config.responseRequirements.followUpPrompts.map((prompt, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={prompt}
+                      onChange={(e) => {
+                        const newPrompts = [...config.responseRequirements.followUpPrompts]
+                        newPrompts[index] = e.target.value
+                        setConfig(prev => ({
+                          ...prev,
+                          responseRequirements: {
+                            ...prev.responseRequirements,
+                            followUpPrompts: newPrompts
+                          }
+                        }))
+                      }}
+                      placeholder="Enter follow-up prompt..."
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newPrompts = config.responseRequirements.followUpPrompts.filter((_, i) => i !== index)
+                        setConfig(prev => ({
+                          ...prev,
+                          responseRequirements: {
+                            ...prev.responseRequirements,
+                            followUpPrompts: newPrompts
+                          }
+                        }))
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setConfig(prev => ({
+                      ...prev,
+                      responseRequirements: {
+                        ...prev.responseRequirements,
+                        followUpPrompts: [...prev.responseRequirements.followUpPrompts, '']
+                      }
+                    }))
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Follow-up Prompt
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Advanced Flow Builder */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Flow Builder</h3>
+            <h3 className="text-lg font-medium">Advanced Flow Builder</h3>
             <QuestioningFlowBuilder
               flow={config.questioningFlow}
               onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}

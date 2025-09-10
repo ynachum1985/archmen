@@ -10,6 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Settings, TestTube, BarChart3, Users } from 'lucide-react'
 import Link from 'next/link'
+import { type UploadedFile } from '@/lib/services/file-upload.service'
+import { type ReferenceLink } from '@/components/admin/ReferenceManager'
+import { type QuestioningFlow } from '@/components/admin/QuestioningFlowBuilder'
 
 interface EnhancedAssessmentConfig {
   name: string
@@ -38,22 +41,24 @@ interface EnhancedAssessmentConfig {
     followUpPrompts: string[]
   }
 
-  // Adaptive Logic
-  adaptiveLogic: {
-    minQuestions: number
-    maxQuestions: number
-    evidenceThreshold: number
-    adaptationTriggers: string[]
-  }
-
   // Files and References
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  referenceFiles: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  referenceLinks: any[]
+  referenceFiles: UploadedFile[]
+  referenceLinks: ReferenceLink[]
+
+  // Advanced Questioning Flow
+  questioningFlow?: QuestioningFlow
 
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
+
+  // Report and Answers Configuration
+  reportAnswers?: {
+    theoreticalUnderstanding: string
+    embodimentPractices: string
+    integrationPractices: string
+    resourceLinks: string[]
+    archetypeCards: string[]
+  }
 }
 
 interface ArchetypeScore {
@@ -121,17 +126,6 @@ export default function AssessmentDetailPage() {
             "I'd love to hear more about that feeling. Can you expand on what you experienced?",
             "That sounds important. Can you give me a specific example?",
             "Help me understand that better - what did that look like in your relationship?"
-          ]
-        },
-        adaptiveLogic: {
-          minQuestions: 8,
-          maxQuestions: 15,
-          evidenceThreshold: 3,
-          adaptationTriggers: [
-            "Strong relationship archetype pattern emerges",
-            "User shows emotional vulnerability or resistance",
-            "Attachment patterns become clear",
-            "Communication style patterns are evident"
           ]
         },
         referenceFiles: [],
@@ -257,7 +251,7 @@ export default function AssessmentDetailPage() {
                   analysisInstructions: assessmentConfig.systemPrompt,
                   questioningStyle: assessmentConfig.questioningStrategy,
                   expectedDuration: assessmentConfig.expectedDuration,
-                  completionCriteria: `Use ${assessmentConfig.questioningStrategy} questioning with ${assessmentConfig.questioningDepth} depth. Ask ${assessmentConfig.adaptiveLogic.minQuestions}-${assessmentConfig.adaptiveLogic.maxQuestions} questions.`
+                  completionCriteria: `Use ${assessmentConfig.questioningStrategy} questioning with ${assessmentConfig.questioningDepth} depth. Ask 8-15 questions based on response quality.`
                 }}
                 onComplete={handleTestComplete}
               />
