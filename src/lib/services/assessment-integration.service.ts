@@ -34,7 +34,22 @@ export class AssessmentIntegrationService {
         .single()
 
       if (enhancedAssessment && !enhancedError) {
+        console.log('Found main assessment from enhanced_assessments:', enhancedAssessment.name)
         return this.convertEnhancedAssessmentToTheme(enhancedAssessment)
+      }
+
+      // Try to get any assessment marked as main from enhanced_assessments
+      const { data: anyMainAssessment, error: anyMainError } = await this.supabase
+        .from('enhanced_assessments')
+        .select('*')
+        .eq('is_active', true)
+        .ilike('name', '%main%') // Look for assessments with "main" in the name
+        .limit(1)
+        .single()
+
+      if (anyMainAssessment && !anyMainError) {
+        console.log('Found main-like assessment from enhanced_assessments:', anyMainAssessment.name)
+        return this.convertEnhancedAssessmentToTheme(anyMainAssessment)
       }
 
       // Fallback to assessment_templates table
@@ -46,10 +61,12 @@ export class AssessmentIntegrationService {
         .single()
 
       if (template && !templateError) {
+        console.log('Found main assessment from assessment_templates:', template.name)
         return this.convertTemplateToTheme(template)
       }
 
       // If no main assessment found, return null (will use hardcoded themes)
+      console.log('No main assessment found, will use hardcoded themes')
       return null
     } catch (error) {
       console.error('Error fetching main assessment:', error)
@@ -62,35 +79,53 @@ export class AssessmentIntegrationService {
     try {
       const themes: HomepageAssessmentTheme[] = []
 
-      // Get from enhanced_assessments
-      const { data: enhancedAssessments, error: enhancedError } = await this.supabase
-        .from('enhanced_assessments')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+      // Get from enhanced_assessments (Assessment Builder created)
+      try {
+        const { data: enhancedAssessments, error: enhancedError } = await this.supabase
+          .from('enhanced_assessments')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
 
-      if (enhancedAssessments && !enhancedError) {
-        const enhancedThemes = enhancedAssessments.map(assessment => 
-          this.convertEnhancedAssessmentToTheme(assessment)
-        )
-        themes.push(...enhancedThemes)
+        if (enhancedAssessments && !enhancedError && enhancedAssessments.length > 0) {
+          console.log(`Found ${enhancedAssessments.length} assessments from Assessment Builder`)
+          const enhancedThemes = enhancedAssessments.map(assessment =>
+            this.convertEnhancedAssessmentToTheme(assessment)
+          )
+          themes.push(...enhancedThemes)
+        }
+      } catch (enhancedError) {
+        console.log('Enhanced assessments table not available or empty, checking templates...')
       }
 
       // Get from assessment_templates as fallback
-      const { data: templates, error: templateError } = await this.supabase
-        .from('assessment_templates')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+      try {
+        const { data: templates, error: templateError } = await this.supabase
+          .from('assessment_templates')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
 
-      if (templates && !templateError) {
-        const templateThemes = templates.map(template => 
-          this.convertTemplateToTheme(template)
-        )
-        themes.push(...templateThemes)
+        if (templates && !templateError && templates.length > 0) {
+          console.log(`Found ${templates.length} assessment templates`)
+          const templateThemes = templates.map(template =>
+            this.convertTemplateToTheme(template)
+          )
+          themes.push(...templateThemes)
+        }
+      } catch (templateError) {
+        console.log('Assessment templates table not available or empty')
       }
 
-      return themes
+      // If we found assessments from either source, return them
+      if (themes.length > 0) {
+        console.log(`Returning ${themes.length} total assessments for homepage`)
+        return themes
+      }
+
+      // If no assessments found, return empty array (will trigger fallback to hardcoded themes)
+      console.log('No assessments found in database, homepage will use hardcoded themes')
+      return []
     } catch (error) {
       console.error('Error fetching available assessments:', error)
       return []
@@ -259,6 +294,84 @@ export class AssessmentIntegrationService {
       'The Hero': ['rescue', 'achievement', 'overcoming', 'proving', 'courage'],
       'The Caregiver': ['nurturing', 'supporting', 'helping', 'caring', 'sacrifice'],
       'The Explorer': ['freedom', 'adventure', 'independence', 'discovery', 'autonomy']
+    }
+  }
+}
+
+  // Check the status of Assessment Builder integration
+  async checkIntegrationStatus(): Promise<{
+    hasEnhancedAssessments: boolean
+    hasTemplates: boolean
+    hasMainAssessment: boolean
+    totalAssessments: number
+    recommendedAction: string
+  }> {
+    try {
+      let hasEnhancedAssessments = false
+      let hasTemplates = false
+      let hasMainAssessment = false
+      let totalAssessments = 0
+
+      // Check enhanced_assessments table
+      try {
+        const { data: enhanced, error: enhancedError } = await this.supabase
+          .from('enhanced_assessments')
+          .select('id, name, category')
+          .eq('is_active', true)
+
+        if (enhanced && !enhancedError) {
+          hasEnhancedAssessments = enhanced.length > 0
+          totalAssessments += enhanced.length
+          hasMainAssessment = enhanced.some(a => a.category === 'main' || a.name?.toLowerCase().includes('main'))
+        }
+      } catch (error) {
+        console.log('Enhanced assessments table not available')
+      }
+
+      // Check assessment_templates table
+      try {
+        const { data: templates, error: templateError } = await this.supabase
+          .from('assessment_templates')
+          .select('id, name, category')
+          .eq('is_active', true)
+
+        if (templates && !templateError) {
+          hasTemplates = templates.length > 0
+          totalAssessments += templates.length
+          if (!hasMainAssessment) {
+            hasMainAssessment = templates.some(t => t.category === 'main')
+          }
+        }
+      } catch (error) {
+        console.log('Assessment templates table not available')
+      }
+
+      // Determine recommended action
+      let recommendedAction = ''
+      if (!hasEnhancedAssessments && !hasTemplates) {
+        recommendedAction = 'Create your first assessment using the Assessment Builder in the admin panel'
+      } else if (!hasMainAssessment) {
+        recommendedAction = 'Create a main assessment for the homepage using the Assessment Builder'
+      } else {
+        recommendedAction = 'Integration is working! Your assessments are available on the homepage'
+      }
+
+      return {
+        hasEnhancedAssessments,
+        hasTemplates,
+        hasMainAssessment,
+        totalAssessments,
+        recommendedAction
+      }
+    } catch (error) {
+      console.error('Error checking integration status:', error)
+      return {
+        hasEnhancedAssessments: false,
+        hasTemplates: false,
+        hasMainAssessment: false,
+        totalAssessments: 0,
+        recommendedAction: 'Error checking integration status. Please check database connection.'
+      }
     }
   }
 }

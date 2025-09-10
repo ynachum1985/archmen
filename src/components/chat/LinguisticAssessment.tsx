@@ -52,6 +52,7 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [requiresAuth, setRequiresAuth] = useState(false)
   const [freeQuestionsRemaining, setFreeQuestionsRemaining] = useState(2)
+  const [integrationStatus, setIntegrationStatus] = useState<string>('')
 
   const [isComplete, setIsComplete] = useState(false)
   const [finalReport, setFinalReport] = useState('')
@@ -61,13 +62,19 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
   useEffect(() => {
     // Load available themes and check auth status
     const initializeComponent = async () => {
+      // Check integration status first
+      const status = await assessmentIntegrationService.checkIntegrationStatus()
+      setIntegrationStatus(status.recommendedAction)
+
       // First try to get assessments from the Assessment Builder
       const builderAssessments = await assessmentIntegrationService.getAvailableAssessments()
 
       if (builderAssessments.length > 0) {
+        console.log(`Using ${builderAssessments.length} assessments from Assessment Builder`)
         setThemes(builderAssessments)
       } else {
         // Fallback to hardcoded themes from linguistic assessment service
+        console.log('Using fallback hardcoded themes')
         const fallbackThemes = await linguisticAssessmentService.getAvailableThemes()
         setThemes(fallbackThemes)
       }
@@ -215,6 +222,16 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
                   <AlertCircle className="h-4 w-4 text-teal-400" />
                   <AlertDescription className="text-teal-300">
                     <strong>Free Trial:</strong> Try 2 questions for free! Create a free account to continue your assessment and receive your personalized archetype analysis.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Development Info - Only show in development */}
+              {process.env.NODE_ENV === 'development' && integrationStatus && (
+                <Alert className="border-blue-600 bg-blue-950/20">
+                  <Brain className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-300">
+                    <strong>Assessment Builder Status:</strong> {integrationStatus}
                   </AlertDescription>
                 </Alert>
               )}
