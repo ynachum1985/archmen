@@ -39,7 +39,14 @@ export class AIPersonalityService {
       throw error
     }
 
-    return data || []
+    // Ensure arrays are always defined
+    return (data || []).map(personality => ({
+      ...personality,
+      open_ended_questions: personality.open_ended_questions || [],
+      clarifying_questions: personality.clarifying_questions || [],
+      goals: personality.goals || [],
+      behavior_traits: personality.behavior_traits || []
+    }))
   }
 
   async getActivePersonalities(): Promise<AIPersonality[]> {
@@ -54,7 +61,14 @@ export class AIPersonalityService {
       throw error
     }
 
-    return data || []
+    // Ensure arrays are always defined
+    return (data || []).map(personality => ({
+      ...personality,
+      open_ended_questions: personality.open_ended_questions || [],
+      clarifying_questions: personality.clarifying_questions || [],
+      goals: personality.goals || [],
+      behavior_traits: personality.behavior_traits || []
+    }))
   }
 
   async getPersonalityById(id: string): Promise<AIPersonality | null> {
@@ -69,7 +83,16 @@ export class AIPersonalityService {
       return null
     }
 
-    return data
+    if (!data) return null
+
+    // Ensure arrays are always defined
+    return {
+      ...data,
+      open_ended_questions: data.open_ended_questions || [],
+      clarifying_questions: data.clarifying_questions || [],
+      goals: data.goals || [],
+      behavior_traits: data.behavior_traits || []
+    }
   }
 
   async createPersonality(personality: NewAIPersonality): Promise<AIPersonality> {
@@ -89,7 +112,14 @@ export class AIPersonalityService {
       throw error
     }
 
-    return data
+    // Ensure arrays are always defined
+    return {
+      ...data,
+      open_ended_questions: data.open_ended_questions || [],
+      clarifying_questions: data.clarifying_questions || [],
+      goals: data.goals || [],
+      behavior_traits: data.behavior_traits || []
+    }
   }
 
   async updatePersonality(id: string, updates: Partial<NewAIPersonality>): Promise<AIPersonality> {
@@ -108,7 +138,14 @@ export class AIPersonalityService {
       throw error
     }
 
-    return data
+    // Ensure arrays are always defined
+    return {
+      ...data,
+      open_ended_questions: data.open_ended_questions || [],
+      clarifying_questions: data.clarifying_questions || [],
+      goals: data.goals || [],
+      behavior_traits: data.behavior_traits || []
+    }
   }
 
   async deletePersonality(id: string): Promise<void> {

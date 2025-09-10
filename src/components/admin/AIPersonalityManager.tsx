@@ -60,7 +60,7 @@ export function AIPersonalityManager() {
     
     try {
       const updated = await aiPersonalityService.updatePersonality(editingPersonality.id, newPersonality)
-      setPersonalities(prev => prev.map(p => p.id === updated.id ? updated : p))
+      setPersonalities(prev => (prev || []).map(p => p.id === updated.id ? updated : p))
       setEditingPersonality(null)
       resetForm()
     } catch (error) {
@@ -172,7 +172,7 @@ export function AIPersonalityManager() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {personalities.map((personality) => (
+        {(personalities || []).map((personality) => (
           <Card key={personality.id} className="relative">
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -212,7 +212,7 @@ export function AIPersonalityManager() {
                   <span className="text-sm font-medium">Question Types</span>
                 </div>
                 <div className="text-sm text-gray-600">
-                  {personality.open_ended_questions.length} open-ended, {personality.clarifying_questions.length} clarifying
+                  {(personality.open_ended_questions || []).length} open-ended, {(personality.clarifying_questions || []).length} clarifying
                 </div>
               </div>
               <div>
@@ -221,8 +221,8 @@ export function AIPersonalityManager() {
                   <span className="text-sm font-medium">Goals</span>
                 </div>
                 <div className="text-sm text-gray-600">
-                  {personality.goals.slice(0, 2).join(', ')}
-                  {personality.goals.length > 2 && ` +${personality.goals.length - 2} more`}
+                  {(personality.goals || []).slice(0, 2).join(', ')}
+                  {(personality.goals || []).length > 2 && ` +${(personality.goals || []).length - 2} more`}
                 </div>
               </div>
             </CardContent>
