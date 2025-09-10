@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
+import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -227,8 +228,12 @@ export default function AdminPage() {
   const handleSaveEnhancedAssessment = async (assessmentData: unknown) => {
     try {
       console.log('Enhanced Assessment saved:', assessmentData)
-      // Here you would save to database
-      alert('Assessment saved successfully!')
+
+      // Save to database using the integration service
+      const assessmentId = await assessmentIntegrationService.createMainAssessment(assessmentData)
+      console.log('Assessment saved with ID:', assessmentId)
+
+      alert('Assessment saved successfully! This will now be available on the homepage.')
     } catch (error) {
       console.error('Error saving enhanced assessment:', error)
       alert('Error saving assessment. Please try again.')
@@ -286,6 +291,45 @@ export default function AdminPage() {
                   New Assessment
                 </Button>
               </div>
+
+              {/* Main Assessment Section */}
+              <Card className="border-2 border-teal-200 bg-teal-50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg text-teal-800">Homepage Main Assessment</CardTitle>
+                      <CardDescription className="text-teal-600">
+                        The primary assessment that appears on the homepage for new users
+                      </CardDescription>
+                    </div>
+                    <Badge variant="secondary" className="bg-teal-100 text-teal-800">Main</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm text-teal-700">
+                      Create or update the main assessment that users will see when they visit the homepage.
+                      This assessment should be designed to give users a taste of the full archetype analysis experience.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="bg-teal-600 hover:bg-teal-700"
+                        onClick={() => {
+                          // Switch to builder tab with main assessment preset
+                          const builderTab = document.querySelector('[value="builder"]') as HTMLElement
+                          builderTab?.click()
+                        }}
+                      >
+                        Create Main Assessment
+                      </Button>
+                      <Button size="sm" variant="outline" className="border-teal-600 text-teal-600">
+                        View Current
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Assessment Categories */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
