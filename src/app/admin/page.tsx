@@ -11,13 +11,15 @@ import {
   BarChart3,
   Plus,
   Search,
-  FileText
+  FileText,
+  Brain
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
+import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -254,7 +256,7 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
             <TabsTrigger value="assessments" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Assessments
@@ -266,6 +268,10 @@ export default function AdminPage() {
             <TabsTrigger value="archetypes" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Archetypes
+            </TabsTrigger>
+            <TabsTrigger value="ai-personality" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              AI Personality
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -416,6 +422,10 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
+          {/* AI Personality Tab */}
+          <TabsContent value="ai-personality" className="mt-6">
+            <AIPersonalityManager />
+          </TabsContent>
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="mt-6">

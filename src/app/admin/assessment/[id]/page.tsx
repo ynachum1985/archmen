@@ -10,10 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Settings, TestTube, BarChart3, Users } from 'lucide-react'
 import Link from 'next/link'
-import { type UploadedFile } from '@/lib/services/file-upload.service'
-import { type ReferenceLink } from '@/components/admin/ReferenceManager'
-import { type QuestioningFlow } from '@/components/admin/QuestioningFlowBuilder'
-
 interface EnhancedAssessmentConfig {
   name: string
   description: string
@@ -25,6 +21,20 @@ interface EnhancedAssessmentConfig {
   systemPrompt: string
   questioningStrategy: 'adaptive' | 'progressive' | 'exploratory' | 'focused'
   questioningDepth: 'surface' | 'moderate' | 'deep' | 'profound'
+
+  // AI Settings
+  minQuestions: number
+  maxQuestions: number
+  evidenceThreshold: number
+  adaptationSensitivity: number
+  cycleSettings: {
+    maxCycles: number
+    evidencePerCycle: number
+  }
+
+  // AI Personality
+  selectedPersonalityId?: string
+  combinedPrompt: string
 
   // Questioning Examples
   questionExamples: {
@@ -40,13 +50,6 @@ interface EnhancedAssessmentConfig {
     maxSentences: number
     followUpPrompts: string[]
   }
-
-  // Files and References
-  referenceFiles: UploadedFile[]
-  referenceLinks: ReferenceLink[]
-
-  // Advanced Questioning Flow
-  questioningFlow?: QuestioningFlow
 
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
@@ -97,6 +100,20 @@ export default function AssessmentDetailPage() {
         systemPrompt: "You are an expert psychological assessor specializing in relationship archetype identification through linguistic analysis. Your role is to conduct natural, engaging conversations that reveal deep emotional and relational patterns through language use, metaphors, and communication styles.",
         questioningStrategy: "adaptive",
         questioningDepth: "moderate",
+
+        // AI Settings
+        minQuestions: 8,
+        maxQuestions: 15,
+        evidenceThreshold: 0.7,
+        adaptationSensitivity: 0.5,
+        cycleSettings: {
+          maxCycles: 3,
+          evidencePerCycle: 3
+        },
+
+        // AI Personality
+        selectedPersonalityId: undefined,
+        combinedPrompt: '',
         questionExamples: {
           openEnded: [
             "Tell me about a recent relationship experience that felt significant to you. What made it meaningful?",
@@ -128,8 +145,6 @@ export default function AssessmentDetailPage() {
             "Help me understand that better - what did that look like in your relationship?"
           ]
         },
-        referenceFiles: [],
-        referenceLinks: [],
         reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores. The AI should freely choose from all available archetypes based on the evidence gathered.",
         reportAnswers: {
           theoreticalUnderstanding: "Provide theoretical understanding of the discovered archetypes",
