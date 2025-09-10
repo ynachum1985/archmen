@@ -148,7 +148,12 @@ export function ProgressiveArchetypeDiscovery({
     }
 
     const newDiscoveries: DiscoveredArchetype[] = []
-    
+
+    // Ensure archetypeScores is defined and is an array
+    if (!archetypeScores || !Array.isArray(archetypeScores)) {
+      return
+    }
+
     archetypeScores.forEach(score => {
       if (score.confidence >= confidenceThresholds.peek) {
         const cardData = archetypeCardData[score.name]
@@ -180,7 +185,7 @@ export function ProgressiveArchetypeDiscovery({
     }
   }, [archetypeScores, conversationTurn, discoveredArchetypes, archetypeCardData])
 
-  const sortedArchetypes = discoveredArchetypes.sort((a, b) => b.confidenceScore - a.confidenceScore)
+  const sortedArchetypes = (discoveredArchetypes || []).sort((a, b) => b.confidenceScore - a.confidenceScore)
   const primaryArchetype = sortedArchetypes.find(arch => arch.confidenceScore >= 80)
 
   if (discoveredArchetypes.length === 0) {

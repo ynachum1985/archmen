@@ -109,21 +109,21 @@ export function AIPersonalityManager() {
   const addArrayItem = (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>) => {
     setNewPersonality(prev => ({
       ...prev,
-      [field]: [...prev[field], '']
+      [field]: [...(prev[field] || []), '']
     }))
   }
 
   const updateArrayItem = (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>, index: number, value: string) => {
     setNewPersonality(prev => ({
       ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
+      [field]: (prev[field] || []).map((item, i) => i === index ? value : item)
     }))
   }
 
   const removeArrayItem = (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>, index: number) => {
     setNewPersonality(prev => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
+      [field]: (prev[field] || []).filter((_, i) => i !== index)
     }))
   }
 
@@ -276,7 +276,7 @@ function PersonalityForm({ personality, onChange, onAddArrayItem, onUpdateArrayI
   ) => (
     <div className="space-y-3">
       <Label className="text-base font-medium">{label}</Label>
-      {personality[field].map((item, index) => (
+      {(personality[field] || []).map((item, index) => (
         <div key={index} className="flex gap-2">
           <Textarea
             value={item}

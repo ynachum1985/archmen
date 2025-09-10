@@ -321,8 +321,8 @@ export function AssessmentQuiz({ onDiscoveredArchetypes, onQuizComplete }: Asses
       </Card>
 
       {/* Progressive Archetype Discovery Panel */}
-      <ProgressiveArchetypeDiscovery 
-        archetypeScores={Object.entries(archetypeConfidence).map(([name, confidence]) => ({
+      <ProgressiveArchetypeDiscovery
+        archetypeScores={Object.entries(archetypeConfidence || {}).map(([name, confidence]) => ({
           name,
           score: confidence / 100, // Convert percentage to decimal
           confidence: confidence / 100, // Convert percentage to decimal

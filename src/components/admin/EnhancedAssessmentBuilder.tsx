@@ -576,8 +576,8 @@ export function EnhancedAssessmentBuilder({
             <div>
               <Label htmlFor="personality">Select AI Personality</Label>
               <Select
-                value={config.selectedPersonalityId || ''}
-                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value || undefined }))}
+                value={config.selectedPersonalityId || 'default'}
+                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
               >
                 <SelectTrigger className="mt-1 border-gray-200">
                   <SelectValue placeholder="Choose an AI personality for this assessment" />
@@ -587,7 +587,7 @@ export function EnhancedAssessmentBuilder({
                     <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
                   ) : (
                     <>
-                      <SelectItem value="">No specific personality (use default)</SelectItem>
+                      <SelectItem value="default">No specific personality (use default)</SelectItem>
                       {personalities.map(personality => (
                         <SelectItem key={personality.id} value={personality.id}>
                           {personality.name} - {personality.description}
