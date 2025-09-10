@@ -130,7 +130,14 @@ export default function AssessmentDetailPage() {
         },
         referenceFiles: [],
         referenceLinks: [],
-        reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores. The AI should freely choose from all available archetypes based on the evidence gathered."
+        reportGeneration: "Provide a comprehensive analysis of relationship patterns with specific linguistic evidence and archetype confidence scores. The AI should freely choose from all available archetypes based on the evidence gathered.",
+        reportAnswers: {
+          theoreticalUnderstanding: "Provide theoretical understanding of the discovered archetypes",
+          embodimentPractices: "Suggest practices to embody the archetype",
+          integrationPractices: "Recommend integration practices",
+          resourceLinks: [],
+          archetypeCards: []
+        }
       }
       
       setAssessmentConfig(mockConfig)

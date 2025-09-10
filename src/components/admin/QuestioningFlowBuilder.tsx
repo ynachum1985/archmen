@@ -197,12 +197,11 @@ export function QuestioningFlowBuilder({ flow, onSave, onTest }: QuestioningFlow
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
+    <div className="space-y-6">
+      {/* Minimal Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Questioning Flow Builder</h1>
-          <p className="text-gray-600 mt-1">Design sophisticated questioning sequences with drag & drop</p>
+          <h2 className="text-xl font-medium text-gray-900">Flow Builder</h2>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={handleTest} className="flex items-center gap-2">

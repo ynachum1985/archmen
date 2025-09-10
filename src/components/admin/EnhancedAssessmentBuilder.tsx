@@ -261,9 +261,8 @@ export function EnhancedAssessmentBuilder({
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-8">
           {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Basic Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="name">Assessment Name</Label>
                 <Input
@@ -271,7 +270,7 @@ export function EnhancedAssessmentBuilder({
                   value={config.name}
                   onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Leadership Archetype Discovery"
-                  className="mt-1"
+                  className="mt-1 border-gray-200"
                 />
               </div>
               <div>
@@ -281,7 +280,7 @@ export function EnhancedAssessmentBuilder({
                   type="number"
                   value={config.expectedDuration}
                   onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                  className="mt-1"
+                  className="mt-1 border-gray-200"
                 />
               </div>
             </div>
@@ -293,7 +292,7 @@ export function EnhancedAssessmentBuilder({
                 value={config.description}
                 onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Describe what this assessment aims to discover..."
-                className="mt-1"
+                className="mt-1 border-gray-200"
                 rows={3}
               />
             </div>
@@ -303,12 +302,12 @@ export function EnhancedAssessmentBuilder({
                 <Label htmlFor="category">Category</Label>
                 <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-800">
                       <Plus className="h-3 w-3" />
                       New Category
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="border-gray-200">
                     <DialogHeader>
                       <DialogTitle>Create New Category</DialogTitle>
                     </DialogHeader>
@@ -320,6 +319,7 @@ export function EnhancedAssessmentBuilder({
                           value={newCategory.name}
                           onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
                           placeholder="e.g., Spiritual Development"
+                          className="border-gray-200"
                         />
                       </div>
                       <div>
@@ -330,6 +330,7 @@ export function EnhancedAssessmentBuilder({
                           onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
                           placeholder="Describe this category..."
                           rows={2}
+                          className="border-gray-200"
                         />
                       </div>
                       <div className="flex gap-4">
@@ -354,7 +355,7 @@ export function EnhancedAssessmentBuilder({
                   }
                 }}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 border-gray-200">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -383,27 +384,24 @@ export function EnhancedAssessmentBuilder({
                 value={config.purpose}
                 onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
                 placeholder="What specific insights should this assessment provide?"
-                className="mt-1"
+                className="mt-1 border-gray-200"
                 rows={3}
               />
             </div>
           </div>
 
           {/* AI Configuration */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">AI Configuration</h3>
+          <div className="space-y-6">
             <div>
               <Label htmlFor="systemPrompt">System Prompt</Label>
               <Textarea
                 id="systemPrompt"
                 value={config.systemPrompt}
                 onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                className="mt-1 font-mono text-sm"
+                className="mt-1 font-mono text-sm border-gray-200"
                 rows={12}
               />
             </div>
-
-
           </div>
         </TabsContent>
 
@@ -411,17 +409,28 @@ export function EnhancedAssessmentBuilder({
 
         {/* Questioning & Flow Tab */}
         <TabsContent value="questioning" className="space-y-8">
+          {/* Flow Builder - moved to top */}
+          <div>
+            <QuestioningFlowBuilder
+              flow={config.questioningFlow}
+              onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
+              onTest={(flow) => {
+                console.log('Testing questioning flow:', flow)
+                alert('Flow testing will be implemented in the chat interface!')
+              }}
+            />
+          </div>
+
           {/* Questioning Strategy */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Questioning Strategy</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="questioningStrategy">Strategy</Label>
                 <Select
                   value={config.questioningStrategy}
                   onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 border-gray-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -439,7 +448,7 @@ export function EnhancedAssessmentBuilder({
                   value={config.questioningDepth}
                   onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 border-gray-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -454,9 +463,8 @@ export function EnhancedAssessmentBuilder({
           </div>
 
           {/* Response Requirements */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Response Requirements</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="minSentences">Minimum Sentences</Label>
                 <Input
@@ -472,7 +480,7 @@ export function EnhancedAssessmentBuilder({
                       minSentences: parseInt(e.target.value) || 2
                     }
                   }))}
-                  className="mt-1"
+                  className="mt-1 border-gray-200"
                 />
               </div>
               <div>
@@ -490,16 +498,16 @@ export function EnhancedAssessmentBuilder({
                       maxSentences: parseInt(e.target.value) || 8
                     }
                   }))}
-                  className="mt-1"
+                  className="mt-1 border-gray-200"
                 />
               </div>
             </div>
 
             <div>
               <Label>Follow-up Prompts</Label>
-              <div className="mt-2 space-y-2">
+              <div className="mt-3 space-y-3">
                 {config.responseRequirements.followUpPrompts.map((prompt, index) => (
-                  <div key={index} className="flex gap-2">
+                  <div key={index} className="flex gap-3">
                     <Input
                       value={prompt}
                       onChange={(e) => {
@@ -514,10 +522,10 @@ export function EnhancedAssessmentBuilder({
                         }))
                       }}
                       placeholder="Enter follow-up prompt..."
-                      className="flex-1"
+                      className="flex-1 border-gray-200"
                     />
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         const newPrompts = config.responseRequirements.followUpPrompts.filter((_, i) => i !== index)
@@ -529,13 +537,14 @@ export function EnhancedAssessmentBuilder({
                           }
                         }))
                       }}
+                      className="text-gray-400 hover:text-gray-600"
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => {
                     setConfig(prev => ({
@@ -546,26 +555,13 @@ export function EnhancedAssessmentBuilder({
                       }
                     }))
                   }}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-4 w-4" />
                   Add Follow-up Prompt
                 </Button>
               </div>
             </div>
-          </div>
-
-          {/* Advanced Flow Builder */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Advanced Flow Builder</h3>
-            <QuestioningFlowBuilder
-              flow={config.questioningFlow}
-              onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
-              onTest={(flow) => {
-                console.log('Testing questioning flow:', flow)
-                alert('Flow testing will be implemented in the chat interface!')
-              }}
-            />
           </div>
 
           {/* Question Examples */}
