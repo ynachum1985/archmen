@@ -321,26 +321,10 @@ export default function AdminPage() {
 
           {/* Builder Tab - Assessment creation form */}
           <TabsContent value="builder" className="mt-6">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-medium">Assessment Builder</h2>
-                <p className="text-gray-600 text-sm">Create specialized archetype assessments for different relationship categories</p>
-              </div>
-
-              {/* Assessment Builder Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create New Assessment</CardTitle>
-                  <CardDescription>Build a specialized assessment for a specific relationship category</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <EnhancedAssessmentBuilder
-                    onSave={handleSaveEnhancedAssessment}
-                    onTest={handleTestEnhancedAssessment}
-                  />
-                </CardContent>
-              </Card>
-            </div>
+            <EnhancedAssessmentBuilder
+              onSave={handleSaveEnhancedAssessment}
+              onTest={handleTestEnhancedAssessment}
+            />
           </TabsContent>
 
           {/* Archetypes Tab */}

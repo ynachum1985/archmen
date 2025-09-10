@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,16 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { QuestioningFlowBuilder, QuestioningFlow } from './QuestioningFlowBuilder'
 import { ReferenceManager, type ReferenceLink } from './ReferenceManager'
-import { 
-  Save, 
-  Eye, 
+import {
+  Save,
+  Eye,
   Plus,
-  X,
-  FileText,
-  Settings,
-  Brain,
-  MessageCircle,
-
+  X
 } from 'lucide-react'
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
 import { type UploadedFile } from '@/lib/services/file-upload.service'
@@ -52,14 +47,6 @@ interface EnhancedAssessmentConfig {
     followUpPrompts: string[]
   }
   
-  // Adaptive Logic
-  adaptiveLogic: {
-    minQuestions: number
-    maxQuestions: number
-    evidenceThreshold: number
-    adaptationTriggers: string[]
-  }
-  
   // Files and References
   referenceFiles: UploadedFile[]
   referenceLinks: ReferenceLink[]
@@ -69,6 +56,15 @@ interface EnhancedAssessmentConfig {
 
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
+
+  // Report and Answers Configuration
+  reportAnswers?: {
+    theoreticalUnderstanding: string
+    embodimentPractices: string
+    integrationPractices: string
+    resourceLinks: string[]
+    archetypeCards: string[]
+  }
 }
 
 interface EnhancedAssessmentBuilderProps {
@@ -129,17 +125,6 @@ QUESTIONING STRATEGY:
       "Help me understand that better - what did that look like for you?"
     ]
   },
-  adaptiveLogic: {
-    minQuestions: 8,
-    maxQuestions: 15,
-    evidenceThreshold: 3,
-    adaptationTriggers: [
-      "Strong archetypal pattern emerges",
-      "User shows resistance or discomfort",
-      "Response patterns become repetitive",
-      "Emotional depth increases significantly"
-    ]
-  },
   referenceFiles: [],
   referenceLinks: [],
   reportGeneration: `Generate a comprehensive archetypal analysis that includes:
@@ -150,7 +135,26 @@ QUESTIONING STRATEGY:
 4. SHADOW PATTERNS: Potential blind spots or underdeveloped aspects
 5. INTEGRATION RECOMMENDATIONS: Specific suggestions for growth and development
 
-The AI should freely choose from all available archetypes based on the evidence gathered, without being constrained to a predefined list.`
+The AI should freely choose from all available archetypes based on the evidence gathered, without being constrained to a predefined list.`,
+  reportAnswers: {
+    theoreticalUnderstanding: `Provide deep theoretical context about the discovered archetype(s):
+- Historical and mythological origins
+- Psychological foundations and core motivations
+- How this archetype manifests in modern life
+- Common patterns and behaviors associated with this archetype`,
+    embodimentPractices: `Suggest specific embodiment practices to help integrate the archetype:
+- Physical practices (movement, posture, breathing)
+- Visualization and meditation techniques
+- Daily rituals and habits
+- Creative expression methods`,
+    integrationPractices: `Recommend integration practices for balanced development:
+- Shadow work exercises
+- Journaling prompts and reflection questions
+- Relationship and communication practices
+- Professional and life application strategies`,
+    resourceLinks: [],
+    archetypeCards: []
+  }
 }
 
 export function EnhancedAssessmentBuilder({ 
@@ -227,471 +231,669 @@ export function EnhancedAssessmentBuilder({
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Enhanced Assessment Builder</h1>
-          <p className="text-gray-600 mt-1">Create AI-powered archetype assessments with advanced questioning strategies</p>
-        </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={handleTest}
-            className="flex items-center gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            Test Assessment
-          </Button>
-          <Button 
-            onClick={handleSave}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-          >
-            <Save className="h-4 w-4" />
-            Save Assessment
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3">
+        <Button
+          variant="outline"
+          onClick={handleTest}
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          Test Assessment
+        </Button>
+        <Button
+          onClick={handleSave}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+        >
+          <Save className="h-4 w-4" />
+          Save Assessment
+        </Button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="ai-config">AI Configuration</TabsTrigger>
-          <TabsTrigger value="questioning">Questioning Strategy</TabsTrigger>
-          <TabsTrigger value="flow-builder">Advanced Flow</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview & AI Configuration</TabsTrigger>
+          <TabsTrigger value="questioning">Questioning Strategy & Flow</TabsTrigger>
+          <TabsTrigger value="reports">Report & Answers</TabsTrigger>
           <TabsTrigger value="files">Reference Files</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Assessment Name</Label>
-                  <Input
-                    id="name"
-                    value={config.name}
-                    onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Leadership Archetype Discovery"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="duration">Expected Duration (minutes)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    value={config.expectedDuration}
-                    onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-              
+        <TabsContent value="overview" className="space-y-8">
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={config.description}
-                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe what this assessment aims to discover..."
+                <Label htmlFor="name">Assessment Name</Label>
+                <Input
+                  id="name"
+                  value={config.name}
+                  onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., Leadership Archetype Discovery"
                   className="mt-1"
-                  rows={3}
                 />
               </div>
-
               <div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="category">Category</Label>
-                  <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
-                        <Plus className="h-3 w-3" />
-                        New Category
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create New Category</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="categoryName">Category Name</Label>
-                          <Input
-                            id="categoryName"
-                            value={newCategory.name}
-                            onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                            placeholder="e.g., Spiritual Development"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="categoryDescription">Description</Label>
-                          <Textarea
-                            id="categoryDescription"
-                            value={newCategory.description}
-                            onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Describe this category..."
-                            rows={2}
-                          />
-                        </div>
-                        <div className="flex gap-4">
-                          <Button onClick={handleCreateCategory} className="flex-1">
-                            Create Category
-                          </Button>
-                          <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
-                            Cancel
-                          </Button>
-                        </div>
+                <Label htmlFor="duration">Expected Duration (minutes)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={config.expectedDuration}
+                  onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={config.description}
+                onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Describe what this assessment aims to discover..."
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="category">Category</Label>
+                <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex items-center gap-1">
+                      <Plus className="h-3 w-3" />
+                      New Category
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Category</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="categoryName">Category Name</Label>
+                        <Input
+                          id="categoryName"
+                          value={newCategory.name}
+                          onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="e.g., Spiritual Development"
+                        />
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <Select
-                  value={config.category}
-                  onValueChange={(value) => {
-                    if (value === 'create-new') {
-                      setShowNewCategoryDialog(true)
-                    } else {
-                      setConfig(prev => ({ ...prev, category: value }))
-                    }
-                  }}
-                >
-                  <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                    {isLoadingCategories ? (
-                      <SelectItem value="loading" disabled>Loading categories...</SelectItem>
-                    ) : (
-                      <>
-                        {categories.map(category => (
-                          <SelectItem key={category.id} value={category.name} className="hover:bg-gray-50">
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="create-new" className="text-blue-600 font-medium hover:bg-blue-50">
-                          + Create New Category
+                      <div>
+                        <Label htmlFor="categoryDescription">Description</Label>
+                        <Textarea
+                          id="categoryDescription"
+                          value={newCategory.description}
+                          onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Describe this category..."
+                          rows={2}
+                        />
+                      </div>
+                      <div className="flex gap-4">
+                        <Button onClick={handleCreateCategory} className="flex-1">
+                          Create Category
+                        </Button>
+                        <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <Select
+                value={config.category}
+                onValueChange={(value) => {
+                  if (value === 'create-new') {
+                    setShowNewCategoryDialog(true)
+                  } else {
+                    setConfig(prev => ({ ...prev, category: value }))
+                  }
+                }}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingCategories ? (
+                    <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                  ) : (
+                    <>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
                         </SelectItem>
-                      </>
-                    )}
+                      ))}
+                      <SelectItem value="create-new" className="text-blue-600 font-medium">
+                        + Create New Category
+                      </SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="purpose">Assessment Purpose</Label>
+              <Textarea
+                id="purpose"
+                value={config.purpose}
+                onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
+                placeholder="What specific insights should this assessment provide?"
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          {/* AI Configuration */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">AI Configuration</h3>
+            <div>
+              <Label htmlFor="systemPrompt">System Prompt</Label>
+              <Textarea
+                id="systemPrompt"
+                value={config.systemPrompt}
+                onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                className="mt-1 font-mono text-sm"
+                rows={12}
+              />
+            </div>
+
+
+          </div>
+        </TabsContent>
+
+
+
+        {/* Questioning & Flow Tab */}
+        <TabsContent value="questioning" className="space-y-8">
+          {/* Questioning Strategy */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Questioning Strategy</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="questioningStrategy">Strategy</Label>
+                <Select
+                  value={config.questioningStrategy}
+                  onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="adaptive">Adaptive - Adjusts based on responses</SelectItem>
+                    <SelectItem value="progressive">Progressive - Builds complexity gradually</SelectItem>
+                    <SelectItem value="exploratory">Exploratory - Wide-ranging discovery</SelectItem>
+                    <SelectItem value="focused">Focused - Targeted deep-dive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="purpose">Assessment Purpose</Label>
-                <Textarea
-                  id="purpose"
-                  value={config.purpose}
-                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                  placeholder="What specific insights should this assessment provide?"
+                <Label htmlFor="questioningDepth">Depth</Label>
+                <Select
+                  value={config.questioningDepth}
+                  onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="surface">Surface - Basic patterns</SelectItem>
+                    <SelectItem value="moderate">Moderate - Behavioral insights</SelectItem>
+                    <SelectItem value="deep">Deep - Psychological patterns</SelectItem>
+                    <SelectItem value="profound">Profound - Unconscious dynamics</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Response Requirements */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Response Requirements</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="minSentences">Minimum Sentences</Label>
+                <Input
+                  id="minSentences"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={config.responseRequirements.minSentences}
+                  onChange={(e) => setConfig(prev => ({
+                    ...prev,
+                    responseRequirements: {
+                      ...prev.responseRequirements,
+                      minSentences: parseInt(e.target.value) || 2
+                    }
+                  }))}
                   className="mt-1"
-                  rows={3}
                 />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* AI Configuration Tab */}
-        <TabsContent value="ai-config" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                AI System Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="systemPrompt">System Prompt</Label>
-                <Textarea
-                  id="systemPrompt"
-                  value={config.systemPrompt}
-                  onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                  className="mt-1 font-mono text-sm"
-                  rows={12}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="questioningStrategy">Questioning Strategy</Label>
-                  <Select
-                    value={config.questioningStrategy}
-                    onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
-                  >
-                    <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectItem value="adaptive" className="hover:bg-gray-50">Adaptive - Adjusts based on responses</SelectItem>
-                      <SelectItem value="progressive" className="hover:bg-gray-50">Progressive - Builds complexity gradually</SelectItem>
-                      <SelectItem value="exploratory" className="hover:bg-gray-50">Exploratory - Wide-ranging discovery</SelectItem>
-                      <SelectItem value="focused" className="hover:bg-gray-50">Focused - Targeted deep-dive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="questioningDepth">Questioning Depth</Label>
-                  <Select
-                    value={config.questioningDepth}
-                    onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
-                  >
-                    <SelectTrigger className="mt-1 bg-white border-gray-300 shadow-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectItem value="surface" className="hover:bg-gray-50">Surface - Basic patterns</SelectItem>
-                      <SelectItem value="moderate" className="hover:bg-gray-50">Moderate - Behavioral insights</SelectItem>
-                      <SelectItem value="deep" className="hover:bg-gray-50">Deep - Psychological patterns</SelectItem>
-                      <SelectItem value="profound" className="hover:bg-gray-50">Profound - Unconscious dynamics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="reportGeneration">Report Generation Instructions</Label>
-                <Textarea
-                  id="reportGeneration"
-                  value={config.reportGeneration}
-                  onChange={(e) => setConfig(prev => ({ ...prev, reportGeneration: e.target.value }))}
+                <Label htmlFor="maxSentences">Maximum Sentences</Label>
+                <Input
+                  id="maxSentences"
+                  type="number"
+                  min="2"
+                  max="20"
+                  value={config.responseRequirements.maxSentences}
+                  onChange={(e) => setConfig(prev => ({
+                    ...prev,
+                    responseRequirements: {
+                      ...prev.responseRequirements,
+                      maxSentences: parseInt(e.target.value) || 8
+                    }
+                  }))}
                   className="mt-1"
-                  rows={8}
                 />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        {/* Questioning Strategy Tab */}
-        <TabsContent value="questioning" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Questioning Strategy & Examples
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Response Requirements */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Response Requirements</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="minSentences">Minimum Sentences</Label>
+            <div>
+              <Label>Follow-up Prompts</Label>
+              <div className="mt-2 space-y-2">
+                {config.responseRequirements.followUpPrompts.map((prompt, index) => (
+                  <div key={index} className="flex gap-2">
                     <Input
-                      id="minSentences"
-                      type="number"
-                      value={config.responseRequirements.minSentences}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        responseRequirements: {
-                          ...prev.responseRequirements,
-                          minSentences: parseInt(e.target.value) || 2
-                        }
-                      }))}
-                      className="mt-1"
+                      value={prompt}
+                      onChange={(e) => {
+                        const newPrompts = [...config.responseRequirements.followUpPrompts]
+                        newPrompts[index] = e.target.value
+                        setConfig(prev => ({
+                          ...prev,
+                          responseRequirements: {
+                            ...prev.responseRequirements,
+                            followUpPrompts: newPrompts
+                          }
+                        }))
+                      }}
+                      placeholder="Enter follow-up prompt..."
+                      className="flex-1"
                     />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newPrompts = config.responseRequirements.followUpPrompts.filter((_, i) => i !== index)
+                        setConfig(prev => ({
+                          ...prev,
+                          responseRequirements: {
+                            ...prev.responseRequirements,
+                            followUpPrompts: newPrompts
+                          }
+                        }))
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div>
-                    <Label htmlFor="maxSentences">Maximum Sentences</Label>
-                    <Input
-                      id="maxSentences"
-                      type="number"
-                      value={config.responseRequirements.maxSentences}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        responseRequirements: {
-                          ...prev.responseRequirements,
-                          maxSentences: parseInt(e.target.value) || 8
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setConfig(prev => ({
+                      ...prev,
+                      responseRequirements: {
+                        ...prev.responseRequirements,
+                        followUpPrompts: [...prev.responseRequirements.followUpPrompts, '']
+                      }
+                    }))
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Follow-up Prompt
+                </Button>
               </div>
+            </div>
+          </div>
 
-              {/* Adaptive Logic */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Adaptive Logic</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="minQuestions">Min Questions</Label>
-                    <Input
-                      id="minQuestions"
-                      type="number"
-                      value={config.adaptiveLogic.minQuestions}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        adaptiveLogic: {
-                          ...prev.adaptiveLogic,
-                          minQuestions: parseInt(e.target.value) || 8
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="maxQuestions">Max Questions</Label>
-                    <Input
-                      id="maxQuestions"
-                      type="number"
-                      value={config.adaptiveLogic.maxQuestions}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        adaptiveLogic: {
-                          ...prev.adaptiveLogic,
-                          maxQuestions: parseInt(e.target.value) || 15
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="evidenceThreshold">Evidence Threshold</Label>
-                    <Input
-                      id="evidenceThreshold"
-                      type="number"
-                      value={config.adaptiveLogic.evidenceThreshold}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        adaptiveLogic: {
-                          ...prev.adaptiveLogic,
-                          evidenceThreshold: parseInt(e.target.value) || 3
-                        }
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
+          {/* Advanced Flow Builder */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Advanced Flow Builder</h3>
+            <QuestioningFlowBuilder
+              flow={config.questioningFlow}
+              onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
+              onTest={(flow) => {
+                console.log('Testing questioning flow:', flow)
+                alert('Flow testing will be implemented in the chat interface!')
+              }}
+            />
+          </div>
 
-              {/* Question Examples */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Question Examples</h3>
-                <div className="space-y-4">
-                  {Object.entries(config.questionExamples).map(([type, examples]) => (
-                    <div key={type}>
-                      <Label className="capitalize">{type.replace(/([A-Z])/g, ' $1')} Questions</Label>
-                      <div className="mt-2 space-y-2">
-                        {examples.map((example, index) => (
-                          <div key={index} className="flex gap-2">
-                            <Textarea
-                              value={example}
-                              onChange={(e) => {
-                                const newExamples = [...examples]
-                                newExamples[index] = e.target.value
-                                setConfig(prev => ({
-                                  ...prev,
-                                  questionExamples: {
-                                    ...prev.questionExamples,
-                                    [type]: newExamples
-                                  }
-                                }))
-                              }}
-                              className="flex-1"
-                              rows={2}
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newExamples = examples.filter((_, i) => i !== index)
-                                setConfig(prev => ({
-                                  ...prev,
-                                  questionExamples: {
-                                    ...prev.questionExamples,
-                                    [type]: newExamples
-                                  }
-                                }))
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
+          {/* Question Examples */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Question Examples</h3>
+            <div className="space-y-4">
+              {Object.entries(config.questionExamples).map(([type, examples]) => (
+                <div key={type}>
+                  <Label className="capitalize">{type.replace(/([A-Z])/g, ' $1')} Questions</Label>
+                  <div className="mt-2 space-y-2">
+                    {examples.map((example, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Textarea
+                          value={example}
+                          onChange={(e) => {
+                            const newExamples = [...examples]
+                            newExamples[index] = e.target.value
                             setConfig(prev => ({
                               ...prev,
                               questionExamples: {
                                 ...prev.questionExamples,
-                                [type]: [...examples, '']
+                                [type]: newExamples
                               }
                             }))
                           }}
-                          className="flex items-center gap-1"
+                          className="flex-1"
+                          rows={2}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newExamples = examples.filter((_, i) => i !== index)
+                            setConfig(prev => ({
+                              ...prev,
+                              questionExamples: {
+                                ...prev.questionExamples,
+                                [type]: newExamples
+                              }
+                            }))
+                          }}
                         >
-                          <Plus className="h-3 w-3" />
-                          Add Example
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setConfig(prev => ({
+                          ...prev,
+                          questionExamples: {
+                            ...prev.questionExamples,
+                            [type]: [...examples, '']
+                          }
+                        }))
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add Example
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </div>
         </TabsContent>
 
-        {/* Advanced Flow Builder Tab */}
-        <TabsContent value="flow-builder" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Advanced Questioning Flow Designer
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Create sophisticated questioning sequences with drag & drop. Design custom flows that adapt to user responses and build evidence systematically.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <QuestioningFlowBuilder
-                flow={config.questioningFlow}
-                onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
-                onTest={(flow) => {
-                  console.log('Testing questioning flow:', flow)
-                  alert('Flow testing will be implemented in the chat interface!')
+        {/* Report & Answers Tab */}
+        <TabsContent value="reports" className="space-y-8">
+          {/* Report Generation */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Report Generation Instructions</h3>
+            <Textarea
+              value={config.reportGeneration}
+              onChange={(e) => setConfig(prev => ({ ...prev, reportGeneration: e.target.value }))}
+              className="font-mono text-sm"
+              rows={8}
+              placeholder="Define how the AI should generate assessment reports..."
+            />
+          </div>
+
+          {/* Theoretical Understanding */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Theoretical Understanding</h3>
+            <p className="text-sm text-gray-600">
+              Provide deep theoretical context about discovered archetypes
+            </p>
+            <Textarea
+              value={config.reportAnswers?.theoreticalUnderstanding || ''}
+              onChange={(e) => setConfig(prev => ({
+                ...prev,
+                reportAnswers: {
+                  ...prev.reportAnswers,
+                  theoreticalUnderstanding: e.target.value,
+                  embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                  integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                  resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                  archetypeCards: prev.reportAnswers?.archetypeCards || []
+                }
+              }))}
+              className="text-sm"
+              rows={6}
+              placeholder="Define theoretical context and background information..."
+            />
+          </div>
+
+          {/* Embodiment Practices */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Embodiment Practices</h3>
+            <p className="text-sm text-gray-600">
+              Specific practices to help users embody their discovered archetype
+            </p>
+            <Textarea
+              value={config.reportAnswers?.embodimentPractices || ''}
+              onChange={(e) => setConfig(prev => ({
+                ...prev,
+                reportAnswers: {
+                  ...prev.reportAnswers,
+                  theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                  embodimentPractices: e.target.value,
+                  integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                  resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                  archetypeCards: prev.reportAnswers?.archetypeCards || []
+                }
+              }))}
+              className="text-sm"
+              rows={6}
+              placeholder="Define embodiment practices and exercises..."
+            />
+          </div>
+
+          {/* Integration Practices */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Integration Practices</h3>
+            <p className="text-sm text-gray-600">
+              Practices to help integrate archetypal knowledge into daily life
+            </p>
+            <Textarea
+              value={config.reportAnswers?.integrationPractices || ''}
+              onChange={(e) => setConfig(prev => ({
+                ...prev,
+                reportAnswers: {
+                  ...prev.reportAnswers,
+                  theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                  embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                  integrationPractices: e.target.value,
+                  resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                  archetypeCards: prev.reportAnswers?.archetypeCards || []
+                }
+              }))}
+              className="text-sm"
+              rows={6}
+              placeholder="Define integration practices and strategies..."
+            />
+          </div>
+
+          {/* Resource Links */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Resource Links</h3>
+            <p className="text-sm text-gray-600">
+              Additional resources and links for deeper exploration
+            </p>
+            <div className="space-y-2">
+              {(config.reportAnswers?.resourceLinks || []).map((link, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={link}
+                    onChange={(e) => {
+                      const currentLinks = config.reportAnswers?.resourceLinks || []
+                      const newLinks = [...currentLinks]
+                      newLinks[index] = e.target.value
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: newLinks,
+                          archetypeCards: prev.reportAnswers?.archetypeCards || []
+                        }
+                      }))
+                    }}
+                    placeholder="https://example.com/resource"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const currentLinks = config.reportAnswers?.resourceLinks || []
+                      const newLinks = currentLinks.filter((_, i) => i !== index)
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: newLinks,
+                          archetypeCards: prev.reportAnswers?.archetypeCards || []
+                        }
+                      }))
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setConfig(prev => ({
+                    ...prev,
+                    reportAnswers: {
+                      ...prev.reportAnswers,
+                      theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                      embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                      integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                      resourceLinks: [...(prev.reportAnswers?.resourceLinks || []), ''],
+                      archetypeCards: prev.reportAnswers?.archetypeCards || []
+                    }
+                  }))
                 }}
-              />
-            </CardContent>
-          </Card>
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                Add Resource Link
+              </Button>
+            </div>
+          </div>
+
+          {/* Archetype Cards */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Archetype Cards</h3>
+            <p className="text-sm text-gray-600">
+              Reference cards with archetype information and guidance
+            </p>
+            <div className="space-y-2">
+              {(config.reportAnswers?.archetypeCards || []).map((card, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={card}
+                    onChange={(e) => {
+                      const currentCards = config.reportAnswers?.archetypeCards || []
+                      const newCards = [...currentCards]
+                      newCards[index] = e.target.value
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                          archetypeCards: newCards
+                        }
+                      }))
+                    }}
+                    placeholder="Archetype card name or reference"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const currentCards = config.reportAnswers?.archetypeCards || []
+                      const newCards = currentCards.filter((_, i) => i !== index)
+                      setConfig(prev => ({
+                        ...prev,
+                        reportAnswers: {
+                          ...prev.reportAnswers,
+                          theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                          embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                          integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                          resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                          archetypeCards: newCards
+                        }
+                      }))
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setConfig(prev => ({
+                    ...prev,
+                    reportAnswers: {
+                      ...prev.reportAnswers,
+                      theoreticalUnderstanding: prev.reportAnswers?.theoreticalUnderstanding || '',
+                      embodimentPractices: prev.reportAnswers?.embodimentPractices || '',
+                      integrationPractices: prev.reportAnswers?.integrationPractices || '',
+                      resourceLinks: prev.reportAnswers?.resourceLinks || [],
+                      archetypeCards: [...(prev.reportAnswers?.archetypeCards || []), '']
+                    }
+                  }))
+                }}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                Add Archetype Card
+              </Button>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Reference Files Tab */}
         <TabsContent value="files" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Reference Files & Links
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Upload documents and add reference links for the AI to use during assessments
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ReferenceManager
-                files={config.referenceFiles}
-                links={config.referenceLinks}
-                onFilesChange={(files) => setConfig(prev => ({ ...prev, referenceFiles: files }))}
-                onLinksChange={(links) => setConfig(prev => ({ ...prev, referenceLinks: links }))}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Reference Files & Links</h3>
+            <p className="text-sm text-gray-600">
+              Upload documents and add reference links for the AI to use during assessments
+            </p>
+            <ReferenceManager
+              files={config.referenceFiles}
+              links={config.referenceLinks}
+              onFilesChange={(files) => setConfig(prev => ({ ...prev, referenceFiles: files }))}
+              onLinksChange={(links) => setConfig(prev => ({ ...prev, referenceLinks: links }))}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
