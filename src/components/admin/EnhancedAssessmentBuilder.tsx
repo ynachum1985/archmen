@@ -29,8 +29,6 @@ interface EnhancedAssessmentConfig {
   
   // AI Configuration
   systemPrompt: string
-  questioningStrategy: 'adaptive' | 'progressive' | 'exploratory' | 'focused'
-  questioningDepth: 'surface' | 'moderate' | 'deep' | 'profound'
 
   // AI Settings
   minQuestions: number
@@ -101,8 +99,6 @@ QUESTIONING STRATEGY:
 - Use follow-up prompts if responses are too brief
 - Adapt questioning based on emerging patterns
 - Ask 8-15 questions total, stopping when sufficient evidence is gathered`,
-  questioningStrategy: 'adaptive',
-  questioningDepth: 'moderate',
 
   // AI Settings
   minQuestions: 8,
@@ -309,37 +305,40 @@ export function EnhancedAssessmentBuilder({
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-900">AI Configuration Settings</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <Label htmlFor="name">Assessment Name</Label>
-                <Input
-                  id="name"
-                  value={config.name}
-                  onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., Leadership Archetype Discovery"
-                  className="mt-1 border-gray-200"
-                />
-              </div>
-              <div>
-                <Label htmlFor="duration">Expected Duration (minutes)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={config.expectedDuration}
-                  onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                  className="mt-1 border-gray-200"
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="category">Category</Label>
-                  <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-800">
-                        <Plus className="h-3 w-3" />
-                        New
-                      </Button>
-                    </DialogTrigger>
+            {/* Basic Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Basic Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="name" className="text-sm">Assessment Name</Label>
+                  <Input
+                    id="name"
+                    value={config.name}
+                    onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Leadership Archetype Discovery"
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="duration" className="text-sm">Duration (min)</Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    value={config.expectedDuration}
+                    onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="category" className="text-sm">Category</Label>
+                    <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-800 h-6 px-2">
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="border-gray-200">
                       <DialogHeader>
                         <DialogTitle>Create New Category</DialogTitle>
@@ -388,7 +387,7 @@ export function EnhancedAssessmentBuilder({
                     }
                   }}
                 >
-                  <SelectTrigger className="mt-1 border-gray-200">
+                  <SelectTrigger className="mt-1 h-8 text-sm">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -408,137 +407,111 @@ export function EnhancedAssessmentBuilder({
                     )}
                   </SelectContent>
                 </Select>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <Label htmlFor="minQuestions">Minimum Questions</Label>
-                <Input
-                  id="minQuestions"
-                  type="number"
-                  min="3"
-                  max="20"
-                  value={config.minQuestions}
-                  onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
-                  className="mt-1 border-gray-200"
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxQuestions">Maximum Questions</Label>
-                <Input
-                  id="maxQuestions"
-                  type="number"
-                  min="5"
-                  max="30"
-                  value={config.maxQuestions}
-                  onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
-                  className="mt-1 border-gray-200"
-                />
-              </div>
-              <div>
-                <Label htmlFor="evidenceThreshold">Evidence Threshold</Label>
-                <Input
-                  id="evidenceThreshold"
-                  type="number"
-                  min="0.1"
-                  max="1.0"
-                  step="0.1"
-                  value={config.evidenceThreshold}
-                  onChange={(e) => setConfig(prev => ({ ...prev, evidenceThreshold: parseFloat(e.target.value) || 0.7 }))}
-                  className="mt-1 border-gray-200"
-                />
-              </div>
-              <div>
-                <Label htmlFor="adaptationSensitivity">Adaptation Sensitivity</Label>
-                <Input
-                  id="adaptationSensitivity"
-                  type="number"
-                  min="0.1"
-                  max="1.0"
-                  step="0.1"
-                  value={config.adaptationSensitivity}
-                  onChange={(e) => setConfig(prev => ({ ...prev, adaptationSensitivity: parseFloat(e.target.value) || 0.5 }))}
-                  className="mt-1 border-gray-200"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="maxCycles">Cycle Settings - Max Cycles</Label>
-                <Input
-                  id="maxCycles"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={config.cycleSettings.maxCycles}
-                  onChange={(e) => setConfig(prev => ({
-                    ...prev,
-                    cycleSettings: {
-                      ...prev.cycleSettings,
-                      maxCycles: parseInt(e.target.value) || 3
-                    }
-                  }))}
-                  className="mt-1 border-gray-200"
-                />
-              </div>
-              <div>
-                <Label htmlFor="evidencePerCycle">Evidence Per Cycle</Label>
-                <Input
-                  id="evidencePerCycle"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={config.cycleSettings.evidencePerCycle}
-                  onChange={(e) => setConfig(prev => ({
-                    ...prev,
-                    cycleSettings: {
-                      ...prev.cycleSettings,
-                      evidencePerCycle: parseInt(e.target.value) || 3
-                    }
-                  }))}
-                  className="mt-1 border-gray-200"
-                />
+            {/* Question Settings */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Question Settings</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="minQuestions" className="text-sm">Min Questions</Label>
+                  <Input
+                    id="minQuestions"
+                    type="number"
+                    min="3"
+                    max="20"
+                    value={config.minQuestions}
+                    onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxQuestions" className="text-sm">Max Questions</Label>
+                  <Input
+                    id="maxQuestions"
+                    type="number"
+                    min="5"
+                    max="30"
+                    value={config.maxQuestions}
+                    onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="evidenceThreshold" className="text-sm">Evidence Threshold</Label>
+                  <Input
+                    id="evidenceThreshold"
+                    type="number"
+                    min="0.1"
+                    max="1.0"
+                    step="0.1"
+                    value={config.evidenceThreshold}
+                    onChange={(e) => setConfig(prev => ({ ...prev, evidenceThreshold: parseFloat(e.target.value) || 0.7 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="adaptationSensitivity" className="text-sm">Adaptation Sensitivity</Label>
+                  <Input
+                    id="adaptationSensitivity"
+                    type="number"
+                    min="0.1"
+                    max="1.0"
+                    step="0.1"
+                    value={config.adaptationSensitivity}
+                    onChange={(e) => setConfig(prev => ({ ...prev, adaptationSensitivity: parseFloat(e.target.value) || 0.5 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="questioningStrategy">Advanced AI Behavior - Strategy</Label>
-                <Select
-                  value={config.questioningStrategy}
-                  onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
-                >
-                  <SelectTrigger className="mt-1 border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="adaptive">Adaptive - Adjusts based on responses</SelectItem>
-                    <SelectItem value="progressive">Progressive - Builds complexity gradually</SelectItem>
-                    <SelectItem value="exploratory">Exploratory - Wide-ranging discovery</SelectItem>
-                    <SelectItem value="focused">Focused - Targeted deep-dive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="questioningDepth">Depth</Label>
-                <Select
-                  value={config.questioningDepth}
-                  onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
-                >
-                  <SelectTrigger className="mt-1 border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="surface">Surface - Basic patterns</SelectItem>
-                    <SelectItem value="moderate">Moderate - Behavioral insights</SelectItem>
-                    <SelectItem value="deep">Deep - Psychological patterns</SelectItem>
-                    <SelectItem value="profound">Profound - Unconscious dynamics</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Cycle Settings */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Cycle Settings</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="maxCycles" className="text-sm">Max Cycles</Label>
+                  <Input
+                    id="maxCycles"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={config.cycleSettings.maxCycles}
+                    onChange={(e) => setConfig(prev => ({
+                      ...prev,
+                      cycleSettings: {
+                        ...prev.cycleSettings,
+                        maxCycles: parseInt(e.target.value) || 3
+                      }
+                    }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="evidencePerCycle" className="text-sm">Evidence Per Cycle</Label>
+                  <Input
+                    id="evidencePerCycle"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={config.cycleSettings.evidencePerCycle}
+                    onChange={(e) => setConfig(prev => ({
+                      ...prev,
+                      cycleSettings: {
+                        ...prev.cycleSettings,
+                        evidencePerCycle: parseInt(e.target.value) || 3
+                      }
+                    }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
               </div>
             </div>
+
+
           </div>
 
           {/* Combined Prompt Section */}

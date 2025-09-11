@@ -145,7 +145,7 @@ export function AIPersonalityManager() {
               Create Personality
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
             <DialogHeader>
               <DialogTitle>Create AI Personality</DialogTitle>
               <DialogDescription>
@@ -232,7 +232,7 @@ export function AIPersonalityManager() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingPersonality} onOpenChange={(open) => !open && setEditingPersonality(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle>Edit AI Personality</DialogTitle>
             <DialogDescription>
