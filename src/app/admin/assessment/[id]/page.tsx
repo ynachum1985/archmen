@@ -19,8 +19,6 @@ interface EnhancedAssessmentConfig {
 
   // AI Configuration
   systemPrompt: string
-  questioningStrategy: 'adaptive' | 'progressive' | 'exploratory' | 'focused'
-  questioningDepth: 'surface' | 'moderate' | 'deep' | 'profound'
 
   // AI Settings
   minQuestions: number
@@ -98,8 +96,6 @@ export default function AssessmentDetailPage() {
         purpose: "Discover the user's dominant relationship archetypes by analyzing their communication patterns, emotional expression, attachment styles, and interpersonal dynamics. Focus on how they navigate intimacy, conflict, and emotional connection.",
         expectedDuration: 15,
         systemPrompt: "You are an expert psychological assessor specializing in relationship archetype identification through linguistic analysis. Your role is to conduct natural, engaging conversations that reveal deep emotional and relational patterns through language use, metaphors, and communication styles.",
-        questioningStrategy: "adaptive",
-        questioningDepth: "moderate",
 
         // AI Settings
         minQuestions: 8,
@@ -271,9 +267,9 @@ export default function AssessmentDetailPage() {
                   purpose: assessmentConfig.purpose,
                   targetArchetypes: [], // AI chooses freely from all archetypes
                   analysisInstructions: assessmentConfig.systemPrompt,
-                  questioningStyle: assessmentConfig.questioningStrategy,
+                  questioningStyle: 'adaptive',
                   expectedDuration: assessmentConfig.expectedDuration,
-                  completionCriteria: `Use ${assessmentConfig.questioningStrategy} questioning with ${assessmentConfig.questioningDepth} depth. Ask 8-15 questions based on response quality.`
+                  completionCriteria: `Use adaptive questioning with moderate depth. Ask 8-15 questions based on response quality.`
                 }}
                 onComplete={handleTestComplete}
               />
