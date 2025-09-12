@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Json } from '@/lib/supabase/database.types'
+import type { Json } from '@/lib/types/database'
 
 export interface AssessmentResult {
   id: string
