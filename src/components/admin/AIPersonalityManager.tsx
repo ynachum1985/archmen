@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X, Sparkles } from 'lucide-react'
 import { AIPersonality, NewAIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 
 export function AIPersonalityManager() {
@@ -25,8 +26,22 @@ export function AIPersonalityManager() {
     goals: [''],
     behavior_traits: [''],
     system_prompt_template: '',
-    is_active: true
+    is_active: true,
+    personality_config: {
+      questioning_approach: '',
+      behavioral_traits: '',
+      goals_and_objectives: ''
+    },
+    questioning_style: 'reflective',
+    tone: 'warm',
+    challenge_level: 5,
+    emotional_attunement: 7
   })
+
+  // Phase 3: UX Enhancement - Combined input mode
+  const [useCombinedInput, setUseCombinedInput] = useState(false)
+  const [combinedInput, setCombinedInput] = useState('')
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false)
 
   useEffect(() => {
     loadPersonalities()
@@ -88,8 +103,42 @@ export function AIPersonalityManager() {
       goals: [''],
       behavior_traits: [''],
       system_prompt_template: '',
-      is_active: true
+      is_active: true,
+      personality_config: {
+        questioning_approach: '',
+        behavioral_traits: '',
+        goals_and_objectives: ''
+      },
+      questioning_style: 'reflective',
+      tone: 'warm',
+      challenge_level: 5,
+      emotional_attunement: 7
     })
+    setCombinedInput('')
+    setUseCombinedInput(false)
+  }
+
+  const generateEmbeddings = async () => {
+    setIsGeneratingEmbeddings(true)
+    try {
+      const response = await fetch('/api/generate-embeddings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) throw new Error('Failed to generate embeddings')
+
+      const data = await response.json()
+      console.log('Embeddings generated:', data)
+      alert('Embeddings generated successfully! RAG system is now ready.')
+    } catch (error) {
+      console.error('Error generating embeddings:', error)
+      alert('Error generating embeddings. Please try again.')
+    } finally {
+      setIsGeneratingEmbeddings(false)
+    }
   }
 
   const startEdit = (personality: AIPersonality) => {
@@ -136,8 +185,18 @@ export function AIPersonalityManager() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">AI Personalities</h2>
-          <p className="text-gray-600 mt-1">Configure AI personalities for different assessment approaches</p>
+          <p className="text-gray-600 mt-1">Configure AI personalities for different assessment approaches with RAG capabilities</p>
         </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={generateEmbeddings}
+            disabled={isGeneratingEmbeddings}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            {isGeneratingEmbeddings ? 'Generating...' : 'Generate Embeddings'}
+          </Button>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
@@ -342,10 +401,113 @@ function PersonalityForm({ personality, onChange, onAddArrayItem, onUpdateArrayI
         />
       </div>
 
-      {renderArrayField('open_ended_questions', 'Open-Ended Questions', 'Enter an open-ended question this personality would ask...')}
-      {renderArrayField('clarifying_questions', 'Clarifying Questions', 'Enter a clarifying question this personality would ask...')}
-      {renderArrayField('goals', 'Goals', 'Enter a goal this personality aims to accomplish...')}
-      {renderArrayField('behavior_traits', 'Behavior Traits', 'Enter a behavior trait that describes this personality...')}
+      {/* Phase 3: UX Enhancement - Input Mode Toggle */}
+      <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg">
+        <input
+          type="checkbox"
+          id="useCombinedInput"
+          checked={useCombinedInput}
+          onChange={(e) => setUseCombinedInput(e.target.checked)}
+          className="rounded"
+        />
+        <Label htmlFor="useCombinedInput" className="text-sm">
+          Use combined input mode (faster, AI will parse into individual fields)
+        </Label>
+      </div>
+
+      {useCombinedInput ? (
+        /* Combined Input Mode */
+        <div>
+          <Label htmlFor="combinedInput">Combined Personality Configuration</Label>
+          <Textarea
+            id="combinedInput"
+            value={combinedInput}
+            onChange={(e) => setCombinedInput(e.target.value)}
+            placeholder="Describe the AI personality in natural language. Include questioning approach, behavioral traits, goals, and any specific instructions. The AI will automatically parse this into structured fields.
+
+Example:
+This personality should ask thoughtful, open-ended questions about relationships and emotional patterns. It should be warm and empathetic, validating emotions while gently challenging assumptions. The goal is to help people understand their attachment styles and communication patterns. Use reflective listening and ask follow-up questions about feelings."
+            className="mt-1"
+            rows={8}
+          />
+          <p className="text-sm text-gray-500 mt-2">
+            Write naturally - AI will extract questions, traits, goals, and approach automatically.
+          </p>
+        </div>
+      ) : (
+        /* Individual Fields Mode */
+        <div className="space-y-6">
+          {renderArrayField('open_ended_questions', 'Open-Ended Questions', 'Enter an open-ended question this personality would ask...')}
+          {renderArrayField('clarifying_questions', 'Clarifying Questions', 'Enter a clarifying question this personality would ask...')}
+          {renderArrayField('goals', 'Goals', 'Enter a goal this personality aims to accomplish...')}
+          {renderArrayField('behavior_traits', 'Behavior Traits', 'Enter a behavior trait that describes this personality...')}
+        </div>
+      )}
+
+      {/* Enhanced Configuration Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="questioningStyle">Questioning Style</Label>
+          <Select
+            value={personality.questioning_style || 'reflective'}
+            onValueChange={(value) => onChange({ ...personality, questioning_style: value })}
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="reflective">Reflective</SelectItem>
+              <SelectItem value="direct">Direct</SelectItem>
+              <SelectItem value="exploratory">Exploratory</SelectItem>
+              <SelectItem value="analytical">Analytical</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="tone">Tone</Label>
+          <Select
+            value={personality.tone || 'warm'}
+            onValueChange={(value) => onChange({ ...personality, tone: value })}
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="warm">Warm</SelectItem>
+              <SelectItem value="professional">Professional</SelectItem>
+              <SelectItem value="casual">Casual</SelectItem>
+              <SelectItem value="formal">Formal</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="challengeLevel">Challenge Level (1-10)</Label>
+          <Input
+            id="challengeLevel"
+            type="number"
+            min="1"
+            max="10"
+            value={personality.challenge_level || 5}
+            onChange={(e) => onChange({ ...personality, challenge_level: parseInt(e.target.value) || 5 })}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="emotionalAttunement">Emotional Attunement (1-10)</Label>
+          <Input
+            id="emotionalAttunement"
+            type="number"
+            min="1"
+            max="10"
+            value={personality.emotional_attunement || 7}
+            onChange={(e) => onChange({ ...personality, emotional_attunement: parseInt(e.target.value) || 7 })}
+            className="mt-1"
+          />
+        </div>
+      </div>
 
       <div>
         <Label htmlFor="systemPrompt">System Prompt Template</Label>

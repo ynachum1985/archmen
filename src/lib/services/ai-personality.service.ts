@@ -12,6 +12,25 @@ export interface AIPersonality {
   is_active: boolean
   created_at: string
   updated_at: string
+
+  // Enhanced fields for RAG and UX
+  personality_config?: {
+    questioning_approach?: string
+    behavioral_traits?: string
+    goals_and_objectives?: string
+  }
+  parsed_questions?: string[]
+  parsed_traits?: string[]
+  parsed_goals?: string[]
+  embedding?: number[]
+
+  // Existing schema fields
+  questioning_style?: string
+  tone?: string
+  challenge_level?: number
+  emotional_attunement?: number
+  sample_openers?: string[]
+  sample_followups?: string[]
 }
 
 export interface NewAIPersonality {
@@ -23,6 +42,19 @@ export interface NewAIPersonality {
   behavior_traits: string[]
   system_prompt_template: string
   is_active?: boolean
+
+  // Enhanced fields for UX
+  personality_config?: {
+    questioning_approach?: string
+    behavioral_traits?: string
+    goals_and_objectives?: string
+  }
+
+  // Optional existing schema fields
+  questioning_style?: string
+  tone?: string
+  challenge_level?: number
+  emotional_attunement?: number
 }
 
 export class AIPersonalityService {
@@ -259,6 +291,59 @@ Help people understand their cognitive patterns while maintaining a supportive a
     for (const personality of defaultPersonalities) {
       await this.createPersonality(personality)
     }
+  }
+}
+
+  // Phase 3: AI-powered parsing for UX optimization
+  async parsePersonalityInput(combinedText: string): Promise<{
+    questions: string[]
+    traits: string[]
+    goals: string[]
+    approach: string
+  }> {
+    // This would use OpenAI to parse combined text
+    // For now, return a simple split-based parsing
+    const lines = combinedText.split('\n').filter(line => line.trim())
+
+    return {
+      questions: lines.filter(line => line.includes('?') || line.toLowerCase().includes('question')),
+      traits: lines.filter(line => line.toLowerCase().includes('trait') || line.toLowerCase().includes('behavior')),
+      goals: lines.filter(line => line.toLowerCase().includes('goal') || line.toLowerCase().includes('aim')),
+      approach: lines.find(line => line.toLowerCase().includes('approach') || line.toLowerCase().includes('style')) || ''
+    }
+  }
+
+  // Enhanced create method that handles both individual and combined input
+  async createEnhancedPersonality(
+    personality: NewAIPersonality,
+    combinedInput?: string
+  ): Promise<AIPersonality> {
+    let finalPersonality = { ...personality }
+
+    // If combined input is provided, parse it
+    if (combinedInput) {
+      const parsed = await this.parsePersonalityInput(combinedInput)
+
+      // Store both the combined input and parsed results
+      finalPersonality.personality_config = {
+        questioning_approach: combinedInput,
+        behavioral_traits: parsed.traits.join('\n'),
+        goals_and_objectives: parsed.goals.join('\n')
+      }
+
+      // Update individual arrays if they're empty
+      if (finalPersonality.open_ended_questions.length === 0) {
+        finalPersonality.open_ended_questions = parsed.questions
+      }
+      if (finalPersonality.behavior_traits.length === 0) {
+        finalPersonality.behavior_traits = parsed.traits
+      }
+      if (finalPersonality.goals.length === 0) {
+        finalPersonality.goals = parsed.goals
+      }
+    }
+
+    return this.createPersonality(finalPersonality)
   }
 }
 

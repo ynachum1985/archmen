@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
+import { EnhancedArchetypeChat } from "@/components/chat/EnhancedArchetypeChat"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -273,6 +274,10 @@ export default function AdminPage() {
               <Brain className="h-4 w-4" />
               AI Personality
             </TabsTrigger>
+            <TabsTrigger value="enhanced-chat" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Enhanced Chat (RAG)
+            </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Analytics
@@ -425,6 +430,11 @@ export default function AdminPage() {
           {/* AI Personality Tab */}
           <TabsContent value="ai-personality" className="mt-6">
             <AIPersonalityManager />
+          </TabsContent>
+
+          {/* Enhanced Chat Tab */}
+          <TabsContent value="enhanced-chat" className="mt-6">
+            <EnhancedArchetypeChat />
           </TabsContent>
 
           {/* Analytics Tab */}
