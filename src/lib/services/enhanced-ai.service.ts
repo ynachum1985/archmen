@@ -21,10 +21,6 @@ interface RelevantContext {
     name: string
     description: string
     category: string
-    keywords: string[]
-    phrases: string[]
-    emotional_indicators: string[]
-    behavioral_patterns: string[]
     similarity: number
   }>
   personalities: Array<{
@@ -226,20 +222,11 @@ export class EnhancedAIService {
     let systemPrompt = personality?.system_prompt_template || 
       `You are an expert psychological assessor specializing in archetype identification through conversation.`
 
-    // Add relevant archetype context with linguistic patterns
+    // Add relevant archetype context
     if (context.archetypes.length > 0) {
       systemPrompt += `\n\nRELEVANT ARCHETYPES TO CONSIDER:\n`
       context.archetypes.forEach(archetype => {
-        systemPrompt += `- ${archetype.name}: ${archetype.description}\n`
-        if (archetype.keywords && archetype.keywords.length > 0) {
-          systemPrompt += `  Keywords: ${archetype.keywords.join(', ')}\n`
-        }
-        if (archetype.phrases && archetype.phrases.length > 0) {
-          systemPrompt += `  Phrases: ${archetype.phrases.join(', ')}\n`
-        }
-        if (archetype.emotional_indicators && archetype.emotional_indicators.length > 0) {
-          systemPrompt += `  Emotional Indicators: ${archetype.emotional_indicators.join(', ')}\n`
-        }
+        systemPrompt += `- ${archetype.name} (${archetype.category}): ${archetype.description}\n`
       })
     }
 
@@ -274,27 +261,17 @@ export class EnhancedAIService {
 
     console.log('Generating embeddings for existing data...')
 
-    // Generate embeddings for archetypes (including linguistic patterns)
+    // Generate embeddings for archetypes (start with basic fields, expand later)
     const { data: archetypes } = await this.getSupabase()
       .from('enhanced_archetypes')
-      .select('id, name, description, keywords, phrases, emotional_indicators, behavioral_patterns')
+      .select('id, name, description')
       .is('description_embedding', null)
 
     if (archetypes) {
       for (const archetype of archetypes) {
-        // Type assertion for the extended archetype data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const extendedArchetype = archetype as any
-
-        // Combine description with linguistic patterns for richer embeddings
-        const linguisticContent = [
-          ...(extendedArchetype.keywords || []),
-          ...(extendedArchetype.phrases || []),
-          ...(extendedArchetype.emotional_indicators || []),
-          ...(extendedArchetype.behavioral_patterns || [])
-        ].join(' ')
-
-        const text = `${archetype.name}: ${archetype.description} ${linguisticContent}`.trim()
+        // For now, just use name and description for embeddings
+        // TODO: Add linguistic patterns once columns are properly accessible
+        const text = `${archetype.name}: ${archetype.description}`.trim()
         const embedding = await this.getEmbedding(text)
 
         await this.getSupabase()
