@@ -85,11 +85,12 @@ export class LinguisticAssessmentService {
 
     // If not found in hardcoded themes, it might be from the database
     if (!theme) {
-      // Try to get from database via assessment themes table
+      // Try to get from database via assessment templates table
       const { data, error } = await this.supabase
-        .from('assessment_themes')
+        .from('assessment_templates')
         .select('*')
         .eq('id', themeId)
+        .eq('is_active', true)
         .single()
 
       if (data && !error) {
@@ -97,9 +98,9 @@ export class LinguisticAssessmentService {
           id: data.id,
           name: data.name,
           description: data.description || '',
-          focusAreas: data.focus_areas || [],
-          initialPrompt: data.initial_prompt,
-          archetypeMapping: data.archetype_mapping as Record<string, string[]> || {}
+          focusAreas: data.archetype_focus || [],
+          initialPrompt: data.intro_text || "Let's begin your assessment.",
+          archetypeMapping: (data.metadata as Record<string, unknown>)?.archetypeMapping as Record<string, string[]> || {}
         }
       }
     }
@@ -414,17 +415,15 @@ Write in a warm, insightful tone that helps the person understand themselves bet
     conversationHistory: ConversationTurn[]
   ): Promise<void> {
     try {
-      await this.supabase.from('assessment_results').insert({
-        user_id: userId,
-        session_id: sessionId,
-        theme_id: themeId,
-        archetype_scores: archetypeScores,
-        final_report: finalReport,
-        conversation_summary: {
+      await this.supabase.from('archetype_results').insert({
+        assessment_id: sessionId, // Use session ID as assessment ID
+        archetype_scores: JSON.parse(JSON.stringify(archetypeScores)),
+        recommendations: JSON.parse(JSON.stringify(finalReport)),
+        shadow_patterns: JSON.parse(JSON.stringify({
           total_turns: conversationHistory.length,
           themes_discussed: conversationHistory.map(turn => turn.linguisticAnalysis.dominantThemes || []).flat(),
           linguistic_patterns: conversationHistory.map(turn => turn.linguisticAnalysis.languagePatterns || []).flat()
-        }
+        }))
       })
     } catch (error) {
       console.error('Error saving final results:', error)
@@ -435,7 +434,7 @@ Write in a warm, insightful tone that helps the person understand themselves bet
   async getAvailableThemes(): Promise<AssessmentTheme[]> {
     try {
       const { data, error } = await this.supabase
-        .from('assessment_themes')
+        .from('assessment_templates')
         .select('*')
         .eq('is_active', true)
 
@@ -446,13 +445,13 @@ Write in a warm, insightful tone that helps the person understand themselves bet
       }
 
       // Convert database themes to AssessmentTheme format
-      const dbThemes: AssessmentTheme[] = data?.map(theme => ({
-        id: theme.id,
-        name: theme.name,
-        description: theme.description || '',
-        focusAreas: theme.focus_areas || [],
-        initialPrompt: theme.initial_prompt,
-        archetypeMapping: theme.archetype_mapping as Record<string, string[]> || {}
+      const dbThemes: AssessmentTheme[] = data?.map(template => ({
+        id: template.id,
+        name: template.name,
+        description: template.description || '',
+        focusAreas: template.archetype_focus || [],
+        initialPrompt: template.intro_text || "Let's begin your assessment.",
+        archetypeMapping: (template.metadata as Record<string, unknown>)?.archetypeMapping as Record<string, string[]> || {}
       })) || []
 
       // Return database themes if available, otherwise fallback to hardcoded
@@ -484,26 +483,26 @@ Write in a warm, insightful tone that helps the person understand themselves bet
         template_id: templateId,
         question_id: `question_${Date.now()}`, // Generate unique question ID
         response_value: response,
-        response_data: {
+        response_data: JSON.parse(JSON.stringify({
           linguistic_analysis: analysis,
           timestamp: new Date().toISOString()
-        }
+        }))
       })
 
       // Also save to conversations table for chat history
       await this.supabase.from('conversations').insert({
         user_id: userId,
         assessment_id: sessionId,
-        messages: [{
+        messages: JSON.parse(JSON.stringify([{
           role: 'user',
           content: response,
           timestamp: new Date().toISOString(),
           analysis
-        }],
-        metadata: {
+        }])),
+        metadata: JSON.parse(JSON.stringify({
           type: 'linguistic_assessment',
           template_id: templateId
-        }
+        }))
       })
     } catch (error) {
       console.error('Error saving assessment response:', error)

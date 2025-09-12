@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { enhancedAIService } from '@/lib/services/enhanced-ai.service'
 
 interface TestConfig {
   name: string
@@ -62,8 +61,6 @@ export async function POST(request: Request) {
     `
 
     for (const config of testConfigs) {
-      const startTime = Date.now()
-      
       // Simulate chunking with different strategies
       const chunks = await simulateChunking(sampleContent, config)
       
@@ -166,7 +163,7 @@ async function simulateChunking(content: string, config: TestConfig) {
   return chunks
 }
 
-async function simulateRetrieval(query: string, chunks: any[]) {
+async function simulateRetrieval(query: string, chunks: { content: string; metadata: Record<string, unknown> }[]) {
   // Simple keyword-based similarity for testing
   // In real implementation, this would use actual embeddings
   const queryWords = query.toLowerCase().split(/\s+/)
@@ -185,7 +182,8 @@ async function simulateRetrieval(query: string, chunks: any[]) {
     
     return {
       ...chunk,
-      similarity
+      similarity,
+      score: similarity
     }
   })
   
@@ -195,13 +193,13 @@ async function simulateRetrieval(query: string, chunks: any[]) {
     .slice(0, 5)
 }
 
-function calculateRelevanceScore(query: string, results: any[]): number {
+function calculateRelevanceScore(query: string, results: { content: string; score: number }[]): number {
   if (results.length === 0) return 0
   
   // Calculate relevance based on top results
   const topResult = results[0]
-  const avgTopThree = results.slice(0, 3).reduce((sum, r) => sum + r.similarity, 0) / Math.min(3, results.length)
-  
+  const avgTopThree = results.slice(0, 3).reduce((sum, r) => sum + r.score, 0) / Math.min(3, results.length)
+
   // Weighted score: top result matters most, but consistency in top 3 also important
-  return (topResult.similarity * 0.6) + (avgTopThree * 0.4)
+  return (topResult.score * 0.6) + (avgTopThree * 0.4)
 }

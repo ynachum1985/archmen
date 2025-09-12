@@ -229,7 +229,7 @@ export default function AdminStatusPage() {
                       1. Go to the <strong>Assessment Builder</strong> tab in the admin panel
                     </p>
                     <p className="text-blue-800">
-                      2. Create a new assessment and set the category to "main"
+                      2. Create a new assessment and set the category to &quot;main&quot;
                     </p>
                     <p className="text-blue-800">
                       3. Configure the assessment with appropriate questions and logic

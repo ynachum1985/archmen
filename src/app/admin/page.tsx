@@ -239,7 +239,7 @@ export default function AdminPage() {
       console.log('Enhanced Assessment saved:', assessmentData)
 
       // Save to database using the integration service
-      const assessmentId = await assessmentIntegrationService.createMainAssessment(assessmentData)
+      const assessmentId = await assessmentIntegrationService.createMainAssessment(assessmentData as Record<string, unknown>)
       console.log('Assessment saved with ID:', assessmentId)
 
       alert('Assessment saved successfully! This will now be available on the homepage.')

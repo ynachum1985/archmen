@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/database'
 
-type EnhancedAssessment = Database['public']['Tables']['enhanced_assessments']['Row']
 type AssessmentTemplate = Database['public']['Tables']['assessment_templates']['Row']
 
 // Interface for homepage assessment themes (converted from admin assessments)
@@ -25,44 +24,44 @@ export class AssessmentIntegrationService {
   // Get the main assessment for the homepage
   async getMainAssessment(): Promise<HomepageAssessmentTheme | null> {
     try {
-      // First try to get from enhanced_assessments table
-      const { data: enhancedAssessment, error: enhancedError } = await this.supabase
-        .from('enhanced_assessments')
+      // First try to get from assessment_templates table
+      const { data: template, error: templateError } = await this.supabase
+        .from('assessment_templates')
         .select('*')
         .eq('is_active', true)
         .eq('category', 'main') // Look for main assessment
         .single()
 
-      if (enhancedAssessment && !enhancedError) {
-        console.log('Found main assessment from enhanced_assessments:', enhancedAssessment.name)
-        return this.convertEnhancedAssessmentToTheme(enhancedAssessment)
+      if (template && !templateError) {
+        console.log('Found main assessment from assessment_templates:', template.name)
+        return this.convertTemplateToTheme(template)
       }
 
-      // Try to get any assessment marked as main from enhanced_assessments
-      const { data: anyMainAssessment, error: anyMainError } = await this.supabase
-        .from('enhanced_assessments')
+      // Try to get any assessment marked as main from assessment_templates
+      const { data: anyMainTemplate, error: anyMainError } = await this.supabase
+        .from('assessment_templates')
         .select('*')
         .eq('is_active', true)
         .ilike('name', '%main%') // Look for assessments with "main" in the name
         .limit(1)
         .single()
 
-      if (anyMainAssessment && !anyMainError) {
-        console.log('Found main-like assessment from enhanced_assessments:', anyMainAssessment.name)
-        return this.convertEnhancedAssessmentToTheme(anyMainAssessment)
+      if (anyMainTemplate && !anyMainError) {
+        console.log('Found main-like assessment from assessment_templates:', anyMainTemplate.name)
+        return this.convertTemplateToTheme(anyMainTemplate)
       }
 
       // Fallback to assessment_templates table
-      const { data: template, error: templateError } = await this.supabase
+      const { data: fallbackTemplate, error: fallbackError } = await this.supabase
         .from('assessment_templates')
         .select('*')
         .eq('is_active', true)
         .eq('category', 'main')
         .single()
 
-      if (template && !templateError) {
-        console.log('Found main assessment from assessment_templates:', template.name)
-        return this.convertTemplateToTheme(template)
+      if (fallbackTemplate && !fallbackError) {
+        console.log('Found main assessment from assessment_templates:', fallbackTemplate.name)
+        return this.convertTemplateToTheme(fallbackTemplate)
       }
 
       // If no main assessment found, return null (will use hardcoded themes)
@@ -79,23 +78,23 @@ export class AssessmentIntegrationService {
     try {
       const themes: HomepageAssessmentTheme[] = []
 
-      // Get from enhanced_assessments (Assessment Builder created)
+      // Get from assessment_templates (Assessment Builder created)
       try {
-        const { data: enhancedAssessments, error: enhancedError } = await this.supabase
-          .from('enhanced_assessments')
+        const { data: templates, error: templateError } = await this.supabase
+          .from('assessment_templates')
           .select('*')
           .eq('is_active', true)
           .order('created_at', { ascending: false })
 
-        if (enhancedAssessments && !enhancedError && enhancedAssessments.length > 0) {
-          console.log(`Found ${enhancedAssessments.length} assessments from Assessment Builder`)
-          const enhancedThemes = enhancedAssessments.map(assessment =>
-            this.convertEnhancedAssessmentToTheme(assessment)
+        if (templates && !templateError && templates.length > 0) {
+          console.log(`Found ${templates.length} assessments from Assessment Builder`)
+          const templateThemes = templates.map(template =>
+            this.convertTemplateToTheme(template)
           )
-          themes.push(...enhancedThemes)
+          themes.push(...templateThemes)
         }
-      } catch (enhancedError) {
-        console.log('Enhanced assessments table not available or empty, checking templates...')
+      } catch {
+        console.log('Assessment templates table not available or empty')
       }
 
       // Get from assessment_templates as fallback
@@ -113,7 +112,7 @@ export class AssessmentIntegrationService {
           )
           themes.push(...templateThemes)
         }
-      } catch (templateError) {
+      } catch {
         console.log('Assessment templates table not available or empty')
       }
 
@@ -132,16 +131,16 @@ export class AssessmentIntegrationService {
     }
   }
 
-  // Convert enhanced assessment to homepage theme format
-  private convertEnhancedAssessmentToTheme(assessment: EnhancedAssessment): HomepageAssessmentTheme {
+  // Convert template to homepage theme format
+  private convertTemplateToTheme(template: AssessmentTemplate): HomepageAssessmentTheme {
     // Extract archetype mapping from question examples or adaptive logic
     const archetypeMapping: Record<string, string[]> = {}
     
-    // Try to extract from adaptive logic or create default mapping
-    if (assessment.adaptive_logic && typeof assessment.adaptive_logic === 'object') {
-      const adaptiveLogic = assessment.adaptive_logic as Record<string, unknown>
-      if (adaptiveLogic.archetypeMapping && typeof adaptiveLogic.archetypeMapping === 'object') {
-        Object.assign(archetypeMapping, adaptiveLogic.archetypeMapping)
+    // Try to extract from metadata or create default mapping
+    if (template.metadata && typeof template.metadata === 'object') {
+      const metadata = template.metadata as Record<string, unknown>
+      if (metadata.archetypeMapping && typeof metadata.archetypeMapping === 'object') {
+        Object.assign(archetypeMapping, metadata.archetypeMapping)
       }
     }
 
@@ -158,91 +157,39 @@ export class AssessmentIntegrationService {
       })
     }
 
-    // Extract focus areas from question examples or use defaults
+    // Extract focus areas from archetype_focus or use defaults
     const focusAreas: string[] = []
-    if (assessment.question_examples && typeof assessment.question_examples === 'object') {
-      const questionExamples = assessment.question_examples as Record<string, unknown>
-      if (questionExamples.focusAreas && Array.isArray(questionExamples.focusAreas)) {
-        focusAreas.push(...questionExamples.focusAreas)
-      }
+    if (template.archetype_focus && Array.isArray(template.archetype_focus)) {
+      focusAreas.push(...template.archetype_focus)
     }
 
     // Default focus areas based on category
     if (focusAreas.length === 0) {
-      if (assessment.category?.toLowerCase().includes('relationship')) {
+      if (template.category?.toLowerCase().includes('relationship')) {
         focusAreas.push('attachment', 'communication', 'conflict', 'intimacy', 'boundaries')
       } else {
         focusAreas.push('patterns', 'behavior', 'psychology', 'growth', 'awareness')
       }
     }
 
-    // Create initial prompt from system prompt or generate one
+    // Create initial prompt from intro_text or generate one
     let initialPrompt = "Let's explore your archetypal patterns. Tell me about a recent experience that felt significant to you."
-    
-    if (assessment.system_prompt) {
-      // Extract or generate initial prompt from system prompt
-      const systemPrompt = assessment.system_prompt
-      if (systemPrompt.includes('initial') || systemPrompt.includes('first') || systemPrompt.includes('start')) {
-        // Try to extract initial prompt from system prompt
-        const lines = systemPrompt.split('\n')
-        const promptLine = lines.find(line => 
-          line.toLowerCase().includes('ask') || 
-          line.toLowerCase().includes('start') ||
-          line.toLowerCase().includes('begin')
-        )
-        if (promptLine) {
-          initialPrompt = promptLine.replace(/^[^a-zA-Z]*/, '').trim()
-        }
-      }
-    }
 
-    return {
-      id: assessment.id,
-      name: assessment.name,
-      description: assessment.description || '',
-      focusAreas,
-      initialPrompt,
-      archetypeMapping,
-      systemPrompt: assessment.system_prompt || undefined,
-      questioningStrategy: assessment.questioning_strategy || undefined,
-      questioningDepth: assessment.questioning_depth || undefined,
-      expectedDuration: assessment.expected_duration || 15,
-      isMainAssessment: assessment.category === 'main'
+    if (template.intro_text) {
+      // Use intro_text as initial prompt or extract from it
+      initialPrompt = template.intro_text
     }
-  }
-
-  // Convert assessment template to homepage theme format
-  private convertTemplateToTheme(template: AssessmentTemplate): HomepageAssessmentTheme {
-    // Extract archetype mapping from metadata
-    const archetypeMapping: Record<string, string[]> = {}
-    
-    if (template.metadata && typeof template.metadata === 'object') {
-      const metadata = template.metadata as Record<string, unknown>
-      if (metadata.archetypeMapping && typeof metadata.archetypeMapping === 'object') {
-        Object.assign(archetypeMapping, metadata.archetypeMapping)
-      }
-    }
-
-    // Default mapping if none found
-    if (Object.keys(archetypeMapping).length === 0) {
-      Object.assign(archetypeMapping, {
-        'The Lover': ['passion', 'intimacy', 'connection'],
-        'The King': ['leadership', 'authority', 'responsibility'],
-        'The Warrior': ['strength', 'courage', 'discipline'],
-        'The Magician': ['wisdom', 'transformation', 'insight']
-      })
-    }
-
-    // Extract focus areas from archetype focus or category
-    const focusAreas = template.archetype_focus || ['psychology', 'behavior', 'patterns']
 
     return {
       id: template.id,
       name: template.name,
       description: template.description || '',
       focusAreas,
-      initialPrompt: template.intro_text || "Let's begin your assessment. Tell me about yourself.",
+      initialPrompt,
       archetypeMapping,
+      systemPrompt: undefined, // Not available in template
+      questioningStrategy: undefined, // Not available in template
+      questioningDepth: undefined, // Not available in template
       expectedDuration: template.estimated_duration_minutes || 15,
       isMainAssessment: template.category === 'main'
     }
@@ -252,23 +199,23 @@ export class AssessmentIntegrationService {
   async createMainAssessment(assessmentConfig: Record<string, unknown>): Promise<string> {
     try {
       const { data, error } = await this.supabase
-        .from('enhanced_assessments')
+        .from('assessment_templates')
         .insert({
-          name: assessmentConfig.name,
-          description: assessmentConfig.description,
+          name: assessmentConfig.name as string,
+          description: assessmentConfig.description as string,
           category: 'main', // Mark as main assessment
-          purpose: assessmentConfig.purpose,
-          expected_duration: assessmentConfig.expectedDuration,
-          system_prompt: assessmentConfig.systemPrompt,
-          questioning_strategy: assessmentConfig.questioningStrategy,
-          questioning_depth: assessmentConfig.questioningDepth,
-          question_examples: assessmentConfig.questionExamples,
-          response_requirements: assessmentConfig.responseRequirements,
-          adaptive_logic: {
-            ...assessmentConfig.adaptiveLogic,
-            archetypeMapping: this.extractArchetypeMapping(assessmentConfig)
-          },
-          report_generation: assessmentConfig.reportGeneration,
+          intro_text: assessmentConfig.systemPrompt as string,
+          estimated_duration_minutes: assessmentConfig.expectedDuration as number,
+          metadata: JSON.parse(JSON.stringify({
+            purpose: assessmentConfig.purpose,
+            questioningStrategy: assessmentConfig.questioningStrategy,
+            questioningDepth: assessmentConfig.questioningDepth,
+            questionExamples: assessmentConfig.questionExamples,
+            responseRequirements: assessmentConfig.responseRequirements,
+            adaptiveLogic: assessmentConfig.adaptiveLogic,
+            reportGeneration: assessmentConfig.reportGeneration,
+            archetypeMapping: this.extractArchetypeMapping()
+          })),
           is_active: true
         })
         .select()
@@ -283,7 +230,7 @@ export class AssessmentIntegrationService {
   }
 
   // Extract archetype mapping from assessment config
-  private extractArchetypeMapping(_config: Record<string, unknown>): Record<string, string[]> {
+  private extractArchetypeMapping(): Record<string, string[]> {
     // This would extract archetype mapping from the assessment builder config
     // For now, return a default mapping
     return {
@@ -296,7 +243,6 @@ export class AssessmentIntegrationService {
       'The Explorer': ['freedom', 'adventure', 'independence', 'discovery', 'autonomy']
     }
   }
-}
 
   // Check the status of Assessment Builder integration
   async checkIntegrationStatus(): Promise<{
@@ -307,26 +253,9 @@ export class AssessmentIntegrationService {
     recommendedAction: string
   }> {
     try {
-      let hasEnhancedAssessments = false
       let hasTemplates = false
       let hasMainAssessment = false
       let totalAssessments = 0
-
-      // Check enhanced_assessments table
-      try {
-        const { data: enhanced, error: enhancedError } = await this.supabase
-          .from('enhanced_assessments')
-          .select('id, name, category')
-          .eq('is_active', true)
-
-        if (enhanced && !enhancedError) {
-          hasEnhancedAssessments = enhanced.length > 0
-          totalAssessments += enhanced.length
-          hasMainAssessment = enhanced.some(a => a.category === 'main' || a.name?.toLowerCase().includes('main'))
-        }
-      } catch (error) {
-        console.log('Enhanced assessments table not available')
-      }
 
       // Check assessment_templates table
       try {
@@ -342,13 +271,13 @@ export class AssessmentIntegrationService {
             hasMainAssessment = templates.some(t => t.category === 'main')
           }
         }
-      } catch (error) {
+      } catch {
         console.log('Assessment templates table not available')
       }
 
       // Determine recommended action
       let recommendedAction = ''
-      if (!hasEnhancedAssessments && !hasTemplates) {
+      if (!hasTemplates) {
         recommendedAction = 'Create your first assessment using the Assessment Builder in the admin panel'
       } else if (!hasMainAssessment) {
         recommendedAction = 'Create a main assessment for the homepage using the Assessment Builder'
@@ -357,7 +286,7 @@ export class AssessmentIntegrationService {
       }
 
       return {
-        hasEnhancedAssessments,
+        hasEnhancedAssessments: hasTemplates, // Use hasTemplates for backward compatibility
         hasTemplates,
         hasMainAssessment,
         totalAssessments,

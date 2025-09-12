@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
+
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Settings, TestTube, BarChart3, Sparkles, Play, Download } from 'lucide-react'
@@ -34,6 +34,22 @@ interface TestConfig {
   sample_content: string
 }
 
+interface TestResult {
+  config_name: string
+  score: number
+  avg_relevance?: number
+  avg_time?: number
+  queries?: Array<{
+    query: string
+    relevance_score: number
+    retrieval_time: number
+    top_chunks: Array<{
+      content: string
+      score: number
+    }>
+  }>
+}
+
 export function EmbeddingConfigManager() {
   const [config, setConfig] = useState<ChunkingConfig>({
     chunk_size: 400,
@@ -48,7 +64,7 @@ export function EmbeddingConfigManager() {
     max_chunk_size: 1000
   })
 
-  const [testConfigs, setTestConfigs] = useState<TestConfig[]>([
+  const testConfigs: TestConfig[] = [
     {
       name: 'Small Chunks',
       chunk_size: 200,
@@ -73,11 +89,11 @@ export function EmbeddingConfigManager() {
       test_queries: ['What is attachment theory?', 'How do archetypes affect relationships?'],
       sample_content: ''
     }
-  ])
+  ]
 
   const [isGenerating, setIsGenerating] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
-  const [testResults, setTestResults] = useState<any[]>([])
+  const [testResults, setTestResults] = useState<TestResult[]>([])
 
   const availableMetadata = [
     'source', 'section', 'page_number', 'created_at', 'updated_at', 
@@ -220,7 +236,7 @@ export function EmbeddingConfigManager() {
                   <Label htmlFor="split_by">Split Strategy</Label>
                   <Select
                     value={config.split_by}
-                    onValueChange={(value) => setConfig(prev => ({ ...prev, split_by: value as any }))}
+                    onValueChange={(value) => setConfig(prev => ({ ...prev, split_by: value as 'paragraph' | 'sentence' | 'token' | 'semantic' }))}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />
@@ -262,7 +278,7 @@ export function EmbeddingConfigManager() {
                 <Label>Update Strategy</Label>
                 <Select
                   value={config.update_strategy}
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, update_strategy: value as any }))}
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, update_strategy: value as 're-embed-all' | 're-embed-updated' | 'incremental' }))}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue />
