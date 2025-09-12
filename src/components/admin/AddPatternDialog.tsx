@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { archetypeService } from '@/lib/services/archetype.service'
@@ -22,10 +22,7 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
   const [formData, setFormData] = useState({
     archetype_name: '',
     category: '',
-    keywords: '',
-    phrases: '',
-    emotional_indicators: '',
-    behavioral_patterns: ''
+    patterns: ''
   })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -59,20 +56,14 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
       const pattern = {
         archetype_name: formData.archetype_name,
         category: formData.category,
-        keywords: formData.keywords.split(',').map(k => k.trim()).filter(k => k),
-        phrases: formData.phrases.split(',').map(p => p.trim()).filter(p => p),
-        emotional_indicators: formData.emotional_indicators.split(',').map(e => e.trim()).filter(e => e),
-        behavioral_patterns: formData.behavioral_patterns.split(',').map(b => b.trim()).filter(b => b)
+        patterns: formData.patterns
       }
 
       await archetypeService.createLinguisticPattern(pattern)
       setFormData({
         archetype_name: '',
         category: '',
-        keywords: '',
-        phrases: '',
-        emotional_indicators: '',
-        behavioral_patterns: ''
+        patterns: ''
       })
       onPatternAdded()
       onOpenChange(false)
@@ -109,55 +100,20 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
           </div>
 
           <div>
-            <Label htmlFor="keywords" className="text-white">Keywords</Label>
-            <Input
-              id="keywords"
-              type="text"
-              value={formData.keywords}
-              onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-              placeholder="keyword1, keyword2, keyword3"
-              className="bg-slate-700 border-slate-600 text-white"
+            <Label htmlFor="patterns" className="text-white">Linguistic Patterns</Label>
+            <p className="text-sm text-gray-400 mb-2">
+              Include keywords, common phrases, emotional indicators, and behavioral patterns
+            </p>
+            <textarea
+              id="patterns"
+              value={formData.patterns}
+              onChange={(e) => setFormData({ ...formData, patterns: e.target.value })}
+              placeholder="Enter all linguistic patterns here - keywords, phrases, emotional indicators, and behavioral patterns. You can organize them however works best for you."
+              className="w-full h-32 p-3 bg-slate-700 border-slate-600 text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
             />
-            <p className="text-sm text-gray-400 mt-1">Separate with commas</p>
-          </div>
-
-          <div>
-            <Label htmlFor="phrases" className="text-white">Common Phrases</Label>
-            <Input
-              id="phrases"
-              type="text"
-              value={formData.phrases}
-              onChange={(e) => setFormData({ ...formData, phrases: e.target.value })}
-              placeholder="I always, you should, let me"
-              className="bg-slate-700 border-slate-600 text-white"
-            />
-            <p className="text-sm text-gray-400 mt-1">Separate with commas</p>
-          </div>
-
-          <div>
-            <Label htmlFor="emotional_indicators" className="text-white">Emotional Indicators</Label>
-            <Input
-              id="emotional_indicators"
-              type="text"
-              value={formData.emotional_indicators}
-              onChange={(e) => setFormData({ ...formData, emotional_indicators: e.target.value })}
-              placeholder="confident, assertive, dominant"
-              className="bg-slate-700 border-slate-600 text-white"
-            />
-            <p className="text-sm text-gray-400 mt-1">Separate with commas</p>
-          </div>
-
-          <div>
-            <Label htmlFor="behavioral_patterns" className="text-white">Behavioral Patterns</Label>
-            <Input
-              id="behavioral_patterns"
-              type="text"
-              value={formData.behavioral_patterns}
-              onChange={(e) => setFormData({ ...formData, behavioral_patterns: e.target.value })}
-              placeholder="takes control, dominates, leads"
-              className="bg-slate-700 border-slate-600 text-white"
-            />
-            <p className="text-sm text-gray-400 mt-1">Separate with commas</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Mix keywords, phrases, emotional indicators, and behavioral patterns as needed
+            </p>
           </div>
 
           <div className="flex gap-2 pt-4">

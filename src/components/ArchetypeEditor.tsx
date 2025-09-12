@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Save, X, Plus } from 'lucide-react'
+import { Save, X } from 'lucide-react'
 
 interface Archetype {
   id: string
@@ -25,10 +24,7 @@ interface LinguisticPattern {
   id: string
   archetype_name: string
   category: string
-  keywords: string[] | null
-  phrases: string[] | null
-  emotional_indicators: string[] | null
-  behavioral_patterns: string[] | null
+  patterns: string | null // Simplified to single text field
   created_at: string
   updated_at: string
 }
@@ -41,134 +37,29 @@ interface ArchetypeEditorProps {
 
 export default function ArchetypeEditor({ archetype, onSave, onCancel }: ArchetypeEditorProps) {
   const [editedArchetype, setEditedArchetype] = useState<Archetype>(archetype)
-  const [newKeyword, setNewKeyword] = useState('')
-  const [newPhrase, setNewPhrase] = useState('')
-  const [newEmotionalIndicator, setNewEmotionalIndicator] = useState('')
-  const [newBehavioralPattern, setNewBehavioralPattern] = useState('')
+  const [linguisticPatterns, setLinguisticPatterns] = useState(
+    archetype.linguisticPattern?.patterns || ''
+  )
 
   const handleSave = () => {
-    onSave(editedArchetype)
-  }
-
-  const addKeyword = () => {
-    if (newKeyword.trim()) {
-      const updated = { ...editedArchetype }
-      if (!updated.linguisticPattern) {
-        updated.linguisticPattern = {
-          id: '',
-          archetype_name: updated.name,
-          category: updated.category,
-          keywords: [],
-          phrases: [],
-          emotional_indicators: [],
-          behavioral_patterns: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      }
-      updated.linguisticPattern.keywords = [...(updated.linguisticPattern.keywords || []), newKeyword.trim()]
-      setEditedArchetype(updated)
-      setNewKeyword('')
-    }
-  }
-
-  const removeKeyword = (index: number) => {
     const updated = { ...editedArchetype }
-    if (updated.linguisticPattern?.keywords) {
-      updated.linguisticPattern.keywords = updated.linguisticPattern.keywords.filter((_, i) => i !== index)
-      setEditedArchetype(updated)
-    }
-  }
-
-  const addPhrase = () => {
-    if (newPhrase.trim()) {
-      const updated = { ...editedArchetype }
-      if (!updated.linguisticPattern) {
-        updated.linguisticPattern = {
-          id: '',
-          archetype_name: updated.name,
-          category: updated.category,
-          keywords: [],
-          phrases: [],
-          emotional_indicators: [],
-          behavioral_patterns: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
+    if (!updated.linguisticPattern) {
+      updated.linguisticPattern = {
+        id: '',
+        archetype_name: updated.name,
+        category: updated.category,
+        patterns: linguisticPatterns,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
-      updated.linguisticPattern.phrases = [...(updated.linguisticPattern.phrases || []), newPhrase.trim()]
-      setEditedArchetype(updated)
-      setNewPhrase('')
+    } else {
+      updated.linguisticPattern.patterns = linguisticPatterns
+      updated.linguisticPattern.updated_at = new Date().toISOString()
     }
+    onSave(updated)
   }
 
-  const removePhrase = (index: number) => {
-    const updated = { ...editedArchetype }
-    if (updated.linguisticPattern?.phrases) {
-      updated.linguisticPattern.phrases = updated.linguisticPattern.phrases.filter((_, i) => i !== index)
-      setEditedArchetype(updated)
-    }
-  }
-
-  const addEmotionalIndicator = () => {
-    if (newEmotionalIndicator.trim()) {
-      const updated = { ...editedArchetype }
-      if (!updated.linguisticPattern) {
-        updated.linguisticPattern = {
-          id: '',
-          archetype_name: updated.name,
-          category: updated.category,
-          keywords: [],
-          phrases: [],
-          emotional_indicators: [],
-          behavioral_patterns: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      }
-      updated.linguisticPattern.emotional_indicators = [...(updated.linguisticPattern.emotional_indicators || []), newEmotionalIndicator.trim()]
-      setEditedArchetype(updated)
-      setNewEmotionalIndicator('')
-    }
-  }
-
-  const removeEmotionalIndicator = (index: number) => {
-    const updated = { ...editedArchetype }
-    if (updated.linguisticPattern?.emotional_indicators) {
-      updated.linguisticPattern.emotional_indicators = updated.linguisticPattern.emotional_indicators.filter((_, i) => i !== index)
-      setEditedArchetype(updated)
-    }
-  }
-
-  const addBehavioralPattern = () => {
-    if (newBehavioralPattern.trim()) {
-      const updated = { ...editedArchetype }
-      if (!updated.linguisticPattern) {
-        updated.linguisticPattern = {
-          id: '',
-          archetype_name: updated.name,
-          category: updated.category,
-          keywords: [],
-          phrases: [],
-          emotional_indicators: [],
-          behavioral_patterns: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      }
-      updated.linguisticPattern.behavioral_patterns = [...(updated.linguisticPattern.behavioral_patterns || []), newBehavioralPattern.trim()]
-      setEditedArchetype(updated)
-      setNewBehavioralPattern('')
-    }
-  }
-
-  const removeBehavioralPattern = (index: number) => {
-    const updated = { ...editedArchetype }
-    if (updated.linguisticPattern?.behavioral_patterns) {
-      updated.linguisticPattern.behavioral_patterns = updated.linguisticPattern.behavioral_patterns.filter((_, i) => i !== index)
-      setEditedArchetype(updated)
-    }
-  }
+  // Simplified linguistic patterns - all in one text area
 
   return (
     <div className="p-6 bg-white border-t border-gray-200">
@@ -204,7 +95,9 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Impact Score (1-7)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Relationship Impact Score (1-7)
+          </label>
           <Input
             type="number"
             min="1"
@@ -213,114 +106,49 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             onChange={(e) => setEditedArchetype({ ...editedArchetype, impact_score: parseInt(e.target.value) || 1 })}
             className="w-24"
           />
+          <p className="text-xs text-gray-500 mt-1">
+            How negatively this archetype can affect relationships and relating (1 = minimal impact, 7 = severe impact)
+          </p>
+          {/* TODO: Consider adding additional metrics:
+              - Growth Potential Score (1-7): How much potential for positive transformation
+              - Awareness Difficulty (1-7): How hard it is for someone to recognize this pattern
+              - Trigger Intensity (1-7): How easily this archetype gets activated under stress
+              - Integration Complexity (1-7): How challenging it is to integrate this archetype healthily
+              - Shadow Depth (1-7): How deep/unconscious the shadow aspects tend to be
+          */}
         </div>
 
         {/* Linguistic Patterns */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">Linguistic Patterns</h3>
-          
-          {/* Keywords */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Keywords</label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newKeyword}
-                onChange={(e) => setNewKeyword(e.target.value)}
-                placeholder="Add keyword"
-                onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
-              />
-              <Button onClick={addKeyword} size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {editedArchetype.linguisticPattern?.keywords?.map((keyword, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {keyword}
-                  <button onClick={() => removeKeyword(index)} className="ml-1 hover:text-red-600">
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Linguistic Patterns</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Add linguistic patterns that help identify this archetype in text. Include keywords, common phrases, emotional indicators, and behavioral patterns.
+            </p>
 
-          {/* Phrases */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Common Phrases</label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newPhrase}
-                onChange={(e) => setNewPhrase(e.target.value)}
-                placeholder="Add phrase"
-                onKeyPress={(e) => e.key === 'Enter' && addPhrase()}
-              />
-              <Button onClick={addPhrase} size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
+            {/* Examples */}
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Examples:</h4>
+              <div className="text-sm text-gray-600 space-y-1">
+                <div><strong>Keywords:</strong> leadership, control, authority, responsibility, decision</div>
+                <div><strong>Common Phrases:</strong> &quot;I need to take charge&quot;, &quot;Let me handle this&quot;, &quot;I&apos;m responsible for&quot;</div>
+                <div><strong>Emotional Indicators:</strong> frustrated when not in control, confident in decisions, protective</div>
+                <div><strong>Behavioral Patterns:</strong> takes initiative, makes decisions quickly, organizes others</div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {editedArchetype.linguisticPattern?.phrases?.map((phrase, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {phrase}
-                  <button onClick={() => removePhrase(index)} className="ml-1 hover:text-red-600">
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          </div>
 
-          {/* Emotional Indicators */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Emotional Indicators</label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newEmotionalIndicator}
-                onChange={(e) => setNewEmotionalIndicator(e.target.value)}
-                placeholder="Add emotional indicator"
-                onKeyPress={(e) => e.key === 'Enter' && addEmotionalIndicator()}
-              />
-              <Button onClick={addEmotionalIndicator} size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {editedArchetype.linguisticPattern?.emotional_indicators?.map((indicator, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {indicator}
-                  <button onClick={() => removeEmotionalIndicator(index)} className="ml-1 hover:text-red-600">
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Behavioral Patterns */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Behavioral Patterns</label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newBehavioralPattern}
-                onChange={(e) => setNewBehavioralPattern(e.target.value)}
-                placeholder="Add behavioral pattern"
-                onKeyPress={(e) => e.key === 'Enter' && addBehavioralPattern()}
-              />
-              <Button onClick={addBehavioralPattern} size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {editedArchetype.linguisticPattern?.behavioral_patterns?.map((pattern, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {pattern}
-                  <button onClick={() => removeBehavioralPattern(index)} className="ml-1 hover:text-red-600">
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Linguistic Patterns
+            </label>
+            <textarea
+              value={linguisticPatterns}
+              onChange={(e) => setLinguisticPatterns(e.target.value)}
+              placeholder="Enter all linguistic patterns here - keywords, phrases, emotional indicators, and behavioral patterns. You can organize them however works best for you, or paste in relevant documents/text."
+              className="w-full h-32 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Add any patterns that help identify this archetype - mix keywords, phrases, emotional indicators, and behavioral patterns as needed.
+            </p>
           </div>
         </div>
 

@@ -74,10 +74,7 @@ interface LinguisticPattern {
   id: string
   archetype_name: string
   category: string
-  keywords: string[] | null
-  phrases: string[] | null
-  emotional_indicators: string[] | null
-  behavioral_patterns: string[] | null
+  patterns: string | null // Simplified to single text field
   created_at: string
   updated_at: string
 }

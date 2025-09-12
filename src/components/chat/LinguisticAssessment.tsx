@@ -83,7 +83,7 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
     }
 
     initializeComponent()
-  }, [])
+  }, []) // checkAuthStatus is stable and doesn't need to be in dependencies
 
   const checkAuthStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
