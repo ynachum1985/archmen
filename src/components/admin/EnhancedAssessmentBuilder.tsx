@@ -19,6 +19,7 @@ import {
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 import { ReportTemplatePreview } from './ReportTemplatePreview'
+import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -583,6 +584,15 @@ export function EnhancedAssessmentBuilder({
 
         {/* Report & Answers Tab */}
         <TabsContent value="reports" className="space-y-8">
+          {/* Archetype Content Builder */}
+          <ArchetypeContentBuilder
+            assessmentId={config.id}
+            onContentChange={(archetypeId, content) => {
+              console.log('Content updated for archetype:', archetypeId, content)
+              // Here you can save the content to your database
+            }}
+          />
+
           {/* Report Generation */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Report Generation Instructions</h3>
