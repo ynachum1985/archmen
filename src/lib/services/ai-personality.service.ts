@@ -292,8 +292,6 @@ Help people understand their cognitive patterns while maintaining a supportive a
       await this.createPersonality(personality)
     }
   }
-}
-
   // Phase 3: AI-powered parsing for UX optimization
   async parsePersonalityInput(combinedText: string): Promise<{
     questions: string[]
@@ -318,7 +316,7 @@ Help people understand their cognitive patterns while maintaining a supportive a
     personality: NewAIPersonality,
     combinedInput?: string
   ): Promise<AIPersonality> {
-    let finalPersonality = { ...personality }
+    const finalPersonality = { ...personality }
 
     // If combined input is provided, parse it
     if (combinedInput) {

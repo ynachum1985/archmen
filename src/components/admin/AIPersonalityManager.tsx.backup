@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
@@ -37,7 +37,10 @@ export function AIPersonalityManager() {
     challenge_level: 5,
     emotional_attunement: 7
   })
-  
+
+  // Phase 3: UX Enhancement - Combined input mode
+  const [useCombinedInput, setUseCombinedInput] = useState(false)
+  const [combinedInput, setCombinedInput] = useState('')
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false)
 
   useEffect(() => {
@@ -111,6 +114,8 @@ export function AIPersonalityManager() {
       challenge_level: 5,
       emotional_attunement: 7
     })
+    setCombinedInput('')
+    setUseCombinedInput(false)
   }
 
   const generateEmbeddings = async () => {
@@ -193,37 +198,36 @@ export function AIPersonalityManager() {
             {isGeneratingEmbeddings ? 'Generating...' : 'Generate Embeddings'}
           </Button>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Create Personality
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+            <DialogHeader>
+              <DialogTitle>Create AI Personality</DialogTitle>
+              <DialogDescription>
+                Define a new AI personality with specific questioning styles and behaviors.
+              </DialogDescription>
+            </DialogHeader>
+            <PersonalityForm
+              personality={newPersonality}
+              onChange={setNewPersonality}
+              onAddArrayItem={addArrayItem}
+              onUpdateArrayItem={updateArrayItem}
+              onRemoveArrayItem={removeArrayItem}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreate} disabled={!newPersonality.name.trim()}>
                 Create Personality
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
-              <DialogHeader>
-                <DialogTitle>Create AI Personality</DialogTitle>
-                <DialogDescription>
-                  Configure a new AI personality for assessments.
-                </DialogDescription>
-              </DialogHeader>
-              <PersonalityForm
-                personality={newPersonality}
-                onChange={setNewPersonality}
-                onAddArrayItem={addArrayItem}
-                onUpdateArrayItem={updateArrayItem}
-                onRemoveArrayItem={removeArrayItem}
-              />
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreate} disabled={!newPersonality.name.trim()}>
-                  Create Personality
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -260,22 +264,25 @@ export function AIPersonalityManager() {
               </div>
               <CardDescription>{personality.description}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">Questions</span>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageCircle className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium">Question Types</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {(personality.open_ended_questions || []).length} open-ended, {(personality.clarifying_questions || []).length} clarifying
+                </div>
               </div>
-              <div className="text-sm text-gray-600">
-                {(personality.open_ended_questions || []).length} open-ended, {(personality.clarifying_questions || []).length} clarifying
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">Goals</span>
-              </div>
-              <div className="text-sm text-gray-600">
-                {(personality.goals || []).slice(0, 2).join(', ')}
-                {(personality.goals || []).length > 2 && ` +${(personality.goals || []).length - 2} more`}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium">Goals</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {(personality.goals || []).slice(0, 2).join(', ')}
+                  {(personality.goals || []).length > 2 && ` +${(personality.goals || []).length - 2} more`}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -338,23 +345,22 @@ function PersonalityForm({ personality, onChange, onAddArrayItem, onUpdateArrayI
             rows={2}
           />
           <Button
-            type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => onRemoveArrayItem(field, index)}
-            className="self-start mt-1"
+            className="text-gray-400 hover:text-gray-600"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       ))}
       <Button
-        type="button"
         variant="outline"
+        size="sm"
         onClick={() => onAddArrayItem(field)}
-        className="w-full"
+        className="flex items-center gap-2"
       >
-        <Plus className="h-4 w-4 mr-2" />
+        <Plus className="h-3 w-3" />
         Add {label.slice(0, -1)}
       </Button>
     </div>
@@ -395,7 +401,7 @@ function PersonalityForm({ personality, onChange, onAddArrayItem, onUpdateArrayI
         />
       </div>
 
-      {/* Individual Fields Mode */}
+      {/* Individual Fields Mode - Combined input will be added later */}
       <div className="space-y-6">
         {renderArrayField('open_ended_questions', 'Open-Ended Questions', 'Enter an open-ended question this personality would ask...')}
         {renderArrayField('clarifying_questions', 'Clarifying Questions', 'Enter a clarifying question this personality would ask...')}

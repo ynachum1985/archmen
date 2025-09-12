@@ -54,11 +54,18 @@ interface EnhancedPersonality {
   clarifying_questions: string[]
   goals: string[]
   behavior_traits: string[]
-  personality_config: any
+  personality_config: Record<string, unknown>
 }
 
 export class EnhancedAIService {
-  private supabase = createClient()
+  private supabase: ReturnType<typeof createClient> | null = null
+
+  private getSupabase() {
+    if (!this.supabase) {
+      this.supabase = createClient()
+    }
+    return this.supabase
+  }
 
   async generateResponse(
     userMessage: string,
@@ -116,7 +123,7 @@ export class EnhancedAIService {
   }
 
   async getPersonality(personalityId: string): Promise<EnhancedPersonality | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('ai_personalities')
       .select('*')
       .eq('id', personalityId)
@@ -128,13 +135,18 @@ export class EnhancedAIService {
       return null
     }
 
+    const extendedData = data as Record<string, unknown>
     return {
       ...data,
       open_ended_questions: data.open_ended_questions || [],
       clarifying_questions: data.clarifying_questions || [],
       goals: data.goals || [],
       behavior_traits: data.behavior_traits || [],
-      personality_config: data.personality_config || {}
+      personality_config: (extendedData.personality_config as Record<string, unknown>) || {} as Record<string, unknown>,
+      questioning_style: (extendedData.questioning_style as string) || 'reflective',
+      tone: (extendedData.tone as string) || 'warm',
+      challenge_level: (extendedData.challenge_level as number) || 5,
+      emotional_attunement: (extendedData.emotional_attunement as number) || 7
     }
   }
 
@@ -177,7 +189,8 @@ export class EnhancedAIService {
   }
 
   private async searchArchetypes(embedding: number[]) {
-    const { data, error } = await this.supabase.rpc('match_archetypes', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.getSupabase() as any).rpc('match_archetypes', {
       query_embedding: embedding,
       match_threshold: 0.6,
       match_count: 5
@@ -192,7 +205,8 @@ export class EnhancedAIService {
   }
 
   private async searchLinguisticPatterns(embedding: number[]) {
-    const { data, error } = await this.supabase.rpc('match_linguistic_patterns', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.getSupabase() as any).rpc('match_linguistic_patterns', {
       query_embedding: embedding,
       match_threshold: 0.6,
       match_count: 5
@@ -207,7 +221,8 @@ export class EnhancedAIService {
   }
 
   private async searchPersonalities(embedding: number[]) {
-    const { data, error } = await this.supabase.rpc('match_personalities', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.getSupabase() as any).rpc('match_personalities', {
       query_embedding: embedding,
       match_threshold: 0.6,
       match_count: 3
@@ -279,7 +294,7 @@ export class EnhancedAIService {
     console.log('Generating embeddings for existing data...')
 
     // Generate embeddings for archetypes
-    const { data: archetypes } = await this.supabase
+    const { data: archetypes } = await this.getSupabase()
       .from('enhanced_archetypes')
       .select('id, name, description')
       .is('description_embedding', null)
@@ -289,9 +304,10 @@ export class EnhancedAIService {
         const text = `${archetype.name}: ${archetype.description}`
         const embedding = await this.getEmbedding(text)
         
-        await this.supabase
+        await this.getSupabase()
           .from('enhanced_archetypes')
-          .update({ description_embedding: embedding })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .update({ description_embedding: embedding } as any)
           .eq('id', archetype.id)
         
         console.log(`Generated embedding for archetype: ${archetype.name}`)
@@ -302,7 +318,7 @@ export class EnhancedAIService {
     }
 
     // Generate embeddings for linguistic patterns
-    const { data: patterns } = await this.supabase
+    const { data: patterns } = await this.getSupabase()
       .from('linguistic_patterns')
       .select('id, archetype_name, keywords, phrases, emotional_indicators')
       .is('pattern_embedding', null)
@@ -317,9 +333,10 @@ export class EnhancedAIService {
         
         const embedding = await this.getEmbedding(text)
         
-        await this.supabase
+        await this.getSupabase()
           .from('linguistic_patterns')
-          .update({ pattern_embedding: embedding })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .update({ pattern_embedding: embedding } as any)
           .eq('id', pattern.id)
         
         console.log(`Generated embedding for pattern: ${pattern.archetype_name}`)
@@ -330,19 +347,20 @@ export class EnhancedAIService {
     }
 
     // Generate embeddings for AI personalities
-    const { data: personalities } = await this.supabase
+    const { data: personalities } = await this.getSupabase()
       .from('ai_personalities')
-      .select('id, name, description, questioning_style, tone')
+      .select('id, name, description')
       .is('embedding', null)
 
     if (personalities) {
       for (const personality of personalities) {
-        const text = `${personality.name}: ${personality.description} ${personality.questioning_style} ${personality.tone}`
+        const text = `${personality.name}: ${personality.description}`
         const embedding = await this.getEmbedding(text)
         
-        await this.supabase
+        await this.getSupabase()
           .from('ai_personalities')
-          .update({ embedding })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .update({ embedding } as any)
           .eq('id', personality.id)
         
         console.log(`Generated embedding for personality: ${personality.name}`)
@@ -356,4 +374,14 @@ export class EnhancedAIService {
   }
 }
 
-export const enhancedAIService = new EnhancedAIService()
+// Lazy initialization to avoid build-time Supabase client creation
+let enhancedAIServiceInstance: EnhancedAIService | null = null
+
+export const enhancedAIService = {
+  getInstance: () => {
+    if (!enhancedAIServiceInstance) {
+      enhancedAIServiceInstance = new EnhancedAIService()
+    }
+    return enhancedAIServiceInstance
+  }
+}

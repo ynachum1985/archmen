@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { enhancedAIService } from '@/lib/services/enhanced-ai.service'
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = await createClient()
     
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     console.log('Starting embedding generation...')
     
     // Generate embeddings for all existing data
-    await enhancedAIService.generateEmbeddingsForExistingData()
+    await enhancedAIService.getInstance().generateEmbeddingsForExistingData()
     
     return NextResponse.json({ 
       success: true,

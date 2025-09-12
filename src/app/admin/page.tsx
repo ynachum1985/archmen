@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering to avoid build-time Supabase client creation
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

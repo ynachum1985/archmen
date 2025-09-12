@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering to avoid build-time issues
+export const dynamic = 'force-dynamic'
+
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Brain, Heart, Shield, Send, Sparkles } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'

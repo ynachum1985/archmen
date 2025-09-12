@@ -11,7 +11,7 @@ async function main() {
   console.log('🚀 Starting embedding generation for existing data...')
   
   try {
-    await enhancedAIService.generateEmbeddingsForExistingData()
+    await enhancedAIService.getInstance().generateEmbeddingsForExistingData()
     console.log('✅ Embedding generation completed successfully!')
   } catch (error) {
     console.error('❌ Error generating embeddings:', error)

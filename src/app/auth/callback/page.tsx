@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
+
+// Force dynamic rendering to avoid build-time Supabase client creation
+export const dynamic = 'force-dynamic'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

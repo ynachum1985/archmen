@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     const conversationHistory = messages.slice(0, -1)
 
     // Use enhanced AI service with RAG
-    const result = await enhancedAIService.generateResponse(
+    const result = await enhancedAIService.getInstance().generateResponse(
       userMessage,
       conversationHistory,
       personalityId
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (conversationId && user) {
       await supabase
         .from('conversations')
-        .insert({
+        .upsert({
           id: conversationId,
           user_id: user.id,
           messages: messages,
@@ -38,8 +38,6 @@ export async function POST(request: Request) {
           context_used: result.context,
           updated_at: new Date().toISOString()
         })
-        .onConflict('id')
-        .merge()
     }
 
     return NextResponse.json({ 

@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering to avoid build-time Supabase client creation
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AuthService } from '@/lib/services/auth.service'
