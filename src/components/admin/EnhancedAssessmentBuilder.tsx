@@ -9,8 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { QuestioningFlowBuilder, QuestioningFlow } from './QuestioningFlowBuilder'
-import { ReferenceManager, type ReferenceLink } from './ReferenceManager'
+
 import {
   Save,
   Eye,
@@ -18,7 +17,8 @@ import {
   X
 } from 'lucide-react'
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
-import { type UploadedFile } from '@/lib/services/file-upload.service'
+import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
+import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
   name: string
@@ -29,8 +29,20 @@ interface EnhancedAssessmentConfig {
   
   // AI Configuration
   systemPrompt: string
-  questioningStrategy: 'adaptive' | 'progressive' | 'exploratory' | 'focused'
-  questioningDepth: 'surface' | 'moderate' | 'deep' | 'profound'
+
+  // AI Settings
+  minQuestions: number
+  maxQuestions: number
+  evidenceThreshold: number
+  adaptationSensitivity: number
+  cycleSettings: {
+    maxCycles: number
+    evidencePerCycle: number
+  }
+
+  // AI Personality
+  selectedPersonalityId?: string
+  combinedPrompt: string // description + purpose + system prompt combined
   
   // Questioning Examples
   questionExamples: {
@@ -47,12 +59,7 @@ interface EnhancedAssessmentConfig {
     followUpPrompts: string[]
   }
   
-  // Files and References
-  referenceFiles: UploadedFile[]
-  referenceLinks: ReferenceLink[]
 
-  // Advanced Questioning Flow
-  questioningFlow?: QuestioningFlow
 
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
@@ -92,8 +99,20 @@ QUESTIONING STRATEGY:
 - Use follow-up prompts if responses are too brief
 - Adapt questioning based on emerging patterns
 - Ask 8-15 questions total, stopping when sufficient evidence is gathered`,
-  questioningStrategy: 'adaptive',
-  questioningDepth: 'moderate',
+
+  // AI Settings
+  minQuestions: 8,
+  maxQuestions: 15,
+  evidenceThreshold: 0.7,
+  adaptationSensitivity: 0.5,
+  cycleSettings: {
+    maxCycles: 3,
+    evidencePerCycle: 3
+  },
+
+  // AI Personality
+  selectedPersonalityId: undefined,
+  combinedPrompt: '',
   questionExamples: {
     openEnded: [
       "Tell me about a time when you felt most authentic and true to yourself. What were you doing, and what made that moment special?",
@@ -125,8 +144,6 @@ QUESTIONING STRATEGY:
       "Help me understand that better - what did that look like for you?"
     ]
   },
-  referenceFiles: [],
-  referenceLinks: [],
   reportGeneration: `Generate a comprehensive archetypal analysis that includes:
 
 1. PRIMARY ARCHETYPE: The dominant archetypal pattern with confidence score
@@ -164,7 +181,9 @@ export function EnhancedAssessmentBuilder({
 }: EnhancedAssessmentBuilderProps) {
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(assessment || defaultConfig)
   const [categories, setCategories] = useState<AssessmentCategory[]>([])
+  const [personalities, setPersonalities] = useState<AIPersonality[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  const [isLoadingPersonalities, setIsLoadingPersonalities] = useState(true)
   const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: '', description: '', color: 'blue', icon: 'Folder' })
   const categoryService = new CategoryService()
@@ -172,6 +191,7 @@ export function EnhancedAssessmentBuilder({
   useEffect(() => {
     const initialize = async () => {
       await loadCategories()
+      await loadPersonalities()
       await initializeFileStorage()
     }
     initialize()
@@ -186,6 +206,18 @@ export function EnhancedAssessmentBuilder({
       console.error('Error loading categories:', error)
     } finally {
       setIsLoadingCategories(false)
+    }
+  }
+
+  const loadPersonalities = async () => {
+    try {
+      await aiPersonalityService.initializeDefaultPersonalities()
+      const personalitiesData = await aiPersonalityService.getActivePersonalities()
+      setPersonalities(personalitiesData)
+    } catch (error) {
+      console.error('Error loading personalities:', error)
+    } finally {
+      setIsLoadingPersonalities(false)
     }
   }
 
@@ -229,6 +261,17 @@ export function EnhancedAssessmentBuilder({
     onTest(config)
   }
 
+  // Update combined prompt when relevant fields change
+  useEffect(() => {
+    const combinedPrompt = [
+      config.description && `ASSESSMENT DESCRIPTION: ${config.description}`,
+      config.purpose && `ASSESSMENT PURPOSE: ${config.purpose}`,
+      config.systemPrompt && `SYSTEM INSTRUCTIONS: ${config.systemPrompt}`
+    ].filter(Boolean).join('\n\n')
+
+    setConfig(prev => ({ ...prev, combinedPrompt }))
+  }, [config.description, config.purpose, config.systemPrompt])
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Action Buttons */}
@@ -250,388 +293,289 @@ export function EnhancedAssessmentBuilder({
         </Button>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview & AI Configuration</TabsTrigger>
-          <TabsTrigger value="questioning">Questioning Strategy & Flow</TabsTrigger>
-          <TabsTrigger value="reports">Report & Answers</TabsTrigger>
-          <TabsTrigger value="files">Reference Files</TabsTrigger>
+      <Tabs defaultValue="ai-setup" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="ai-setup">AI Setup</TabsTrigger>
+          <TabsTrigger value="reports">Report and Answers</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-8">
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Basic Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Assessment Name</Label>
-                <Input
-                  id="name"
-                  value={config.name}
-                  onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., Leadership Archetype Discovery"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="duration">Expected Duration (minutes)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={config.expectedDuration}
-                  onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                  className="mt-1"
-                />
+        {/* AI Setup Tab */}
+        <TabsContent value="ai-setup" className="space-y-8">
+          {/* Fixed AI Settings */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium text-gray-900">AI Configuration Settings</h3>
+
+            {/* Basic Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Basic Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="name" className="text-sm">Assessment Name</Label>
+                  <Input
+                    id="name"
+                    value={config.name}
+                    onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Leadership Archetype Discovery"
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="duration" className="text-sm">Duration (min)</Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    value={config.expectedDuration}
+                    onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="category" className="text-sm">Category</Label>
+                    <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-800 h-6 px-2">
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      </DialogTrigger>
+                    <DialogContent className="border-gray-200">
+                      <DialogHeader>
+                        <DialogTitle>Create New Category</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="categoryName">Category Name</Label>
+                          <Input
+                            id="categoryName"
+                            value={newCategory.name}
+                            onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="e.g., Spiritual Development"
+                            className="border-gray-200"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="categoryDescription">Description</Label>
+                          <Textarea
+                            id="categoryDescription"
+                            value={newCategory.description}
+                            onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Describe this category..."
+                            rows={2}
+                            className="border-gray-200"
+                          />
+                        </div>
+                        <div className="flex gap-4">
+                          <Button onClick={handleCreateCategory} className="flex-1">
+                            Create Category
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <Select
+                  value={config.category}
+                  onValueChange={(value) => {
+                    if (value === 'create-new') {
+                      setShowNewCategoryDialog(true)
+                    } else {
+                      setConfig(prev => ({ ...prev, category: value }))
+                    }
+                  }}
+                >
+                  <SelectTrigger className="mt-1 h-8 text-sm">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isLoadingCategories ? (
+                      <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                    ) : (
+                      <>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="create-new" className="text-blue-600 font-medium">
+                          + Create New Category
+                        </SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+                </div>
               </div>
             </div>
 
+            {/* Question Settings */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Question Settings</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="minQuestions" className="text-sm">Min Questions</Label>
+                  <Input
+                    id="minQuestions"
+                    type="number"
+                    min="3"
+                    max="20"
+                    value={config.minQuestions}
+                    onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxQuestions" className="text-sm">Max Questions</Label>
+                  <Input
+                    id="maxQuestions"
+                    type="number"
+                    min="5"
+                    max="30"
+                    value={config.maxQuestions}
+                    onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="evidenceThreshold" className="text-sm">Evidence Threshold</Label>
+                  <Input
+                    id="evidenceThreshold"
+                    type="number"
+                    min="0.1"
+                    max="1.0"
+                    step="0.1"
+                    value={config.evidenceThreshold}
+                    onChange={(e) => setConfig(prev => ({ ...prev, evidenceThreshold: parseFloat(e.target.value) || 0.7 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="adaptationSensitivity" className="text-sm">Adaptation Sensitivity</Label>
+                  <Input
+                    id="adaptationSensitivity"
+                    type="number"
+                    min="0.1"
+                    max="1.0"
+                    step="0.1"
+                    value={config.adaptationSensitivity}
+                    onChange={(e) => setConfig(prev => ({ ...prev, adaptationSensitivity: parseFloat(e.target.value) || 0.5 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cycle Settings */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Cycle Settings</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="maxCycles" className="text-sm">Max Cycles</Label>
+                  <Input
+                    id="maxCycles"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={config.cycleSettings.maxCycles}
+                    onChange={(e) => setConfig(prev => ({
+                      ...prev,
+                      cycleSettings: {
+                        ...prev.cycleSettings,
+                        maxCycles: parseInt(e.target.value) || 3
+                      }
+                    }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="evidencePerCycle" className="text-sm">Evidence Per Cycle</Label>
+                  <Input
+                    id="evidencePerCycle"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={config.cycleSettings.evidencePerCycle}
+                    onChange={(e) => setConfig(prev => ({
+                      ...prev,
+                      cycleSettings: {
+                        ...prev.cycleSettings,
+                        evidencePerCycle: parseInt(e.target.value) || 3
+                      }
+                    }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+
+          </div>
+
+          {/* Combined Prompt Section */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium text-gray-900">Assessment Description & System Prompt</h3>
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="combinedPrompt">Combined Prompt (Description + Purpose + System Instructions)</Label>
               <Textarea
-                id="description"
-                value={config.description}
-                onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe what this assessment aims to discover..."
-                className="mt-1"
-                rows={3}
+                id="combinedPrompt"
+                value={config.combinedPrompt}
+                onChange={(e) => setConfig(prev => ({ ...prev, combinedPrompt: e.target.value }))}
+                placeholder="This will automatically combine your description, purpose, and system prompt. You can also edit it directly here..."
+                className="mt-1 font-mono text-sm border-gray-200"
+                rows={15}
               />
+              <p className="text-sm text-gray-500 mt-2">
+                This field automatically combines your assessment description, purpose, and system prompt. You can edit it directly or it will update when you change the individual fields above.
+              </p>
+            </div>
+          </div>
+
+          {/* AI Personality Selection */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">AI Personality</h3>
+              <Link
+                href="/admin?tab=ai-personality"
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Manage Personalities
+              </Link>
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="category">Category</Label>
-                <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
-                      <Plus className="h-3 w-3" />
-                      New Category
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Category</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="categoryName">Category Name</Label>
-                        <Input
-                          id="categoryName"
-                          value={newCategory.name}
-                          onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="e.g., Spiritual Development"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="categoryDescription">Description</Label>
-                        <Textarea
-                          id="categoryDescription"
-                          value={newCategory.description}
-                          onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Describe this category..."
-                          rows={2}
-                        />
-                      </div>
-                      <div className="flex gap-4">
-                        <Button onClick={handleCreateCategory} className="flex-1">
-                          Create Category
-                        </Button>
-                        <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+              <Label htmlFor="personality">Select AI Personality</Label>
               <Select
-                value={config.category}
-                onValueChange={(value) => {
-                  if (value === 'create-new') {
-                    setShowNewCategoryDialog(true)
-                  } else {
-                    setConfig(prev => ({ ...prev, category: value }))
-                  }
-                }}
+                value={config.selectedPersonalityId || 'default'}
+                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
               >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select a category" />
+                <SelectTrigger className="mt-1 border-gray-200">
+                  <SelectValue placeholder="Choose an AI personality for this assessment" />
                 </SelectTrigger>
                 <SelectContent>
-                  {isLoadingCategories ? (
-                    <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                  {isLoadingPersonalities ? (
+                    <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
                   ) : (
                     <>
-                      {categories.map(category => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
+                      <SelectItem value="default">No specific personality (use default)</SelectItem>
+                      {personalities.map(personality => (
+                        <SelectItem key={personality.id} value={personality.id}>
+                          {personality.name} - {personality.description}
                         </SelectItem>
                       ))}
-                      <SelectItem value="create-new" className="text-blue-600 font-medium">
-                        + Create New Category
-                      </SelectItem>
                     </>
                   )}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="purpose">Assessment Purpose</Label>
-              <Textarea
-                id="purpose"
-                value={config.purpose}
-                onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                placeholder="What specific insights should this assessment provide?"
-                className="mt-1"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* AI Configuration */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">AI Configuration</h3>
-            <div>
-              <Label htmlFor="systemPrompt">System Prompt</Label>
-              <Textarea
-                id="systemPrompt"
-                value={config.systemPrompt}
-                onChange={(e) => setConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                className="mt-1 font-mono text-sm"
-                rows={12}
-              />
-            </div>
-
-
-          </div>
-        </TabsContent>
-
-
-
-        {/* Questioning & Flow Tab */}
-        <TabsContent value="questioning" className="space-y-8">
-          {/* Questioning Strategy */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Questioning Strategy</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="questioningStrategy">Strategy</Label>
-                <Select
-                  value={config.questioningStrategy}
-                  onValueChange={(value: 'adaptive' | 'progressive' | 'exploratory' | 'focused') => setConfig(prev => ({ ...prev, questioningStrategy: value }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="adaptive">Adaptive - Adjusts based on responses</SelectItem>
-                    <SelectItem value="progressive">Progressive - Builds complexity gradually</SelectItem>
-                    <SelectItem value="exploratory">Exploratory - Wide-ranging discovery</SelectItem>
-                    <SelectItem value="focused">Focused - Targeted deep-dive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="questioningDepth">Depth</Label>
-                <Select
-                  value={config.questioningDepth}
-                  onValueChange={(value: 'surface' | 'moderate' | 'deep' | 'profound') => setConfig(prev => ({ ...prev, questioningDepth: value }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="surface">Surface - Basic patterns</SelectItem>
-                    <SelectItem value="moderate">Moderate - Behavioral insights</SelectItem>
-                    <SelectItem value="deep">Deep - Psychological patterns</SelectItem>
-                    <SelectItem value="profound">Profound - Unconscious dynamics</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Response Requirements */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Response Requirements</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="minSentences">Minimum Sentences</Label>
-                <Input
-                  id="minSentences"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={config.responseRequirements.minSentences}
-                  onChange={(e) => setConfig(prev => ({
-                    ...prev,
-                    responseRequirements: {
-                      ...prev.responseRequirements,
-                      minSentences: parseInt(e.target.value) || 2
-                    }
-                  }))}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxSentences">Maximum Sentences</Label>
-                <Input
-                  id="maxSentences"
-                  type="number"
-                  min="2"
-                  max="20"
-                  value={config.responseRequirements.maxSentences}
-                  onChange={(e) => setConfig(prev => ({
-                    ...prev,
-                    responseRequirements: {
-                      ...prev.responseRequirements,
-                      maxSentences: parseInt(e.target.value) || 8
-                    }
-                  }))}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label>Follow-up Prompts</Label>
-              <div className="mt-2 space-y-2">
-                {config.responseRequirements.followUpPrompts.map((prompt, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={prompt}
-                      onChange={(e) => {
-                        const newPrompts = [...config.responseRequirements.followUpPrompts]
-                        newPrompts[index] = e.target.value
-                        setConfig(prev => ({
-                          ...prev,
-                          responseRequirements: {
-                            ...prev.responseRequirements,
-                            followUpPrompts: newPrompts
-                          }
-                        }))
-                      }}
-                      placeholder="Enter follow-up prompt..."
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const newPrompts = config.responseRequirements.followUpPrompts.filter((_, i) => i !== index)
-                        setConfig(prev => ({
-                          ...prev,
-                          responseRequirements: {
-                            ...prev.responseRequirements,
-                            followUpPrompts: newPrompts
-                          }
-                        }))
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setConfig(prev => ({
-                      ...prev,
-                      responseRequirements: {
-                        ...prev.responseRequirements,
-                        followUpPrompts: [...prev.responseRequirements.followUpPrompts, '']
-                      }
-                    }))
-                  }}
-                  className="flex items-center gap-1"
-                >
-                  <Plus className="h-3 w-3" />
-                  Add Follow-up Prompt
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Advanced Flow Builder */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Advanced Flow Builder</h3>
-            <QuestioningFlowBuilder
-              flow={config.questioningFlow}
-              onSave={(flow) => setConfig(prev => ({ ...prev, questioningFlow: flow }))}
-              onTest={(flow) => {
-                console.log('Testing questioning flow:', flow)
-                alert('Flow testing will be implemented in the chat interface!')
-              }}
-            />
-          </div>
-
-          {/* Question Examples */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Question Examples</h3>
-            <div className="space-y-4">
-              {Object.entries(config.questionExamples).map(([type, examples]) => (
-                <div key={type}>
-                  <Label className="capitalize">{type.replace(/([A-Z])/g, ' $1')} Questions</Label>
-                  <div className="mt-2 space-y-2">
-                    {examples.map((example, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Textarea
-                          value={example}
-                          onChange={(e) => {
-                            const newExamples = [...examples]
-                            newExamples[index] = e.target.value
-                            setConfig(prev => ({
-                              ...prev,
-                              questionExamples: {
-                                ...prev.questionExamples,
-                                [type]: newExamples
-                              }
-                            }))
-                          }}
-                          className="flex-1"
-                          rows={2}
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const newExamples = examples.filter((_, i) => i !== index)
-                            setConfig(prev => ({
-                              ...prev,
-                              questionExamples: {
-                                ...prev.questionExamples,
-                                [type]: newExamples
-                              }
-                            }))
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setConfig(prev => ({
-                          ...prev,
-                          questionExamples: {
-                            ...prev.questionExamples,
-                            [type]: [...examples, '']
-                          }
-                        }))
-                      }}
-                      className="flex items-center gap-1"
-                    >
-                      <Plus className="h-3 w-3" />
-                      Add Example
-                    </Button>
-                  </div>
-                </div>
-              ))}
+              <p className="text-sm text-gray-500 mt-2">
+                Choose an AI personality that defines the questioning style and approach for this assessment.
+                <Link href="/admin?tab=ai-personality" className="text-blue-600 hover:text-blue-700 ml-1">
+                  Create or configure personalities here.
+                </Link>
+              </p>
             </div>
           </div>
         </TabsContent>
@@ -877,22 +821,6 @@ export function EnhancedAssessmentBuilder({
                 Add Archetype Card
               </Button>
             </div>
-          </div>
-        </TabsContent>
-
-        {/* Reference Files Tab */}
-        <TabsContent value="files" className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Reference Files & Links</h3>
-            <p className="text-sm text-gray-600">
-              Upload documents and add reference links for the AI to use during assessments
-            </p>
-            <ReferenceManager
-              files={config.referenceFiles}
-              links={config.referenceLinks}
-              onFilesChange={(files) => setConfig(prev => ({ ...prev, referenceFiles: files }))}
-              onLinksChange={(links) => setConfig(prev => ({ ...prev, referenceLinks: links }))}
-            />
           </div>
         </TabsContent>
       </Tabs>

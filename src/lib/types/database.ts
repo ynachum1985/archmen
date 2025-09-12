@@ -215,6 +215,48 @@ export type Database = {
           },
         ]
       }
+      ai_personalities: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          open_ended_questions: string[]
+          clarifying_questions: string[]
+          goals: string[]
+          behavior_traits: string[]
+          system_prompt_template: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description: string
+          open_ended_questions?: string[]
+          clarifying_questions?: string[]
+          goals?: string[]
+          behavior_traits?: string[]
+          system_prompt_template: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          open_ended_questions?: string[]
+          clarifying_questions?: string[]
+          goals?: string[]
+          behavior_traits?: string[]
+          system_prompt_template?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       assessment_templates: {
         Row: {
           archetype_focus: string[] | null

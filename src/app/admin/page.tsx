@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering to avoid build-time Supabase client creation
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,7 +14,10 @@ import {
   BarChart3,
   Plus,
   Search,
-  FileText
+  FileText,
+  Brain,
+  Sparkles,
+  Database
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
@@ -19,6 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
+import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
+import { EmbeddingConfigManager } from "@/components/admin/EmbeddingConfigManager"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -95,6 +103,7 @@ export default function AdminPage() {
   // Filter states
   const [archetypeSearch, setArchetypeSearch] = useState('')
   const [archetypeCategory, setArchetypeCategory] = useState('all')
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false)
 
   // Editor states
   const [expandedArchetype, setExpandedArchetype] = useState<string | null>(null)
@@ -250,6 +259,29 @@ export default function AdminPage() {
     }
   }
 
+  const generateEmbeddings = async () => {
+    setIsGeneratingEmbeddings(true)
+    try {
+      const response = await fetch('/api/generate-embeddings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) throw new Error('Failed to generate embeddings')
+
+      const data = await response.json()
+      console.log('Embeddings generated:', data)
+      alert('Embeddings generated successfully! RAG system is now ready.')
+    } catch (error) {
+      console.error('Error generating embeddings:', error)
+      alert('Error generating embeddings. Please try again.')
+    } finally {
+      setIsGeneratingEmbeddings(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -259,7 +291,7 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
             <TabsTrigger value="assessments" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Assessments
@@ -272,6 +304,15 @@ export default function AdminPage() {
               <Users className="h-4 w-4" />
               Archetypes
             </TabsTrigger>
+            <TabsTrigger value="ai-personality" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              AI Personality
+            </TabsTrigger>
+            <TabsTrigger value="embeddings" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Embeddings
+            </TabsTrigger>
+
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Analytics
@@ -379,10 +420,22 @@ export default function AdminPage() {
                   <h2 className="text-xl font-medium">Archetypes</h2>
                   <p className="text-gray-600 text-sm">{archetypes.length} total archetypes</p>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Archetype
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={generateEmbeddings}
+                    disabled={isGeneratingEmbeddings}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    title="Generate vector embeddings for all archetypes to enable RAG functionality"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {isGeneratingEmbeddings ? 'Generating...' : 'Generate Embeddings'}
+                  </Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Archetype
+                  </Button>
+                </div>
               </div>
 
               {/* Filters */}
@@ -459,6 +512,17 @@ export default function AdminPage() {
               )}
             </div>
           </TabsContent>
+
+          {/* AI Personality Tab */}
+          <TabsContent value="ai-personality" className="mt-6">
+            <AIPersonalityManager />
+          </TabsContent>
+
+          {/* Embeddings Tab */}
+          <TabsContent value="embeddings" className="mt-6">
+            <EmbeddingConfigManager />
+          </TabsContent>
+
 
 
           {/* Analytics Tab */}
