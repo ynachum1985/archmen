@@ -23,10 +23,10 @@ interface AssessmentSession {
   user_id: string
   discovered_archetypes: unknown
   assessment_templates: {
-    name: string
-    description: string
-    category: string
-  }
+    name: string | null
+    description: string | null
+    category: string | null
+  } | null
 }
 
 interface AssessmentReportPageProps {
