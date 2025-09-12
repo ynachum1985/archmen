@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Settings, TestTube, BarChart3, Sparkles, Play, Download } from 'lucide-react'
+import { Settings, TestTube, BarChart3, Play, Download } from 'lucide-react'
 
 interface ChunkingConfig {
   chunk_size: number
@@ -91,7 +91,7 @@ export function EmbeddingConfigManager() {
     }
   ]
 
-  const [isGenerating, setIsGenerating] = useState(false)
+  // Removed isGenerating state - no longer needed for bulk generation
   const [isTesting, setIsTesting] = useState(false)
   const [testResults, setTestResults] = useState<TestResult[]>([])
 
@@ -112,27 +112,7 @@ export function EmbeddingConfigManager() {
     }))
   }
 
-  const generateEmbeddings = async () => {
-    setIsGenerating(true)
-    try {
-      const response = await fetch('/api/generate-embeddings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config })
-      })
-
-      if (!response.ok) throw new Error('Failed to generate embeddings')
-      
-      const data = await response.json()
-      console.log('Embeddings generated with config:', data)
-      alert('Embeddings generated successfully!')
-    } catch (error) {
-      console.error('Error generating embeddings:', error)
-      alert('Error generating embeddings. Please try again.')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
+  // Removed bulk embedding generation - now handled individually per archetype/personality
 
   const runChunkingTest = async () => {
     setIsTesting(true)
@@ -173,14 +153,7 @@ export function EmbeddingConfigManager() {
             <TestTube className="h-4 w-4" />
             {isTesting ? 'Testing...' : 'A/B Test Chunks'}
           </Button>
-          <Button
-            onClick={generateEmbeddings}
-            disabled={isGenerating}
-            className="flex items-center gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            {isGenerating ? 'Generating...' : 'Generate Embeddings'}
-          </Button>
+          {/* Generate Embeddings button removed - now handled individually per archetype/personality */}
         </div>
       </div>
 

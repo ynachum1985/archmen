@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Copy, 
-  Eye, 
-  Image as ImageIcon
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Copy,
+  Eye,
+  Image as ImageIcon,
+  Sparkles
 } from 'lucide-react'
 import { ArchetypeCard } from "@/components/ui/archetype-card"
 import { ArchetypeCardEditor } from "./ArchetypeCardEditor"
@@ -79,6 +80,7 @@ export function ArchetypeCardManager() {
   const [currentView, setCurrentView] = useState<'list' | 'editor'>('list')
   const [selectedCard, setSelectedCard] = useState<ArchetypeCardData | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [generatingEmbeddings, setGeneratingEmbeddings] = useState<string | null>(null)
 
   const handleCreateCard = () => {
     setSelectedCard(null)
@@ -117,6 +119,37 @@ export function ArchetypeCardManager() {
   const handleDeleteCard = (cardId: string) => {
     if (confirm('Are you sure you want to delete this card?')) {
       setCards(prev => prev.filter(card => card.id !== cardId))
+    }
+  }
+
+  const handleGenerateEmbeddings = async (card: ArchetypeCardData) => {
+    setGeneratingEmbeddings(card.id)
+    try {
+      const response = await fetch('/api/generate-embeddings/archetype', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          archetypeId: card.id,
+          archetypeName: card.name,
+          content: {
+            description: card.description,
+            assessmentContext: card.assessmentContext,
+            insights: card.insights,
+            resources: card.resources
+          }
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to generate embeddings')
+
+      const data = await response.json()
+      console.log(`Embeddings generated for ${card.name}:`, data)
+      alert(`Embeddings generated successfully for ${card.name}!`)
+    } catch (error) {
+      console.error(`Error generating embeddings for ${card.name}:`, error)
+      alert(`Failed to generate embeddings for ${card.name}. Please try again.`)
+    } finally {
+      setGeneratingEmbeddings(null)
     }
   }
 
@@ -264,6 +297,16 @@ export function ArchetypeCardManager() {
                   className="flex-1 border-0 bg-white hover:bg-slate-100"
                 >
                   Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleGenerateEmbeddings(card)}
+                  disabled={generatingEmbeddings === card.id}
+                  className="border-0 bg-white hover:bg-slate-100"
+                  title={`Generate embeddings for ${card.name}`}
+                >
+                  <Sparkles className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"

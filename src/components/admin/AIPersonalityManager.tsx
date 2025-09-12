@@ -38,7 +38,7 @@ export function AIPersonalityManager() {
     emotional_attunement: 7
   })
   
-  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false)
+  const [generatingEmbeddings, setGeneratingEmbeddings] = useState<string | null>(null)
 
   useEffect(() => {
     loadPersonalities()
@@ -113,26 +113,37 @@ export function AIPersonalityManager() {
     })
   }
 
-  const generateEmbeddings = async () => {
-    setIsGeneratingEmbeddings(true)
+  // Removed bulk embedding generation - now handled individually per personality
+
+  const handleGenerateEmbeddings = async (personality: AIPersonality) => {
+    setGeneratingEmbeddings(personality.id)
     try {
-      const response = await fetch('/api/generate-embeddings', {
+      const response = await fetch('/api/generate-embeddings/personality', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personalityId: personality.id,
+          personalityName: personality.name,
+          content: {
+            description: personality.description,
+            openEndedQuestions: personality.open_ended_questions,
+            tone: personality.tone,
+            challengeLevel: personality.challenge_level,
+            emotionalAttunement: personality.emotional_attunement
+          }
+        })
       })
 
       if (!response.ok) throw new Error('Failed to generate embeddings')
 
       const data = await response.json()
-      console.log('Embeddings generated:', data)
-      alert('Embeddings generated successfully! RAG system is now ready.')
+      console.log(`Embeddings generated for ${personality.name}:`, data)
+      alert(`Embeddings generated successfully for ${personality.name}!`)
     } catch (error) {
-      console.error('Error generating embeddings:', error)
-      alert('Error generating embeddings. Please try again.')
+      console.error(`Error generating embeddings for ${personality.name}:`, error)
+      alert(`Failed to generate embeddings for ${personality.name}. Please try again.`)
     } finally {
-      setIsGeneratingEmbeddings(false)
+      setGeneratingEmbeddings(null)
     }
   }
 
@@ -183,16 +194,7 @@ export function AIPersonalityManager() {
           <p className="text-gray-600 mt-1">Configure AI personalities for different assessment approaches with RAG capabilities</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={generateEmbeddings}
-            disabled={isGeneratingEmbeddings}
-            variant="outline"
-            className="flex items-center gap-2"
-            title="Generate vector embeddings for all archetypes and personalities to enable RAG (Retrieval-Augmented Generation) functionality"
-          >
-            <Sparkles className="h-4 w-4" />
-            {isGeneratingEmbeddings ? 'Generating...' : 'Generate Embeddings'}
-          </Button>
+          {/* Bulk generate embeddings button removed - now handled individually per personality */}
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
@@ -241,6 +243,15 @@ export function AIPersonalityManager() {
                     {personality.is_active ? "Active" : "Inactive"}
                   </Badge>
                   <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleGenerateEmbeddings(personality)}
+                      disabled={generatingEmbeddings === personality.id}
+                      title={`Generate embeddings for ${personality.name}`}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
