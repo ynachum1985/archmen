@@ -121,34 +121,34 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
         {/* Linguistic Patterns */}
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Linguistic Patterns</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Add linguistic patterns that help identify this archetype in text. Include keywords, common phrases, emotional indicators, and behavioral patterns.
-            </p>
-
-            {/* Examples */}
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Examples:</h4>
-              <div className="text-sm text-gray-600 space-y-1">
-                <div><strong>Keywords:</strong> leadership, control, authority, responsibility, decision</div>
-                <div><strong>Common Phrases:</strong> &quot;I need to take charge&quot;, &quot;Let me handle this&quot;, &quot;I&apos;m responsible for&quot;</div>
-                <div><strong>Emotional Indicators:</strong> frustrated when not in control, confident in decisions, protective</div>
-                <div><strong>Behavioral Patterns:</strong> takes initiative, makes decisions quickly, organizes others</div>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-medium text-gray-900">Linguistic Patterns</h3>
+              <div className="group relative">
+                <button
+                  type="button"
+                  className="w-4 h-4 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center hover:bg-gray-400"
+                >
+                  ?
+                </button>
+                <div className="absolute bottom-6 left-0 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+                  <div className="space-y-2">
+                    <div><strong>Keywords:</strong> leadership, control, authority, responsibility</div>
+                    <div><strong>Phrases:</strong> &quot;I need to take charge&quot;, &quot;Let me handle this&quot;</div>
+                    <div><strong>Emotional:</strong> frustrated when not in control, protective</div>
+                    <div><strong>Behavioral:</strong> takes initiative, makes decisions quickly</div>
+                    <div><strong>Sentence patterns:</strong> Short commands vs. long explanations</div>
+                    <div><strong>Pronouns:</strong> &quot;I&quot; vs. &quot;you&quot; vs. &quot;we&quot; frequency</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Linguistic Patterns
-            </label>
             <textarea
               value={linguisticPatterns}
               onChange={(e) => setLinguisticPatterns(e.target.value)}
-              placeholder="Enter all linguistic patterns here - keywords, phrases, emotional indicators, and behavioral patterns. You can organize them however works best for you, or paste in relevant documents/text."
+              placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly&#10;Sentence patterns: uses short commands&#10;Pronouns: high use of 'I' statements"
               className="w-full h-32 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Add any patterns that help identify this archetype - mix keywords, phrases, emotional indicators, and behavioral patterns as needed.
-            </p>
           </div>
         </div>
 

@@ -101,19 +101,13 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
 
           <div>
             <Label htmlFor="patterns" className="text-white">Linguistic Patterns</Label>
-            <p className="text-sm text-gray-400 mb-2">
-              Include keywords, common phrases, emotional indicators, and behavioral patterns
-            </p>
             <textarea
               id="patterns"
               value={formData.patterns}
               onChange={(e) => setFormData({ ...formData, patterns: e.target.value })}
-              placeholder="Enter all linguistic patterns here - keywords, phrases, emotional indicators, and behavioral patterns. You can organize them however works best for you."
+              placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly&#10;Sentence patterns: uses short commands&#10;Pronouns: high use of 'I' statements"
               className="w-full h-32 p-3 bg-slate-700 border-slate-600 text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Mix keywords, phrases, emotional indicators, and behavioral patterns as needed
-            </p>
           </div>
 
           <div className="flex gap-2 pt-4">

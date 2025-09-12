@@ -16,7 +16,6 @@ import {
   Search,
   FileText,
   Brain,
-  Sparkles,
   Database
 } from 'lucide-react'
 
@@ -100,7 +99,7 @@ export default function AdminPage() {
   // Filter states
   const [archetypeSearch, setArchetypeSearch] = useState('')
   const [archetypeCategory, setArchetypeCategory] = useState('all')
-  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false)
+  // Removed isGeneratingEmbeddings state - now handled individually per archetype
 
   // Editor states
   const [expandedArchetype, setExpandedArchetype] = useState<string | null>(null)
@@ -256,28 +255,7 @@ export default function AdminPage() {
     }
   }
 
-  const generateEmbeddings = async () => {
-    setIsGeneratingEmbeddings(true)
-    try {
-      const response = await fetch('/api/generate-embeddings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) throw new Error('Failed to generate embeddings')
-
-      const data = await response.json()
-      console.log('Embeddings generated:', data)
-      alert('Embeddings generated successfully! RAG system is now ready.')
-    } catch (error) {
-      console.error('Error generating embeddings:', error)
-      alert('Error generating embeddings. Please try again.')
-    } finally {
-      setIsGeneratingEmbeddings(false)
-    }
-  }
+  // Removed bulk generateEmbeddings function - now handled individually per archetype
 
   return (
     <div className="min-h-screen bg-white">
@@ -418,16 +396,7 @@ export default function AdminPage() {
                   <p className="text-gray-600 text-sm">{archetypes.length} total archetypes</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    onClick={generateEmbeddings}
-                    disabled={isGeneratingEmbeddings}
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    title="Generate vector embeddings for all archetypes to enable RAG functionality"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {isGeneratingEmbeddings ? 'Generating...' : 'Generate Embeddings'}
-                  </Button>
+                  {/* Bulk Generate Embeddings button removed - now handled individually per archetype */}
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Archetype
