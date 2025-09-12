@@ -15,7 +15,7 @@ interface AssessmentSession {
   status: string
   progress_percentage: number | null
   completed_at: string | null
-  created_at: string
+  created_at: string | null
   current_question_index: number | null
   session_data: unknown
   updated_at: string | null
@@ -136,7 +136,7 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {assessments.length > 0 ? (
+              {assessments.length > 0 && assessments[0].created_at ? (
                 new Date(assessments[0].created_at).toLocaleDateString()
               ) : (
                 'None'
@@ -247,7 +247,7 @@ function AssessmentCard({ assessment }: AssessmentCardProps) {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                Started {new Date(assessment.created_at).toLocaleDateString()}
+                Started {assessment.created_at ? new Date(assessment.created_at).toLocaleDateString() : 'Unknown'}
               </div>
               {isCompleted && assessment.completed_at && (
                 <div className="flex items-center gap-1">
