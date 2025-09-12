@@ -188,6 +188,7 @@ export function AIPersonalityManager() {
             disabled={isGeneratingEmbeddings}
             variant="outline"
             className="flex items-center gap-2"
+            title="Generate vector embeddings for all archetypes and personalities to enable RAG (Retrieval-Augmented Generation) functionality"
           >
             <Sparkles className="h-4 w-4" />
             {isGeneratingEmbeddings ? 'Generating...' : 'Generate Embeddings'}

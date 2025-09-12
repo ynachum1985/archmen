@@ -21,14 +21,10 @@ interface RelevantContext {
     name: string
     description: string
     category: string
-    similarity: number
-  }>
-  patterns: Array<{
-    id: string
-    archetype_name: string
     keywords: string[]
     phrases: string[]
     emotional_indicators: string[]
+    behavioral_patterns: string[]
     similarity: number
   }>
   personalities: Array<{
@@ -164,15 +160,13 @@ export class EnhancedAIService {
     const embedding = await this.getEmbedding(contextText)
 
     // Parallel searches for different types of context
-    const [archetypes, patterns, personalities] = await Promise.all([
+    const [archetypes, personalities] = await Promise.all([
       this.searchArchetypes(embedding),
-      this.searchLinguisticPatterns(embedding),
       this.searchPersonalities(embedding)
     ])
 
     return {
       archetypes: archetypes || [],
-      patterns: patterns || [],
       personalities: personalities || []
     }
   }
@@ -204,21 +198,7 @@ export class EnhancedAIService {
     return data
   }
 
-  private async searchLinguisticPatterns(embedding: number[]) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (this.getSupabase() as any).rpc('match_linguistic_patterns', {
-      query_embedding: embedding,
-      match_threshold: 0.6,
-      match_count: 5
-    })
 
-    if (error) {
-      console.error('Error searching patterns:', error)
-      return []
-    }
-
-    return data
-  }
 
   private async searchPersonalities(embedding: number[]) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -246,19 +226,20 @@ export class EnhancedAIService {
     let systemPrompt = personality?.system_prompt_template || 
       `You are an expert psychological assessor specializing in archetype identification through conversation.`
 
-    // Add relevant archetype context
+    // Add relevant archetype context with linguistic patterns
     if (context.archetypes.length > 0) {
       systemPrompt += `\n\nRELEVANT ARCHETYPES TO CONSIDER:\n`
       context.archetypes.forEach(archetype => {
         systemPrompt += `- ${archetype.name}: ${archetype.description}\n`
-      })
-    }
-
-    // Add linguistic pattern context
-    if (context.patterns.length > 0) {
-      systemPrompt += `\n\nLINGUISTIC PATTERNS TO WATCH FOR:\n`
-      context.patterns.forEach(pattern => {
-        systemPrompt += `- ${pattern.archetype_name}: Keywords: ${pattern.keywords?.join(', ')}\n`
+        if (archetype.keywords && archetype.keywords.length > 0) {
+          systemPrompt += `  Keywords: ${archetype.keywords.join(', ')}\n`
+        }
+        if (archetype.phrases && archetype.phrases.length > 0) {
+          systemPrompt += `  Phrases: ${archetype.phrases.join(', ')}\n`
+        }
+        if (archetype.emotional_indicators && archetype.emotional_indicators.length > 0) {
+          systemPrompt += `  Emotional Indicators: ${archetype.emotional_indicators.join(', ')}\n`
+        }
       })
     }
 
@@ -293,54 +274,33 @@ export class EnhancedAIService {
 
     console.log('Generating embeddings for existing data...')
 
-    // Generate embeddings for archetypes
+    // Generate embeddings for archetypes (including linguistic patterns)
     const { data: archetypes } = await this.getSupabase()
       .from('enhanced_archetypes')
-      .select('id, name, description')
+      .select('id, name, description, keywords, phrases, emotional_indicators, behavioral_patterns')
       .is('description_embedding', null)
 
     if (archetypes) {
       for (const archetype of archetypes) {
-        const text = `${archetype.name}: ${archetype.description}`
+        // Combine description with linguistic patterns for richer embeddings
+        const linguisticContent = [
+          ...(archetype.keywords || []),
+          ...(archetype.phrases || []),
+          ...(archetype.emotional_indicators || []),
+          ...(archetype.behavioral_patterns || [])
+        ].join(' ')
+
+        const text = `${archetype.name}: ${archetype.description} ${linguisticContent}`.trim()
         const embedding = await this.getEmbedding(text)
-        
+
         await this.getSupabase()
           .from('enhanced_archetypes')
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .update({ description_embedding: embedding } as any)
           .eq('id', archetype.id)
-        
+
         console.log(`Generated embedding for archetype: ${archetype.name}`)
-        
-        // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-    }
 
-    // Generate embeddings for linguistic patterns
-    const { data: patterns } = await this.getSupabase()
-      .from('linguistic_patterns')
-      .select('id, archetype_name, keywords, phrases, emotional_indicators')
-      .is('pattern_embedding', null)
-
-    if (patterns) {
-      for (const pattern of patterns) {
-        const text = `${pattern.archetype_name}: ${[
-          ...(pattern.keywords || []),
-          ...(pattern.phrases || []),
-          ...(pattern.emotional_indicators || [])
-        ].join(' ')}`
-        
-        const embedding = await this.getEmbedding(text)
-        
-        await this.getSupabase()
-          .from('linguistic_patterns')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .update({ pattern_embedding: embedding } as any)
-          .eq('id', pattern.id)
-        
-        console.log(`Generated embedding for pattern: ${pattern.archetype_name}`)
-        
         // Rate limiting
         await new Promise(resolve => setTimeout(resolve, 100))
       }

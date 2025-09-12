@@ -21,11 +21,10 @@ interface RelevantContext {
   archetypes: Array<{
     name: string
     description: string
-    similarity: number
-  }>
-  patterns: Array<{
-    archetype_name: string
     keywords: string[]
+    phrases: string[]
+    emotional_indicators: string[]
+    behavioral_patterns: string[]
     similarity: number
   }>
 }
@@ -257,7 +256,17 @@ export function EnhancedArchetypeChat() {
                           {lastContext.archetypes.map((archetype, index) => (
                             <div key={index} className="p-2 bg-blue-50 rounded text-sm">
                               <div className="font-medium">{archetype.name}</div>
-                              <div className="text-gray-600 text-xs">{archetype.description}</div>
+                              <div className="text-gray-600 text-xs mb-2">{archetype.description}</div>
+                              {archetype.keywords && archetype.keywords.length > 0 && (
+                                <div className="text-gray-600 text-xs mb-1">
+                                  <span className="font-medium">Keywords:</span> {archetype.keywords.slice(0, 3).join(', ')}
+                                </div>
+                              )}
+                              {archetype.emotional_indicators && archetype.emotional_indicators.length > 0 && (
+                                <div className="text-gray-600 text-xs mb-1">
+                                  <span className="font-medium">Emotional Indicators:</span> {archetype.emotional_indicators.slice(0, 2).join(', ')}
+                                </div>
+                              )}
                               <Badge variant="outline" className="mt-1 text-xs">
                                 {Math.round(archetype.similarity * 100)}% match
                               </Badge>
@@ -267,25 +276,7 @@ export function EnhancedArchetypeChat() {
                       </div>
                     )}
 
-                    {/* Linguistic Patterns */}
-                    {lastContext.patterns.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-sm mb-2">Linguistic Patterns</h4>
-                        <div className="space-y-2">
-                          {lastContext.patterns.map((pattern, index) => (
-                            <div key={index} className="p-2 bg-green-50 rounded text-sm">
-                              <div className="font-medium">{pattern.archetype_name}</div>
-                              <div className="text-gray-600 text-xs">
-                                Keywords: {pattern.keywords?.join(', ')}
-                              </div>
-                              <Badge variant="outline" className="mt-1 text-xs">
-                                {Math.round(pattern.similarity * 100)}% match
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
                   </>
                 ) : (
                   <p className="text-gray-500 text-sm">
