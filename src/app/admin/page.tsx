@@ -15,7 +15,8 @@ import {
   Plus,
   Search,
   FileText,
-  Brain
+  Brain,
+  Sparkles
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
@@ -23,7 +24,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
-import { EnhancedArchetypeChat } from "@/components/chat/EnhancedArchetypeChat"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -100,6 +100,7 @@ export default function AdminPage() {
   // Filter states
   const [archetypeSearch, setArchetypeSearch] = useState('')
   const [archetypeCategory, setArchetypeCategory] = useState('all')
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false)
 
   // Editor states
   const [expandedArchetype, setExpandedArchetype] = useState<string | null>(null)
@@ -251,6 +252,29 @@ export default function AdminPage() {
     }
   }
 
+  const generateEmbeddings = async () => {
+    setIsGeneratingEmbeddings(true)
+    try {
+      const response = await fetch('/api/generate-embeddings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) throw new Error('Failed to generate embeddings')
+
+      const data = await response.json()
+      console.log('Embeddings generated:', data)
+      alert('Embeddings generated successfully! RAG system is now ready.')
+    } catch (error) {
+      console.error('Error generating embeddings:', error)
+      alert('Error generating embeddings. Please try again.')
+    } finally {
+      setIsGeneratingEmbeddings(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -277,10 +301,7 @@ export default function AdminPage() {
               <Brain className="h-4 w-4" />
               AI Personality
             </TabsTrigger>
-            <TabsTrigger value="enhanced-chat" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              Enhanced Chat (RAG)
-            </TabsTrigger>
+
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Analytics
@@ -349,10 +370,22 @@ export default function AdminPage() {
                   <h2 className="text-xl font-medium">Archetypes</h2>
                   <p className="text-gray-600 text-sm">{archetypes.length} total archetypes</p>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Archetype
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={generateEmbeddings}
+                    disabled={isGeneratingEmbeddings}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    title="Generate vector embeddings for all archetypes to enable RAG functionality"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {isGeneratingEmbeddings ? 'Generating...' : 'Generate Embeddings'}
+                  </Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Archetype
+                  </Button>
+                </div>
               </div>
 
               {/* Filters */}
@@ -435,10 +468,7 @@ export default function AdminPage() {
             <AIPersonalityManager />
           </TabsContent>
 
-          {/* Enhanced Chat Tab */}
-          <TabsContent value="enhanced-chat" className="mt-6">
-            <EnhancedArchetypeChat />
-          </TabsContent>
+
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="mt-6">

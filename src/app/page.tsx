@@ -93,7 +93,7 @@ export default function HomePage() {
         </div>
 
         {/* Right Column - Enhanced Chat Interface */}
-        <div className="bg-slate-900 flex flex-col p-4">
+        <div className="bg-white flex flex-col p-4">
           <EnhancedArchetypeChat />
         </div>
       </div>
