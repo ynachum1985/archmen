@@ -480,7 +480,6 @@ export type Database = {
       }
       enhanced_archetypes: {
         Row: {
-          category: string
           created_at: string
           description: string
           id: string
@@ -498,7 +497,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          category: string
           created_at?: string
           description: string
           id?: string
@@ -516,7 +514,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          category?: string
           created_at?: string
           description?: string
           id?: string
@@ -538,35 +535,23 @@ export type Database = {
       linguistic_patterns: {
         Row: {
           archetype_name: string
-          behavioral_patterns: string[] | null
-          category: string
+          patterns: string | null
           created_at: string
-          emotional_indicators: string[] | null
           id: string
-          keywords: string[] | null
-          phrases: string[] | null
           updated_at: string
         }
         Insert: {
           archetype_name: string
-          behavioral_patterns?: string[] | null
-          category: string
+          patterns?: string | null
           created_at?: string
-          emotional_indicators?: string[] | null
           id?: string
-          keywords?: string[] | null
-          phrases?: string[] | null
           updated_at?: string
         }
         Update: {
           archetype_name?: string
-          behavioral_patterns?: string[] | null
-          category?: string
+          patterns?: string | null
           created_at?: string
-          emotional_indicators?: string[] | null
           id?: string
-          keywords?: string[] | null
-          phrases?: string[] | null
           updated_at?: string
         }
         Relationships: [

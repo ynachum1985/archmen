@@ -9,7 +9,6 @@ import { Save, X } from 'lucide-react'
 interface Archetype {
   id: string
   name: string
-  category: string
   description: string
   impact_score: number
   growth_potential_score?: number | null
@@ -29,7 +28,6 @@ interface Archetype {
 interface LinguisticPattern {
   id: string
   archetype_name: string
-  category: string
   patterns: string | null // Simplified to single text field
   created_at: string
   updated_at: string
@@ -53,7 +51,6 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
       updated.linguisticPattern = {
         id: '',
         archetype_name: updated.name,
-        category: updated.category,
         patterns: linguisticPatterns,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -80,14 +77,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
               placeholder="Archetype name"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <Input
-              value={editedArchetype.category}
-              onChange={(e) => setEditedArchetype({ ...editedArchetype, category: e.target.value })}
-              placeholder="Category"
-            />
-          </div>
+          {/* Category removed - archetypes will be categorized by assessment type */}
         </div>
 
         <div>

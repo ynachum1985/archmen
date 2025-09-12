@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 
@@ -46,9 +46,14 @@ interface AssessmentOverview {
 interface Archetype {
   id: string
   name: string
-  category: string
   description: string
   impact_score: number
+  growth_potential_score?: number | null
+  awareness_difficulty_score?: number | null
+  trigger_intensity_score?: number | null
+  integration_complexity_score?: number | null
+  shadow_depth_score?: number | null
+  archetype_images?: string[] | null
   traits: unknown
   psychology_profile: unknown
   is_active: boolean | null
@@ -74,7 +79,6 @@ interface LinguisticPattern {
 interface LinguisticPattern {
   id: string
   archetype_name: string
-  category: string
   patterns: string | null // Simplified to single text field
   created_at: string
   updated_at: string
@@ -83,9 +87,14 @@ interface LinguisticPattern {
 interface Archetype {
   id: string
   name: string
-  category: string
   description: string
   impact_score: number
+  growth_potential_score?: number | null
+  awareness_difficulty_score?: number | null
+  trigger_intensity_score?: number | null
+  integration_complexity_score?: number | null
+  shadow_depth_score?: number | null
+  archetype_images?: string[] | null
   traits: unknown
   psychology_profile: unknown
   is_active: boolean | null
@@ -100,7 +109,6 @@ export default function AdminPage() {
 
   // Filter states
   const [archetypeSearch, setArchetypeSearch] = useState('')
-  const [archetypeCategory, setArchetypeCategory] = useState('all')
   // Removed isGeneratingEmbeddings state - now handled individually per archetype
 
   // Editor states
@@ -143,12 +151,8 @@ export default function AdminPage() {
   const filteredArchetypes = archetypes.filter(archetype => {
     const matchesSearch = archetype.name.toLowerCase().includes(archetypeSearch.toLowerCase()) ||
                          archetype.description.toLowerCase().includes(archetypeSearch.toLowerCase())
-    const matchesCategory = archetypeCategory === 'all' || archetype.category === archetypeCategory
-    return matchesSearch && matchesCategory
+    return matchesSearch
   })
-
-  // Get unique categories
-  const archetypeCategories = [...new Set(archetypes.map(a => a.category))].filter(Boolean)
 
   // Assessment categories for specialized assessments
   const assessmentCategories = [
@@ -439,19 +443,7 @@ export default function AdminPage() {
                     />
                   </div>
                 </div>
-                <div className="min-w-[150px]">
-                  <Select value={archetypeCategory} onValueChange={setArchetypeCategory}>
-                    <SelectTrigger className="bg-white border-gray-300">
-                      <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-300 shadow-lg z-50">
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {archetypeCategories.map(category => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Category filter removed - archetypes will be categorized by assessment type */}
               </div>
 
               {/* Archetypes List */}
@@ -471,9 +463,6 @@ export default function AdminPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <h3 className="font-medium text-gray-900">{archetype.name}</h3>
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                              {archetype.category}
-                            </Badge>
                             <span className="text-sm text-gray-500">Impact: {archetype.impact_score}/7</span>
                           </div>
                           <p className="text-sm text-gray-600 mt-1">{archetype.description}</p>

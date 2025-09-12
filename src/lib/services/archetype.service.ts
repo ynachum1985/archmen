@@ -23,20 +23,7 @@ export class ArchetypeService {
     return data || []
   }
 
-  async getArchetypesByCategory(category: string): Promise<Archetype[]> {
-    const { data, error } = await this.supabase
-      .from('enhanced_archetypes')
-      .select('*')
-      .eq('category', category)
-      .order('name')
-
-    if (error) {
-      console.error('Error fetching archetypes by category:', error)
-      throw error
-    }
-
-    return data || []
-  }
+  // Removed getArchetypesByCategory - categories no longer used
 
   async createArchetype(archetype: NewArchetype): Promise<Archetype> {
     const { data, error } = await this.supabase
@@ -152,20 +139,7 @@ export class ArchetypeService {
     }
   }
 
-  async getArchetypeCategories(): Promise<string[]> {
-    const { data, error } = await this.supabase
-      .from('enhanced_archetypes')
-      .select('category')
-      .order('category')
-
-    if (error) {
-      console.error('Error fetching archetype categories:', error)
-      throw error
-    }
-
-    const categories = [...new Set(data?.map((item: { category: string }) => item.category) || [])]
-    return categories
-  }
+  // Removed getArchetypeCategories - categories no longer used
 
   // Assessment-specific methods
 
@@ -205,38 +179,22 @@ export class ArchetypeService {
       patterns.forEach(pattern => {
         let archetypeScore = 0
 
-        // Check keywords
-        if (pattern.keywords) {
-          pattern.keywords.forEach(keyword => {
-            if (lowerText.includes(keyword.toLowerCase())) {
+        // Check patterns (simplified approach)
+        if (pattern.patterns) {
+          const patterns = pattern.patterns.toLowerCase()
+          const words = patterns.split(/[,\n\r]+/).map(w => w.trim()).filter(w => w.length > 0)
+
+          words.forEach(word => {
+            if (lowerText.includes(word)) {
               archetypeScore += 0.1
             }
           })
-        }
 
-        // Check phrases
-        if (pattern.phrases) {
-          pattern.phrases.forEach(phrase => {
-            if (lowerText.includes(phrase.toLowerCase())) {
-              archetypeScore += 0.2
-            }
-          })
-        }
-
-        // Check emotional indicators
-        if (pattern.emotional_indicators) {
-          pattern.emotional_indicators.forEach(indicator => {
-            if (lowerText.includes(indicator.toLowerCase())) {
-              archetypeScore += 0.15
-            }
-          })
-        }
-
-        // Check behavioral patterns
-        if (pattern.behavioral_patterns) {
-          pattern.behavioral_patterns.forEach(behavior => {
-            if (lowerText.includes(behavior.toLowerCase())) {
-              archetypeScore += 0.25
+          // Bonus for exact phrase matches
+          const phrases = patterns.split(/\n+/).map(p => p.trim()).filter(p => p.length > 10)
+          phrases.forEach(phrase => {
+            if (lowerText.includes(phrase)) {
+              archetypeScore += 0.3
             }
           })
         }

@@ -748,10 +748,20 @@ export function EnhancedAssessmentBuilder({
 
           {/* Archetype Cards */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Archetype Cards</h3>
+            <h3 className="text-lg font-medium">Archetype Cards for Report</h3>
             <p className="text-sm text-gray-600">
-              Reference cards with archetype information and guidance
+              These archetype cards will be displayed in the assessment report with cool cover photos and detailed information on the back. Users can flip or click to see details.
             </p>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">Card Features:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Cover photo with archetype name and confidence score</li>
+                <li>• Flip animation to reveal detailed information</li>
+                <li>• Assessment context, growth opportunities, and integration tips</li>
+                <li>• Impact metrics and resource links</li>
+                <li>• Carousel support for multiple images per archetype</li>
+              </ul>
+            </div>
             <div className="space-y-2">
               {(config.reportAnswers?.archetypeCards || []).map((card, index) => (
                 <div key={index} className="flex gap-2">

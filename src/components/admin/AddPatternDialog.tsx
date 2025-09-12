@@ -21,7 +21,6 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
   const [archetypes, setArchetypes] = useState<Archetype[]>([])
   const [formData, setFormData] = useState({
     archetype_name: '',
-    category: '',
     patterns: ''
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -40,11 +39,9 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
   }
 
   const handleArchetypeChange = (archetypeName: string) => {
-    const archetype = archetypes.find(a => a.name === archetypeName)
     setFormData({
       ...formData,
-      archetype_name: archetypeName,
-      category: archetype?.category || ''
+      archetype_name: archetypeName
     })
   }
 
@@ -55,14 +52,12 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
     try {
       const pattern = {
         archetype_name: formData.archetype_name,
-        category: formData.category,
         patterns: formData.patterns
       }
 
       await archetypeService.createLinguisticPattern(pattern)
       setFormData({
         archetype_name: '',
-        category: '',
         patterns: ''
       })
       onPatternAdded()
