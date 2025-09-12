@@ -25,9 +25,9 @@ interface AssessmentSession {
 }
 
 interface AssessmentReportPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 const authService = new AuthService()
@@ -41,6 +41,9 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
   useEffect(() => {
     const loadAssessment = async () => {
       try {
+        // Await the params promise
+        const resolvedParams = await params
+
         // Check authentication
         const userProfile = await authService.getCurrentUser()
         if (!userProfile) {
@@ -49,7 +52,7 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
         }
 
         const supabase = createClient()
-        
+
         const { data, error } = await supabase
           .from('assessment_sessions')
           .select(`
@@ -60,7 +63,7 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
               category
             )
           `)
-          .eq('id', params.id)
+          .eq('id', resolvedParams.id)
           .eq('user_id', userProfile.user.id)
           .single()
 
@@ -88,7 +91,7 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
     }
 
     loadAssessment()
-  }, [params.id, router])
+  }, [params, router])
 
   if (isLoading) {
     return (
