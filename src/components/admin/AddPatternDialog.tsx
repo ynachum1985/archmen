@@ -105,8 +105,8 @@ export function AddPatternDialog({ open, onOpenChange, onPatternAdded }: AddPatt
               id="patterns"
               value={formData.patterns}
               onChange={(e) => setFormData({ ...formData, patterns: e.target.value })}
-              placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly&#10;Sentence patterns: uses short commands&#10;Pronouns: high use of 'I' statements"
-              className="w-full h-32 p-3 bg-slate-700 border-slate-600 text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+              placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly"
+              className="w-full h-24 p-3 bg-slate-700 border-slate-600 text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
             />
           </div>
 

@@ -206,65 +206,16 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
         </div>
 
         {/* Linguistic Patterns */}
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-medium text-gray-900">Linguistic Patterns</h3>
-              <details className="relative">
-                <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800">
-                  📋 Pattern Examples & LLM Prompt
-                </summary>
-                <div className="absolute right-0 top-6 w-96 p-4 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                  <div className="space-y-3">
-                    <div className="text-sm">
-                      <h4 className="font-medium mb-2">Copy this prompt for LLM assistance:</h4>
-                      <div className="bg-gray-50 p-3 rounded text-xs font-mono">
-                        <div className="mb-2 font-bold">Create comprehensive linguistic patterns for the [ARCHETYPE_NAME] archetype that help AI detect this pattern in user responses about relationships. Include:</div>
-                        <div className="space-y-1 text-gray-700">
-                          <div>• <strong>Keywords:</strong> Core terms they use</div>
-                          <div>• <strong>Common Phrases:</strong> Typical expressions</div>
-                          <div>• <strong>Emotional Indicators:</strong> Feeling words they use</div>
-                          <div>• <strong>Behavioral Patterns:</strong> Actions they describe</div>
-                          <div>• <strong>Sentence Structure:</strong> Short/long, commands/questions</div>
-                          <div>• <strong>Pronoun Usage:</strong> I/you/we frequency patterns</div>
-                          <div>• <strong>Temporal Language:</strong> Past/present/future focus</div>
-                          <div>• <strong>Certainty Markers:</strong> Always/never vs maybe/sometimes</div>
-                          <div>• <strong>Responsibility Language:</strong> Who they blame/credit</div>
-                          <div>• <strong>Emotional Intensity:</strong> Mild vs extreme language</div>
-                          <div>• <strong>Metaphors:</strong> War, nurturing, business, etc.</div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(`Create comprehensive linguistic patterns for the [ARCHETYPE_NAME] archetype that help AI detect this pattern in user responses about relationships. Include:
-
-• Keywords: Core terms they use
-• Common Phrases: Typical expressions
-• Emotional Indicators: Feeling words they use
-• Behavioral Patterns: Actions they describe
-• Sentence Structure: Short/long, commands/questions
-• Pronoun Usage: I/you/we frequency patterns
-• Temporal Language: Past/present/future focus
-• Certainty Markers: Always/never vs maybe/sometimes
-• Responsibility Language: Who they blame/credit
-• Emotional Intensity: Mild vs extreme language
-• Metaphors: War, nurturing, business, etc.`)}
-                        className="mt-2 text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                      >
-                        📋 Copy Prompt
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            </div>
-
-            <textarea
-              value={linguisticPatterns}
-              onChange={(e) => setLinguisticPatterns(e.target.value)}
-              placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly&#10;Sentence patterns: uses short commands&#10;Pronouns: high use of 'I' statements"
-              className="w-full h-32 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Linguistic Patterns
+          </label>
+          <textarea
+            value={linguisticPatterns}
+            onChange={(e) => setLinguisticPatterns(e.target.value)}
+            placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly"
+            className="w-full h-24 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+          />
         </div>
 
         {/* Action Buttons */}
