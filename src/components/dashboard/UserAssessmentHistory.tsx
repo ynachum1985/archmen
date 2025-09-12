@@ -262,10 +262,10 @@ function AssessmentCard({ assessment }: AssessmentCardProps) {
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm font-medium">Primary Archetype:</span>
-                  <Badge variant="outline">{primaryArchetype.name}</Badge>
+                  <Badge variant="outline">{(primaryArchetype.name as string) || 'Unknown'}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {primaryArchetype.description?.substring(0, 100)}...
+                  {((primaryArchetype.description as string) || '')?.substring(0, 100)}...
                 </p>
               </div>
             )}
