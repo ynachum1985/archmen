@@ -41,8 +41,8 @@ export interface AssessmentSession {
   status: 'in_progress' | 'completed' | 'abandoned'
   progress_percentage: number
   current_question_index: number
-  session_data: Record<string, unknown>
-  discovered_archetypes: AssessmentResult[]
+  session_data: unknown
+  discovered_archetypes: unknown
   completed_at?: string
   created_at: string
   updated_at: string

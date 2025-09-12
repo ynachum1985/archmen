@@ -15,8 +15,13 @@ interface AssessmentSession {
   template_id: string
   status: string
   completed_at: string | null
-  discovered_archetypes: Record<string, unknown>
-  session_data: Record<string, unknown>
+  created_at: string | null
+  current_question_index: number | null
+  progress_percentage: number | null
+  session_data: unknown
+  updated_at: string | null
+  user_id: string
+  discovered_archetypes: unknown
   assessment_templates: {
     name: string
     description: string
@@ -134,7 +139,7 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
     id: assessment.id,
     assessmentName: assessment.assessment_templates?.name || 'Unknown Assessment',
     completedAt: assessment.completed_at || new Date().toISOString(),
-    discoveredArchetypes: (assessment.discovered_archetypes as Record<string, unknown>[] || []).map((archetype: Record<string, unknown>) => ({
+    discoveredArchetypes: ((assessment.discovered_archetypes as Record<string, unknown>[]) || []).map((archetype: Record<string, unknown>) => ({
       id: archetype.id || archetype.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
       name: archetype.name || 'Unknown Archetype',
       description: archetype.description || 'No description available',
