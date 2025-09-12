@@ -9,7 +9,9 @@ import { AuthService } from '@/lib/services/auth.service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { User, LogOut, Brain, BookOpen, Settings } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { User, LogOut, Brain, BookOpen, Settings, History } from 'lucide-react'
+import { UserAssessmentHistory } from '@/components/dashboard/UserAssessmentHistory'
 import Link from 'next/link'
 
 interface UserProfile {
@@ -108,53 +110,62 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Profile Card */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Profile</CardTitle>
-              <User className="h-4 w-4 ml-auto text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{displayName}</div>
-              <p className="text-xs text-muted-foreground">{userProfile.user.email || 'No email'}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Member since {userProfile.profile?.created_at ? new Date(userProfile.profile.created_at).toLocaleDateString() : 'Unknown'}
-              </p>
-            </CardContent>
-          </Card>
+        {/* Main Dashboard Content */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="assessments">Assessment History</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Assessments</CardTitle>
-              <Brain className="h-4 w-4 ml-auto text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Completed assessments</p>
-              <Link href="/chat" className="text-xs text-primary hover:underline mt-1 block">
-                Start your first assessment →
-              </Link>
-            </CardContent>
-          </Card>
+          <TabsContent value="overview" className="space-y-6">
 
-          <Card>
-            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Courses</CardTitle>
-              <BookOpen className="h-4 w-4 ml-auto text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Courses in progress</p>
-              <Link href="/courses" className="text-xs text-primary hover:underline mt-1 block">
-                Browse courses →
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+            {/* Profile Card */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Profile</CardTitle>
+                  <User className="h-4 w-4 ml-auto text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{displayName}</div>
+                  <p className="text-xs text-muted-foreground">{userProfile.user.email || 'No email'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Member since {userProfile.profile?.created_at ? new Date(userProfile.profile.created_at).toLocaleDateString() : 'Unknown'}
+                  </p>
+                </CardContent>
+              </Card>
 
-        {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <Card>
+                <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Assessments</CardTitle>
+                  <Brain className="h-4 w-4 ml-auto text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">Completed assessments</p>
+                  <Link href="/chat" className="text-xs text-primary hover:underline mt-1 block">
+                    Start your first assessment →
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Courses</CardTitle>
+                  <BookOpen className="h-4 w-4 ml-auto text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">Courses in progress</p>
+                  <Link href="/courses" className="text-xs text-primary hover:underline mt-1 block">
+                    Browse courses →
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <Link href="/chat">
               <CardHeader>
@@ -227,7 +238,13 @@ export default function DashboardPage() {
               </Link>
             </div>
           </CardContent>
-        </Card>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="assessments">
+            <UserAssessmentHistory userId={userProfile.user.id} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

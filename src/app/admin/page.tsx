@@ -314,6 +314,68 @@ export default function AdminPage() {
                 </Button>
               </div>
 
+              {/* Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
+                      Report Preview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      See how assessment reports will look to users
+                    </p>
+                    <Button size="sm" variant="outline" asChild className="w-full">
+                      <a href="/admin/report-preview" target="_blank" rel="noopener noreferrer">
+                        View Live Preview
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-green-600" />
+                      Assessment Builder
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Create new assessments with AI configuration
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => {
+                      const builderTab = document.querySelector('[value="builder"]') as HTMLElement
+                      builderTab?.click()
+                    }}>
+                      Open Builder
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Users className="h-4 w-4 text-purple-600" />
+                      Archetype Manager
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Manage archetype database and patterns
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => {
+                      const archetypesTab = document.querySelector('[value="archetypes"]') as HTMLElement
+                      archetypesTab?.click()
+                    }}>
+                      Manage Archetypes
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
               {/* Main Assessment Section */}
               <Card className="border-2 border-teal-200 bg-teal-50">
                 <CardHeader>

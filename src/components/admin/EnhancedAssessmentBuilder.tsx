@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
+import { ReportTemplatePreview } from './ReportTemplatePreview'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -831,6 +832,11 @@ export function EnhancedAssessmentBuilder({
                 Add Archetype Card
               </Button>
             </div>
+          </div>
+
+          {/* Report Template Preview */}
+          <div className="mt-8">
+            <ReportTemplatePreview reportAnswers={config.reportAnswers} />
           </div>
         </TabsContent>
       </Tabs>
