@@ -4,14 +4,14 @@
 export const dynamic = 'force-dynamic'
 
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Brain, Heart, Shield, Send, Sparkles } from 'lucide-react'
+import { ArrowRight, Brain, Heart, Shield, Sparkles } from 'lucide-react'
 import { APP_CONFIG } from '@/config/app.config'
-import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
 import { EnhancedArchetypeChat } from '@/components/chat/EnhancedArchetypeChat'
+import { LinguisticAssessment } from '@/components/chat/LinguisticAssessment'
+import { DiscoveredArchetypes } from '@/components/chat/AssessmentQuiz'
 
 export default function HomePage() {
-  const [message, setMessage] = useState('')
   const [discoveredArchetypes, setDiscoveredArchetypes] = useState<string[]>([])
   const [showAssessment, setShowAssessment] = useState(false)
 
