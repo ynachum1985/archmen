@@ -63,8 +63,8 @@ export class AssessmentResultsService {
         .update({
           status: 'completed',
           progress_percentage: 100,
-          discovered_archetypes: discoveredArchetypes,
-          session_data: sessionData,
+          discovered_archetypes: discoveredArchetypes as unknown,
+          session_data: sessionData as unknown,
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -145,7 +145,7 @@ export class AssessmentResultsService {
         .update({
           progress_percentage: progressPercentage,
           current_question_index: currentQuestionIndex,
-          session_data: sessionData,
+          session_data: sessionData as unknown,
           updated_at: new Date().toISOString()
         })
         .eq('id', sessionId)
@@ -171,8 +171,8 @@ export class AssessmentResultsService {
           status: 'in_progress',
           progress_percentage: 0,
           current_question_index: 0,
-          session_data: {},
-          discovered_archetypes: [],
+          session_data: {} as unknown,
+          discovered_archetypes: [] as unknown,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
