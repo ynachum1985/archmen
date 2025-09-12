@@ -90,7 +90,7 @@ export function EnhancedArchetypeChat() {
             role: m.role,
             content: m.content
           })),
-          personalityId: selectedPersonalityId || undefined,
+          personalityId: selectedPersonalityId === 'default' ? undefined : selectedPersonalityId,
           conversationId: `conv_${Date.now()}`
         })
       })
@@ -153,7 +153,7 @@ export function EnhancedArchetypeChat() {
               <SelectValue placeholder="Choose AI personality (optional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Default AI Personality</SelectItem>
+              <SelectItem value="default">Default AI Personality</SelectItem>
               {personalities.map(personality => (
                 <SelectItem key={personality.id} value={personality.id}>
                   {personality.name} - {personality.description}
