@@ -10,6 +10,44 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Download, Share2 } from 'lucide-react'
 import Link from 'next/link'
 
+interface ArchetypeData {
+  id?: string
+  name?: string
+  description?: string
+  confidenceScore?: number
+  confidence?: number
+  isPrimary?: boolean
+  primary?: boolean
+  assessmentContext?: string
+  context?: string
+  evidence?: string
+  image?: string
+  visualContent?: {
+    primaryImage?: string
+    backgroundColor?: string
+    accentColor?: string
+  }
+  insights?: {
+    currentInfluence?: string
+    growthOpportunity?: string
+    integrationTip?: string
+    whyThisArchetype?: string
+  }
+  resources?: {
+    theoreticalUnderstanding?: string
+    embodimentPractices?: string[]
+    integrationPractices?: string[]
+    articles?: string[]
+    videos?: string[]
+    exercises?: string[]
+  }
+  mediaContent?: {
+    meditationAudio?: string
+    integrationVideo?: string
+    guidanceAudio?: string
+  }
+}
+
 interface AssessmentSession {
   id: string
   template_id: string
@@ -139,7 +177,7 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
     id: assessment.id,
     assessmentName: assessment.assessment_templates?.name || 'Unknown Assessment',
     completedAt: assessment.completed_at || new Date().toISOString(),
-    discoveredArchetypes: ((assessment.discovered_archetypes as Record<string, unknown>[]) || []).map((archetype: Record<string, unknown>) => ({
+    discoveredArchetypes: ((assessment.discovered_archetypes as ArchetypeData[]) || []).map((archetype: ArchetypeData) => ({
       id: (archetype.id as string) || (archetype.name as string)?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
       name: (archetype.name as string) || 'Unknown Archetype',
       description: (archetype.description as string) || 'No description available',
@@ -147,36 +185,36 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
       isPrimary: (archetype.isPrimary as boolean) || (archetype.primary as boolean) || false,
       assessmentContext: (archetype.assessmentContext as string) || (archetype.context as string) || 'Discovered through assessment analysis',
       visualContent: {
-        primaryImage: (archetype.visualContent as any)?.primaryImage || (archetype.image as string),
-        backgroundColor: (archetype.visualContent as any)?.backgroundColor || '#e2e8f0',
-        accentColor: (archetype.visualContent as any)?.accentColor || '#3b82f6'
+        primaryImage: archetype.visualContent?.primaryImage || archetype.image,
+        backgroundColor: archetype.visualContent?.backgroundColor || '#e2e8f0',
+        accentColor: archetype.visualContent?.accentColor || '#3b82f6'
       },
       insights: {
-        currentInfluence: (archetype.insights as any)?.currentInfluence || 'This archetype influences your current behavior and decision-making patterns.',
-        growthOpportunity: (archetype.insights as any)?.growthOpportunity || 'Exploring this archetype offers opportunities for personal growth and self-understanding.',
-        integrationTip: (archetype.insights as any)?.integrationTip || 'Consider how you can consciously work with this archetypal energy in your daily life.',
-        whyThisArchetype: (archetype.insights as any)?.whyThisArchetype || (archetype.evidence as string) || 'This archetype emerged based on your responses and behavioral patterns identified during the assessment.'
+        currentInfluence: archetype.insights?.currentInfluence || 'This archetype influences your current behavior and decision-making patterns.',
+        growthOpportunity: archetype.insights?.growthOpportunity || 'Exploring this archetype offers opportunities for personal growth and self-understanding.',
+        integrationTip: archetype.insights?.integrationTip || 'Consider how you can consciously work with this archetypal energy in your daily life.',
+        whyThisArchetype: archetype.insights?.whyThisArchetype || archetype.evidence || 'This archetype emerged based on your responses and behavioral patterns identified during the assessment.'
       },
       resources: {
-        theoreticalUnderstanding: (archetype.resources as any)?.theoreticalUnderstanding || 'This archetype represents fundamental patterns of human behavior and motivation.',
-        embodimentPractices: (archetype.resources as any)?.embodimentPractices || [
+        theoreticalUnderstanding: archetype.resources?.theoreticalUnderstanding || 'This archetype represents fundamental patterns of human behavior and motivation.',
+        embodimentPractices: archetype.resources?.embodimentPractices || [
           'Practice mindful awareness of when this archetype is active',
           'Journal about how this energy shows up in your life',
           'Explore creative expressions of this archetypal energy'
         ],
-        integrationPractices: (archetype.resources as any)?.integrationPractices || [
+        integrationPractices: archetype.resources?.integrationPractices || [
           'Set intentions aligned with this archetype\'s positive qualities',
           'Notice and transform shadow expressions of this energy',
           'Seek balance with other archetypal energies in your life'
         ],
-        articles: (archetype.resources as any)?.articles || [],
-        videos: (archetype.resources as any)?.videos || [],
-        exercises: (archetype.resources as any)?.exercises || []
+        articles: archetype.resources?.articles || [],
+        videos: archetype.resources?.videos || [],
+        exercises: archetype.resources?.exercises || []
       },
       mediaContent: {
-        meditationAudio: (archetype.mediaContent as any)?.meditationAudio,
-        integrationVideo: (archetype.mediaContent as any)?.integrationVideo,
-        guidanceAudio: (archetype.mediaContent as any)?.guidanceAudio
+        meditationAudio: archetype.mediaContent?.meditationAudio,
+        integrationVideo: archetype.mediaContent?.integrationVideo,
+        guidanceAudio: archetype.mediaContent?.guidanceAudio
       }
     })),
     overallInsights: {
