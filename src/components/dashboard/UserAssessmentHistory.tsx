@@ -13,7 +13,7 @@ interface AssessmentSession {
   id: string
   template_id: string
   status: string
-  progress_percentage: number
+  progress_percentage: number | null
   completed_at: string | null
   created_at: string
   current_question_index: number | null
@@ -236,7 +236,7 @@ function AssessmentCard({ assessment }: AssessmentCardProps) {
                 {assessment.assessment_templates?.name || 'Unknown Assessment'}
               </h3>
               <Badge variant={isCompleted ? 'default' : 'secondary'}>
-                {isCompleted ? 'Completed' : `${assessment.progress_percentage}% Complete`}
+                {isCompleted ? 'Completed' : `${assessment.progress_percentage || 0}% Complete`}
               </Badge>
             </div>
             
