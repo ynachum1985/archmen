@@ -16,8 +16,8 @@ interface AssessmentSession {
   progress_percentage: number
   completed_at: string | null
   created_at: string
-  discovered_archetypes: any
-  session_data: any
+  discovered_archetypes: Record<string, unknown>
+  session_data: Record<string, unknown>
   assessment_templates: {
     name: string
     description: string
@@ -116,7 +116,7 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
           <CardContent>
             <div className="text-2xl font-bold">
               {completedAssessments.reduce((total, assessment) => {
-                const archetypes = assessment.discovered_archetypes as any[]
+                const archetypes = assessment.discovered_archetypes as Record<string, unknown>[]
                 return total + (archetypes?.length || 0)
               }, 0)}
             </div>
@@ -220,7 +220,7 @@ interface AssessmentCardProps {
 
 function AssessmentCard({ assessment }: AssessmentCardProps) {
   const isCompleted = assessment.status === 'completed'
-  const archetypes = assessment.discovered_archetypes as any[] || []
+  const archetypes = assessment.discovered_archetypes as Record<string, unknown>[] || []
   const primaryArchetype = archetypes.find(a => a.isPrimary) || archetypes[0]
 
   return (

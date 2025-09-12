@@ -177,7 +177,7 @@ export function ReportTemplatePreview({ reportAnswers }: ReportTemplatePreviewPr
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Click "Show Preview" to see how your assessment report will look to users.
+              Click &quot;Show Preview&quot; to see how your assessment report will look to users.
               This preview uses sample data to demonstrate the layout and functionality.
             </p>
             

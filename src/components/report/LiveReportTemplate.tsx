@@ -129,7 +129,6 @@ interface ArchetypeCardProps {
 
 function ArchetypeCard({ archetype, isSelected, onClick, size = 'normal' }: ArchetypeCardProps) {
   const cardHeight = size === 'compact' ? 'h-20' : 'h-32'
-  const imageHeight = size === 'compact' ? 'h-20' : 'h-32'
   
   return (
     <Card 
@@ -188,7 +187,7 @@ interface ArchetypeDetailPanelProps {
   isPreview?: boolean
 }
 
-function ArchetypeDetailPanel({ archetype, isPreview }: ArchetypeDetailPanelProps) {
+function ArchetypeDetailPanel({ archetype }: ArchetypeDetailPanelProps) {
   return (
     <Card className="h-full">
       <CardContent className="p-8 space-y-8">

@@ -41,7 +41,7 @@ export interface AssessmentSession {
   status: 'in_progress' | 'completed' | 'abandoned'
   progress_percentage: number
   current_question_index: number
-  session_data: any
+  session_data: Record<string, unknown>
   discovered_archetypes: AssessmentResult[]
   completed_at?: string
   created_at: string
@@ -55,7 +55,7 @@ export class AssessmentResultsService {
     sessionId: string,
     userId: string,
     discoveredArchetypes: AssessmentResult[],
-    sessionData?: any
+    sessionData?: Record<string, unknown>
   ): Promise<void> {
     try {
       const { error } = await this.supabase
@@ -137,7 +137,7 @@ export class AssessmentResultsService {
     userId: string,
     progressPercentage: number,
     currentQuestionIndex: number,
-    sessionData?: any
+    sessionData?: Record<string, unknown>
   ): Promise<void> {
     try {
       const { error } = await this.supabase

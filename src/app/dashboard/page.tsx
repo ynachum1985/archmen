@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { User, LogOut, Brain, BookOpen, Settings, History } from 'lucide-react'
+import { User, LogOut, Brain, BookOpen, Settings } from 'lucide-react'
 import { UserAssessmentHistory } from '@/components/dashboard/UserAssessmentHistory'
 import Link from 'next/link'
 

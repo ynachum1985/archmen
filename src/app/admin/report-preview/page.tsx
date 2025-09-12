@@ -155,7 +155,7 @@ export default function ReportPreviewPage() {
               <div>
                 <h4 className="font-medium mb-2">For Assessment Builders:</h4>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                  <li>• Configure report content in the "Report and Answers" tab</li>
+                  <li>• Configure report content in the &quot;Report and Answers&quot; tab</li>
                   <li>• Use the preview feature to see how your content will appear</li>
                   <li>• Customize theoretical understanding, practices, and resources</li>
                   <li>• Add resource links and archetype-specific content</li>
