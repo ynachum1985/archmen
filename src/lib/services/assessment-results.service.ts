@@ -224,9 +224,9 @@ export class AssessmentResultsService {
 
       // Filter by archetype on the client side since we can't easily query JSON arrays in Supabase
       const filteredData = data.filter(session => {
-        const archetypes = session.discovered_archetypes as AssessmentResult[]
-        return archetypes?.some(archetype => 
-          archetype.id === archetypeId || 
+        const archetypes = (session.discovered_archetypes as unknown) as AssessmentResult[]
+        return archetypes?.some(archetype =>
+          archetype.id === archetypeId ||
           archetype.name?.toLowerCase().includes(archetypeId.toLowerCase())
         )
       })
