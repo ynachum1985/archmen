@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import type { Json } from '@/lib/supabase/database.types'
 
 export interface AssessmentResult {
   id: string
@@ -63,8 +64,8 @@ export class AssessmentResultsService {
         .update({
           status: 'completed',
           progress_percentage: 100,
-          discovered_archetypes: discoveredArchetypes as unknown,
-          session_data: sessionData as unknown,
+          discovered_archetypes: discoveredArchetypes as Json,
+          session_data: sessionData as Json,
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -145,7 +146,7 @@ export class AssessmentResultsService {
         .update({
           progress_percentage: progressPercentage,
           current_question_index: currentQuestionIndex,
-          session_data: sessionData as unknown,
+          session_data: sessionData as Json,
           updated_at: new Date().toISOString()
         })
         .eq('id', sessionId)
@@ -171,8 +172,8 @@ export class AssessmentResultsService {
           status: 'in_progress',
           progress_percentage: 0,
           current_question_index: 0,
-          session_data: {} as unknown,
-          discovered_archetypes: [] as unknown,
+          session_data: {} as Json,
+          discovered_archetypes: [] as Json,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
