@@ -282,12 +282,16 @@ export class EnhancedAIService {
 
     if (archetypes) {
       for (const archetype of archetypes) {
+        // Type assertion for the extended archetype data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const extendedArchetype = archetype as any
+
         // Combine description with linguistic patterns for richer embeddings
         const linguisticContent = [
-          ...(archetype.keywords || []),
-          ...(archetype.phrases || []),
-          ...(archetype.emotional_indicators || []),
-          ...(archetype.behavioral_patterns || [])
+          ...(extendedArchetype.keywords || []),
+          ...(extendedArchetype.phrases || []),
+          ...(extendedArchetype.emotional_indicators || []),
+          ...(extendedArchetype.behavioral_patterns || [])
         ].join(' ')
 
         const text = `${archetype.name}: ${archetype.description} ${linguisticContent}`.trim()
