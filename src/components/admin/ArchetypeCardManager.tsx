@@ -22,7 +22,15 @@ interface ArchetypeCardData {
   id: string
   name: string
   description: string
+  category?: string
   assessmentContext: string
+  impact_score?: number
+  growth_potential_score?: number
+  awareness_difficulty_score?: number
+  trigger_intensity_score?: number
+  integration_complexity_score?: number
+  shadow_depth_score?: number
+  archetype_images?: string[]
   visualContent: {
     primaryImage?: string
     backgroundColor?: string
@@ -253,9 +261,58 @@ export function ArchetypeCardManager() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Image Section */}
+              <div className="relative h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
+                {card.archetype_images && card.archetype_images.length > 0 ? (
+                  <div className="relative w-full h-full">
+                    <img
+                      src={card.archetype_images[0]}
+                      alt={card.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {card.archetype_images.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                        +{card.archetype_images.length - 1} more
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <ImageIcon className="w-8 h-8 text-slate-400 mx-auto mb-1" />
+                      <p className="text-xs text-slate-500">Add archetype image</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Impact Scores */}
+              {(card.impact_score || card.growth_potential_score) && (
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  {card.impact_score && (
+                    <div className="text-center">
+                      <div className="font-medium text-slate-700">Impact</div>
+                      <div className="text-slate-500">{card.impact_score}/7</div>
+                    </div>
+                  )}
+                  {card.growth_potential_score && (
+                    <div className="text-center">
+                      <div className="font-medium text-slate-700">Growth</div>
+                      <div className="text-slate-500">{card.growth_potential_score}/7</div>
+                    </div>
+                  )}
+                  {card.trigger_intensity_score && (
+                    <div className="text-center">
+                      <div className="font-medium text-slate-700">Trigger</div>
+                      <div className="text-slate-500">{card.trigger_intensity_score}/7</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Mini Preview */}
               <div className="w-full h-24 rounded-lg overflow-hidden">
-                <ArchetypeCard 
+                <ArchetypeCard
                   archetype={{
                     ...card,
                     confidenceScore: 85

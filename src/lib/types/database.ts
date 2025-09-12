@@ -485,6 +485,12 @@ export type Database = {
           description: string
           id: string
           impact_score: number
+          growth_potential_score: number | null
+          awareness_difficulty_score: number | null
+          trigger_intensity_score: number | null
+          integration_complexity_score: number | null
+          shadow_depth_score: number | null
+          archetype_images: string[] | null
           is_active: boolean | null
           name: string
           psychology_profile: Json | null
@@ -497,6 +503,12 @@ export type Database = {
           description: string
           id?: string
           impact_score: number
+          growth_potential_score?: number | null
+          awareness_difficulty_score?: number | null
+          trigger_intensity_score?: number | null
+          integration_complexity_score?: number | null
+          shadow_depth_score?: number | null
+          archetype_images?: string[] | null
           is_active?: boolean | null
           name: string
           psychology_profile?: Json | null
@@ -509,6 +521,12 @@ export type Database = {
           description?: string
           id?: string
           impact_score?: number
+          growth_potential_score?: number | null
+          awareness_difficulty_score?: number | null
+          trigger_intensity_score?: number | null
+          integration_complexity_score?: number | null
+          shadow_depth_score?: number | null
+          archetype_images?: string[] | null
           is_active?: boolean | null
           name?: string
           psychology_profile?: Json | null

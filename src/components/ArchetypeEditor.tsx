@@ -12,6 +12,12 @@ interface Archetype {
   category: string
   description: string
   impact_score: number
+  growth_potential_score?: number | null
+  awareness_difficulty_score?: number | null
+  trigger_intensity_score?: number | null
+  integration_complexity_score?: number | null
+  shadow_depth_score?: number | null
+  archetype_images?: string[] | null
   traits: unknown
   psychology_profile: unknown
   is_active: boolean | null
@@ -94,53 +100,162 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Relationship Impact Score (1-7)
-          </label>
-          <Input
-            type="number"
-            min="1"
-            max="7"
-            value={editedArchetype.impact_score}
-            onChange={(e) => setEditedArchetype({ ...editedArchetype, impact_score: parseInt(e.target.value) || 1 })}
-            className="w-24"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            How negatively this archetype can affect relationships and relating (1 = minimal impact, 7 = severe impact)
-          </p>
-          {/* TODO: Consider adding additional metrics:
-              - Growth Potential Score (1-7): How much potential for positive transformation
-              - Awareness Difficulty (1-7): How hard it is for someone to recognize this pattern
-              - Trigger Intensity (1-7): How easily this archetype gets activated under stress
-              - Integration Complexity (1-7): How challenging it is to integrate this archetype healthily
-              - Shadow Depth (1-7): How deep/unconscious the shadow aspects tend to be
-          */}
+        {/* Impact Metrics */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Relationship Impact (1-7)
+            </label>
+            <Input
+              type="number"
+              min="1"
+              max="7"
+              value={editedArchetype.impact_score}
+              onChange={(e) => setEditedArchetype({ ...editedArchetype, impact_score: parseInt(e.target.value) || 1 })}
+              className="w-24"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              How negatively this affects relationships
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Growth Potential (1-7)
+            </label>
+            <Input
+              type="number"
+              min="1"
+              max="7"
+              value={editedArchetype.growth_potential_score || 1}
+              onChange={(e) => setEditedArchetype({ ...editedArchetype, growth_potential_score: parseInt(e.target.value) || 1 })}
+              className="w-24"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Potential for positive transformation
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Awareness Difficulty (1-7)
+            </label>
+            <Input
+              type="number"
+              min="1"
+              max="7"
+              value={editedArchetype.awareness_difficulty_score || 1}
+              onChange={(e) => setEditedArchetype({ ...editedArchetype, awareness_difficulty_score: parseInt(e.target.value) || 1 })}
+              className="w-24"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              How hard to recognize this pattern
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Trigger Intensity (1-7)
+            </label>
+            <Input
+              type="number"
+              min="1"
+              max="7"
+              value={editedArchetype.trigger_intensity_score || 1}
+              onChange={(e) => setEditedArchetype({ ...editedArchetype, trigger_intensity_score: parseInt(e.target.value) || 1 })}
+              className="w-24"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              How easily activated under stress
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Integration Complexity (1-7)
+            </label>
+            <Input
+              type="number"
+              min="1"
+              max="7"
+              value={editedArchetype.integration_complexity_score || 1}
+              onChange={(e) => setEditedArchetype({ ...editedArchetype, integration_complexity_score: parseInt(e.target.value) || 1 })}
+              className="w-24"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              How challenging to integrate healthily
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Shadow Depth (1-7)
+            </label>
+            <Input
+              type="number"
+              min="1"
+              max="7"
+              value={editedArchetype.shadow_depth_score || 1}
+              onChange={(e) => setEditedArchetype({ ...editedArchetype, shadow_depth_score: parseInt(e.target.value) || 1 })}
+              className="w-24"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              How deep/unconscious the shadow aspects
+            </p>
+          </div>
         </div>
 
         {/* Linguistic Patterns */}
         <div className="space-y-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-medium text-gray-900">Linguistic Patterns</h3>
-              <div className="group relative">
-                <button
-                  type="button"
-                  className="w-4 h-4 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center hover:bg-gray-400"
-                >
-                  ?
-                </button>
-                <div className="absolute bottom-6 left-0 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
-                  <div className="space-y-2">
-                    <div><strong>Keywords:</strong> leadership, control, authority, responsibility</div>
-                    <div><strong>Phrases:</strong> &quot;I need to take charge&quot;, &quot;Let me handle this&quot;</div>
-                    <div><strong>Emotional:</strong> frustrated when not in control, protective</div>
-                    <div><strong>Behavioral:</strong> takes initiative, makes decisions quickly</div>
-                    <div><strong>Sentence patterns:</strong> Short commands vs. long explanations</div>
-                    <div><strong>Pronouns:</strong> &quot;I&quot; vs. &quot;you&quot; vs. &quot;we&quot; frequency</div>
+              <details className="relative">
+                <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800">
+                  📋 Pattern Examples & LLM Prompt
+                </summary>
+                <div className="absolute right-0 top-6 w-96 p-4 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <div className="space-y-3">
+                    <div className="text-sm">
+                      <h4 className="font-medium mb-2">Copy this prompt for LLM assistance:</h4>
+                      <div className="bg-gray-50 p-3 rounded text-xs font-mono">
+                        <div className="mb-2 font-bold">Create comprehensive linguistic patterns for the [ARCHETYPE_NAME] archetype that help AI detect this pattern in user responses about relationships. Include:</div>
+                        <div className="space-y-1 text-gray-700">
+                          <div>• <strong>Keywords:</strong> Core terms they use</div>
+                          <div>• <strong>Common Phrases:</strong> Typical expressions</div>
+                          <div>• <strong>Emotional Indicators:</strong> Feeling words they use</div>
+                          <div>• <strong>Behavioral Patterns:</strong> Actions they describe</div>
+                          <div>• <strong>Sentence Structure:</strong> Short/long, commands/questions</div>
+                          <div>• <strong>Pronoun Usage:</strong> I/you/we frequency patterns</div>
+                          <div>• <strong>Temporal Language:</strong> Past/present/future focus</div>
+                          <div>• <strong>Certainty Markers:</strong> Always/never vs maybe/sometimes</div>
+                          <div>• <strong>Responsibility Language:</strong> Who they blame/credit</div>
+                          <div>• <strong>Emotional Intensity:</strong> Mild vs extreme language</div>
+                          <div>• <strong>Metaphors:</strong> War, nurturing, business, etc.</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(`Create comprehensive linguistic patterns for the [ARCHETYPE_NAME] archetype that help AI detect this pattern in user responses about relationships. Include:
+
+• Keywords: Core terms they use
+• Common Phrases: Typical expressions
+• Emotional Indicators: Feeling words they use
+• Behavioral Patterns: Actions they describe
+• Sentence Structure: Short/long, commands/questions
+• Pronoun Usage: I/you/we frequency patterns
+• Temporal Language: Past/present/future focus
+• Certainty Markers: Always/never vs maybe/sometimes
+• Responsibility Language: Who they blame/credit
+• Emotional Intensity: Mild vs extreme language
+• Metaphors: War, nurturing, business, etc.`)}
+                        className="mt-2 text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                      >
+                        📋 Copy Prompt
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </details>
             </div>
 
             <textarea

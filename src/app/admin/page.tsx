@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
+import { LinguisticPatternsHelper } from "@/components/admin/LinguisticPatternsHelper"
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
 import { EmbeddingConfigManager } from "@/components/admin/EmbeddingConfigManager"
@@ -389,7 +390,7 @@ export default function AdminPage() {
 
           {/* Archetypes Tab */}
           <TabsContent value="archetypes" className="mt-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-medium">Archetypes</h2>
@@ -403,6 +404,9 @@ export default function AdminPage() {
                   </Button>
                 </div>
               </div>
+
+              {/* Linguistic Patterns Helper */}
+              <LinguisticPatternsHelper className="mb-6" />
 
               {/* Filters */}
               <div className="flex gap-4 items-center p-4 bg-gray-50 rounded-lg">
