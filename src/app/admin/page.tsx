@@ -16,7 +16,8 @@ import {
   Search,
   FileText,
   Brain,
-  Sparkles
+  Sparkles,
+  Database
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
@@ -24,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
+import { EmbeddingConfigManager } from "@/components/admin/EmbeddingConfigManager"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -301,6 +303,10 @@ export default function AdminPage() {
               <Brain className="h-4 w-4" />
               AI Personality
             </TabsTrigger>
+            <TabsTrigger value="embeddings" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Embeddings
+            </TabsTrigger>
 
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -466,6 +472,11 @@ export default function AdminPage() {
           {/* AI Personality Tab */}
           <TabsContent value="ai-personality" className="mt-6">
             <AIPersonalityManager />
+          </TabsContent>
+
+          {/* Embeddings Tab */}
+          <TabsContent value="embeddings" className="mt-6">
+            <EmbeddingConfigManager />
           </TabsContent>
 
 
