@@ -585,12 +585,6 @@ export function EnhancedAssessmentBuilder({
         <TabsContent value="reports" className="space-y-8">
           {/* Archetype Content Builder */}
           <ArchetypeContentBuilder
-            initialContent={{
-              theoreticalUnderstanding: config.reportAnswers?.theoreticalUnderstanding,
-              embodimentPractices: config.reportAnswers?.embodimentPractices,
-              integrationPractices: config.reportAnswers?.integrationPractices,
-              resourceLinks: config.reportAnswers?.resourceLinks
-            }}
             onContentChange={(archetypeId, content) => {
               console.log('Content updated for archetype:', archetypeId, content)
               // Here you can save the content to your database
