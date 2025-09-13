@@ -39,6 +39,14 @@ interface ArchetypeCardData {
     growthOpportunity: string
     integrationTip: string
   }
+  // New content structure
+  content?: {
+    overview?: string
+    theoretical?: string
+    embodiment?: string
+    integration?: string
+    shadowWork?: string
+  }
   resources: {
     articles?: string[]
     exercises?: string[]
@@ -323,6 +331,95 @@ export function ArchetypeCardEditor({
                   placeholder="A practical tip for integrating this archetype..."
                   className="mt-1 border-0 bg-white"
                   rows={2}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Archetype Content Structure */}
+          <Card className="border-0 bg-slate-50">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-purple-500" />
+                <h3 className="text-lg font-medium text-slate-900">Archetype Content</h3>
+              </div>
+              <p className="text-sm text-slate-600 mt-1">
+                Create rich content for each aspect of this archetype. This content will be used in assessment reports.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label htmlFor="overview" className="text-slate-700">Overview</Label>
+                <Textarea
+                  id="overview"
+                  value={cardData.content?.overview || ''}
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    content: { ...prev.content, overview: e.target.value }
+                  }))}
+                  placeholder="A comprehensive overview of this archetype..."
+                  className="mt-1 border-0 bg-white"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="theoretical" className="text-slate-700">Theoretical Understanding</Label>
+                <Textarea
+                  id="theoretical"
+                  value={cardData.content?.theoretical || ''}
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    content: { ...prev.content, theoretical: e.target.value }
+                  }))}
+                  placeholder="Deep theoretical context and background information..."
+                  className="mt-1 border-0 bg-white"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="embodiment" className="text-slate-700">Embodiment Practices</Label>
+                <Textarea
+                  id="embodiment"
+                  value={cardData.content?.embodiment || ''}
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    content: { ...prev.content, embodiment: e.target.value }
+                  }))}
+                  placeholder="Specific practices to help users embody this archetype..."
+                  className="mt-1 border-0 bg-white"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="integration" className="text-slate-700">Integration Practices</Label>
+                <Textarea
+                  id="integration"
+                  value={cardData.content?.integration || ''}
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    content: { ...prev.content, integration: e.target.value }
+                  }))}
+                  placeholder="Practices to integrate this archetype into daily life..."
+                  className="mt-1 border-0 bg-white"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="shadowWork" className="text-slate-700">Shadow Work</Label>
+                <Textarea
+                  id="shadowWork"
+                  value={cardData.content?.shadowWork || ''}
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    content: { ...prev.content, shadowWork: e.target.value }
+                  }))}
+                  placeholder="Working with the shadow aspects of this archetype..."
+                  className="mt-1 border-0 bg-white"
+                  rows={4}
                 />
               </div>
             </CardContent>

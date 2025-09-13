@@ -46,6 +46,14 @@ interface ArchetypeCardData {
     growthOpportunity: string
     integrationTip: string
   }
+  // New content structure
+  content?: {
+    overview?: string
+    theoretical?: string
+    embodiment?: string
+    integration?: string
+    shadowWork?: string
+  }
   resources: {
     articles?: string[]
     exercises?: string[]

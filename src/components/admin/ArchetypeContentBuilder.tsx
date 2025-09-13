@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -312,28 +315,24 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
       </div>
 
       {/* Archetype Selection */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="space-y-2">
-            <Label>Select Archetype to Edit</Label>
-            <Select value={selectedArchetype} onValueChange={setSelectedArchetype}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose an archetype to edit" />
-              </SelectTrigger>
-              <SelectContent>
-                {archetypes.map((archetype) => (
-                  <SelectItem key={archetype.id} value={archetype.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{archetype.name}</span>
-                      <span className="text-sm text-muted-foreground">{archetype.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <Label>Select Archetype to Edit</Label>
+        <Select value={selectedArchetype} onValueChange={setSelectedArchetype}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Choose an archetype to edit" />
+          </SelectTrigger>
+          <SelectContent>
+            {archetypes.map((archetype) => (
+              <SelectItem key={archetype.id} value={archetype.id}>
+                <div className="flex flex-col">
+                  <span className="font-medium">{archetype.name}</span>
+                  <span className="text-sm text-muted-foreground">{archetype.description}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Live Preview Editor */}
       {selectedArchetype && (
@@ -386,17 +385,17 @@ function LivePreviewEditor({
         <h3 className="text-lg font-semibold">Archetype Preview</h3>
 
         {/* Primary Archetype Card */}
-        <Card className="border-2 border-blue-200 bg-blue-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                <Heart className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-blue-900">{archetype.name}</h4>
-                <Badge variant="secondary" className="text-xs">Primary • 85% match</Badge>
-              </div>
+        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
+          <div className="relative h-32 bg-gradient-to-br from-blue-400 to-blue-600">
+            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute bottom-3 left-3 right-3">
+              <h4 className="font-bold text-white text-lg">{archetype.name}</h4>
+              <Badge variant="secondary" className="text-xs bg-white/90 text-blue-900">
+                Primary • 85% match
+              </Badge>
             </div>
+          </div>
+          <CardContent className="p-4">
             <p className="text-sm text-blue-800">{archetype.description}</p>
           </CardContent>
         </Card>
@@ -404,18 +403,19 @@ function LivePreviewEditor({
         {/* Related Archetypes */}
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-gray-600">Related Archetypes</h4>
-          {['The Sage', 'The Explorer'].map((name, index) => (
-            <Card key={index} className="border border-gray-200">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{name}</p>
-                    <Badge variant="outline" className="text-xs">{65 - index * 10}% match</Badge>
-                  </div>
+          {[
+            { name: 'The Sage', color: 'from-purple-400 to-purple-600' },
+            { name: 'The Explorer', color: 'from-green-400 to-green-600' }
+          ].map((archetype, index) => (
+            <Card key={index} className="border border-gray-200 overflow-hidden">
+              <div className={`relative h-16 bg-gradient-to-br ${archetype.color}`}>
+                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute bottom-2 left-2 right-2">
+                  <p className="text-sm font-semibold text-white">{archetype.name}</p>
                 </div>
+              </div>
+              <CardContent className="p-2">
+                <Badge variant="outline" className="text-xs">{65 - index * 10}% match</Badge>
               </CardContent>
             </Card>
           ))}
@@ -426,35 +426,25 @@ function LivePreviewEditor({
       <div className="col-span-8">
         <Card className="h-full">
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  {currentPageInfo?.icon && <currentPageInfo.icon className="h-5 w-5" />}
-                  {currentPageInfo?.name}
-                </CardTitle>
-                <CardDescription>{currentPageInfo?.description}</CardDescription>
-              </div>
-
-              {/* Page Navigation */}
-              <div className="flex gap-1">
-                {PAGE_TYPES.map((page) => {
-                  const Icon = page.icon
-                  const hasContent = content[page.id as keyof ArchetypeContent]?.blocks.length > 0
-                  return (
-                    <Button
-                      key={page.id}
-                      variant={currentPage === page.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(page.id)}
-                      className="flex flex-col gap-1 h-auto py-2 px-3"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-xs">{page.name}</span>
-                      {hasContent && <div className="w-1 h-1 bg-current rounded-full" />}
-                    </Button>
-                  )
-                })}
-              </div>
+            {/* Page Navigation */}
+            <div className="flex gap-2 overflow-x-auto">
+              {PAGE_TYPES.map((page) => {
+                const hasContent = content[page.id as keyof ArchetypeContent]?.blocks.length > 0
+                return (
+                  <Button
+                    key={page.id}
+                    variant={currentPage === page.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page.id)}
+                    className="whitespace-nowrap relative"
+                  >
+                    {page.name}
+                    {hasContent && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+                    )}
+                  </Button>
+                )
+              })}
             </div>
           </CardHeader>
 
@@ -577,11 +567,10 @@ function ContentBlockEditor({ block, onUpdate, onRemove, dragHandleProps }: Cont
       </CardHeader>
       <CardContent className="space-y-3">
         {block.type === 'text' && (
-          <Textarea
-            value={block.content.text || ''}
-            onChange={(e) => onUpdate({ text: e.target.value })}
+          <RichTextEditor
+            content={block.content.text || ''}
+            onChange={(content) => onUpdate({ text: content })}
             placeholder="Enter your content here..."
-            rows={4}
           />
         )}
 
@@ -618,5 +607,95 @@ function ContentBlockEditor({ block, onUpdate, onRemove, dragHandleProps }: Cont
         )}
       </CardContent>
     </Card>
+  )
+}
+
+interface RichTextEditorProps {
+  content: string
+  onChange: (content: string) => void
+  placeholder?: string
+}
+
+function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({
+        placeholder: placeholder || 'Start typing...',
+      }),
+    ],
+    content,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML())
+    },
+  })
+
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content)
+    }
+  }, [content, editor])
+
+  if (!editor) {
+    return null
+  }
+
+  return (
+    <div className="border rounded-md">
+      {/* Toolbar */}
+      <div className="border-b p-2 flex gap-1 flex-wrap">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive('bold') ? 'bg-gray-200' : ''}
+        >
+          <strong>B</strong>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive('italic') ? 'bg-gray-200' : ''}
+        >
+          <em>I</em>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''}
+        >
+          H2
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          className={editor.isActive('heading', { level: 3 }) ? 'bg-gray-200' : ''}
+        >
+          H3
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={editor.isActive('bulletList') ? 'bg-gray-200' : ''}
+        >
+          • List
+        </Button>
+      </div>
+
+      {/* Editor */}
+      <EditorContent
+        editor={editor}
+        className="prose prose-sm max-w-none p-3 min-h-[100px] focus-within:outline-none"
+      />
+    </div>
   )
 }
