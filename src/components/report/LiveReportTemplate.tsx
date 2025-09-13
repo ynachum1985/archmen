@@ -282,16 +282,6 @@ function ArchetypeDetailPanel({ archetype }: ArchetypeDetailPanelProps) {
   )
 }
 
-        {/* Why This Archetype */}
-        <div>
-          <h3 className="text-xl font-semibold text-slate-900 mb-3">Why This Archetype Appeared</h3>
-          <p className="text-slate-700 leading-relaxed">{archetype.insights.whyThisArchetype}</p>
-        </div>
-      </div>
-    </Card>
-  )
-}
-
 // Helper component for overview content
 function ArchetypeOverviewContent({ archetype }: { archetype: ArchetypeResult }) {
   return (
