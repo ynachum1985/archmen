@@ -248,7 +248,7 @@ function ArchetypeDetailPanel({ archetype }: ArchetypeDetailPanelProps) {
             <TabsList className="grid grid-cols-6 w-full">
               {contentPages.map((page) => {
                 const Icon = page.icon
-                const hasContent = archetype.structuredContent?.[page.id as keyof ArchetypeContent]?.blocks?.length > 0
+                const hasContent = archetype.structuredContent?.[page.id as keyof ArchetypeContent]?.blocks?.length ?? 0 > 0
                 return (
                   <TabsTrigger key={page.id} value={page.id} className="flex flex-col gap-1 h-auto py-2">
                     <Icon className="h-4 w-4" />
