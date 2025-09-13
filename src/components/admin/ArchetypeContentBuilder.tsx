@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -376,7 +376,6 @@ function LivePreviewEditor({
   if (!archetype) return null
 
   const currentPageContent = content[currentPage as keyof ArchetypeContent]
-  const currentPageInfo = PAGE_TYPES.find(p => p.id === currentPage)
 
   return (
     <div className="grid grid-cols-12 gap-6 min-h-[600px]">
