@@ -291,122 +291,234 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
 
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Archetype Content Builder
-            </CardTitle>
-            <CardDescription>
-              Create rich, contextual content for each archetype in your assessment
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={saveContent} disabled={isLoading || !selectedArchetype}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Content
-            </Button>
-          </div>
+    <div className="w-full space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <BookOpen className="h-6 w-6" />
+            Archetype Content Builder
+          </h2>
+          <p className="text-muted-foreground">
+            Create rich, contextual content for each archetype - edit directly in the preview below
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Archetype Selection */}
+        <div className="flex gap-2">
+          <Button onClick={saveContent} disabled={isLoading || !selectedArchetype}>
+            <Save className="h-4 w-4 mr-2" />
+            Save Content
+          </Button>
+        </div>
+      </div>
+
+      {/* Archetype Selection */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="space-y-2">
+            <Label>Select Archetype to Edit</Label>
+            <Select value={selectedArchetype} onValueChange={setSelectedArchetype}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose an archetype to edit" />
+              </SelectTrigger>
+              <SelectContent>
+                {archetypes.map((archetype) => (
+                  <SelectItem key={archetype.id} value={archetype.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{archetype.name}</span>
+                      <span className="text-sm text-muted-foreground">{archetype.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Live Preview Editor */}
+      {selectedArchetype && (
+        <LivePreviewEditor
+          archetype={archetypes.find(a => a.id === selectedArchetype)}
+          content={content}
+          onContentChange={setContent}
+          onAddBlock={addContentBlock}
+          onUpdateBlock={updateContentBlock}
+          onRemoveBlock={removeContentBlock}
+          onDragEnd={handleDragEnd}
+          sensors={sensors}
+        />
+      )}
+    </div>
+  )
+}
+
+interface LivePreviewEditorProps {
+  archetype?: Archetype
+  content: ArchetypeContent
+  onContentChange: (content: ArchetypeContent) => void
+  onAddBlock: (pageId: string, blockType: string) => void
+  onUpdateBlock: (pageId: string, blockId: string, updates: Partial<ContentBlock['content']>) => void
+  onRemoveBlock: (pageId: string, blockId: string) => void
+  onDragEnd: (event: DragEndEvent, pageId: string) => void
+  sensors: ReturnType<typeof useSensors>
+}
+
+function LivePreviewEditor({
+  archetype,
+  content,
+  onAddBlock,
+  onUpdateBlock,
+  onRemoveBlock,
+  onDragEnd,
+  sensors
+}: LivePreviewEditorProps) {
+  const [currentPage, setCurrentPage] = useState('opening')
+
+  if (!archetype) return null
+
+  const currentPageContent = content[currentPage as keyof ArchetypeContent]
+  const currentPageInfo = PAGE_TYPES.find(p => p.id === currentPage)
+
+  return (
+    <div className="grid grid-cols-12 gap-6 min-h-[600px]">
+      {/* Left Side - Archetype Cards */}
+      <div className="col-span-4 space-y-4">
+        <h3 className="text-lg font-semibold">Archetype Preview</h3>
+
+        {/* Primary Archetype Card */}
+        <Card className="border-2 border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                <Heart className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-blue-900">{archetype.name}</h4>
+                <Badge variant="secondary" className="text-xs">Primary • 85% match</Badge>
+              </div>
+            </div>
+            <p className="text-sm text-blue-800">{archetype.description}</p>
+          </CardContent>
+        </Card>
+
+        {/* Related Archetypes */}
         <div className="space-y-2">
-          <Label>Select Archetype</Label>
-          <Select value={selectedArchetype} onValueChange={setSelectedArchetype}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose an archetype to edit" />
-            </SelectTrigger>
-            <SelectContent>
-              {archetypes.map((archetype) => (
-                <SelectItem key={archetype.id} value={archetype.id}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{archetype.name}</span>
-                    <span className="text-sm text-muted-foreground">{archetype.description}</span>
+          <h4 className="text-sm font-medium text-gray-600">Related Archetypes</h4>
+          {['The Sage', 'The Explorer'].map((name, index) => (
+            <Card key={index} className="border border-gray-200">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                    <BookOpen className="h-4 w-4 text-white" />
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {selectedArchetype && (
-          <Tabs value={selectedPage} onValueChange={setSelectedPage} className="space-y-4">
-            <TabsList className="grid grid-cols-6 w-full">
-              {PAGE_TYPES.map((page) => {
-                const Icon = page.icon
-                const blockCount = content[page.id as keyof ArchetypeContent]?.blocks.length || 0
-                return (
-                  <TabsTrigger key={page.id} value={page.id} className="flex flex-col gap-1 h-auto py-2">
-                    <Icon className="h-4 w-4" />
-                    <span className="text-xs">{page.name}</span>
-                    {blockCount > 0 && (
-                      <Badge variant="secondary" className="text-xs px-1 py-0">
-                        {blockCount}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                )
-              })}
-            </TabsList>
-
-            {PAGE_TYPES.map((page) => (
-              <TabsContent key={page.id} value={page.id} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    {BLOCK_TYPES.map((blockType) => {
-                      const BlockIcon = blockType.icon
-                      return (
-                        <Button
-                          key={blockType.id}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addContentBlock(page.id, blockType.id)}
-                          title={`Add ${blockType.name}`}
-                        >
-                          <BlockIcon className="h-4 w-4" />
-                        </Button>
-                      )
-                    })}
+                  <div>
+                    <p className="text-sm font-medium">{name}</p>
+                    <Badge variant="outline" className="text-xs">{65 - index * 10}% match</Badge>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
 
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={(event) => handleDragEnd(event, page.id)}
-                >
-                  <SortableContext
-                    items={content[page.id as keyof ArchetypeContent]?.blocks.map(block => block.id) || []}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-4">
-                      {content[page.id as keyof ArchetypeContent]?.blocks.map((block) => (
-                        <SortableContentBlockEditor
-                          key={block.id}
-                          block={block}
-                          onUpdate={(updates) => updateContentBlock(page.id, block.id, updates)}
-                          onRemove={() => removeContentBlock(page.id, block.id)}
-                        />
-                      ))}
+      {/* Right Side - Content Pages */}
+      <div className="col-span-8">
+        <Card className="h-full">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  {currentPageInfo?.icon && <currentPageInfo.icon className="h-5 w-5" />}
+                  {currentPageInfo?.name}
+                </CardTitle>
+                <CardDescription>{currentPageInfo?.description}</CardDescription>
+              </div>
 
-                      {(content[page.id as keyof ArchetypeContent]?.blocks.length === 0) && (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>No content blocks yet. Add some content using the buttons above.</p>
-                        </div>
-                      )}
+              {/* Page Navigation */}
+              <div className="flex gap-1">
+                {PAGE_TYPES.map((page) => {
+                  const Icon = page.icon
+                  const hasContent = content[page.id as keyof ArchetypeContent]?.blocks.length > 0
+                  return (
+                    <Button
+                      key={page.id}
+                      variant={currentPage === page.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page.id)}
+                      className="flex flex-col gap-1 h-auto py-2 px-3"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="text-xs">{page.name}</span>
+                      {hasContent && <div className="w-1 h-1 bg-current rounded-full" />}
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            {/* Add Content Section */}
+            <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Add Content Block:</h4>
+              <div className="flex flex-wrap gap-2">
+                {BLOCK_TYPES.map((blockType) => {
+                  const BlockIcon = blockType.icon
+                  return (
+                    <Button
+                      key={blockType.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onAddBlock(currentPage, blockType.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <BlockIcon className="h-4 w-4" />
+                      <span className="text-xs">{blockType.name}</span>
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Content Blocks */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(event) => onDragEnd(event, currentPage)}
+            >
+              <SortableContext
+                items={currentPageContent?.blocks.map(block => block.id) || []}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-4">
+                  {currentPageContent?.blocks.map((block) => (
+                    <SortableContentBlockEditor
+                      key={block.id}
+                      block={block}
+                      onUpdate={(updates) => onUpdateBlock(currentPage, block.id, updates)}
+                      onRemove={() => onRemoveBlock(currentPage, block.id)}
+                    />
+                  ))}
+
+                  {(currentPageContent?.blocks.length === 0) && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg font-medium">No content yet</p>
+                      <p className="text-sm">Add content blocks using the buttons above to get started</p>
                     </div>
-                  </SortableContext>
-                </DndContext>
-              </TabsContent>
-            ))}
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+
   )
 }
 
