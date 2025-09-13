@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Save, X } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Save, X, BarChart3, Brain, Target, Moon, BookOpen, Library } from 'lucide-react'
 
 interface Archetype {
   id: string
@@ -23,6 +25,19 @@ interface Archetype {
   created_at: string
   updated_at: string
   linguisticPattern?: LinguisticPattern
+  // New fields
+  linguistic_patterns?: string
+  theoretical_understanding?: string
+  embodiment_practices?: string
+  integration_practices?: string
+  shadow_work?: string
+  resources?: string
+  metrics?: {
+    impact_level?: number
+    complexity_score?: number
+    integration_difficulty?: number
+    shadow_intensity?: number
+  }
 }
 
 interface LinguisticPattern {
@@ -42,11 +57,35 @@ interface ArchetypeEditorProps {
 export default function ArchetypeEditor({ archetype, onSave, onCancel }: ArchetypeEditorProps) {
   const [editedArchetype, setEditedArchetype] = useState<Archetype>(archetype)
   const [linguisticPatterns, setLinguisticPatterns] = useState(
-    archetype.linguisticPattern?.patterns || ''
+    archetype.linguisticPattern?.patterns || archetype.linguistic_patterns || ''
+  )
+  const [theoreticalUnderstanding, setTheoreticalUnderstanding] = useState(
+    archetype.theoretical_understanding || ''
+  )
+  const [embodimentPractices, setEmbodimentPractices] = useState(
+    archetype.embodiment_practices || ''
+  )
+  const [integrationPractices, setIntegrationPractices] = useState(
+    archetype.integration_practices || ''
+  )
+  const [shadowWork, setShadowWork] = useState(
+    archetype.shadow_work || ''
+  )
+  const [resources, setResources] = useState(
+    archetype.resources || ''
   )
 
   const handleSave = () => {
-    const updated = { ...editedArchetype }
+    const updated = {
+      ...editedArchetype,
+      linguistic_patterns: linguisticPatterns,
+      theoretical_understanding: theoreticalUnderstanding,
+      embodiment_practices: embodimentPractices,
+      integration_practices: integrationPractices,
+      shadow_work: shadowWork,
+      resources: resources
+    }
+
     if (!updated.linguisticPattern) {
       updated.linguisticPattern = {
         id: '',
@@ -62,13 +101,11 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
     onSave(updated)
   }
 
-  // Simplified linguistic patterns - all in one text area
-
   return (
     <div className="p-6 bg-white border-t border-gray-200">
       <div className="space-y-6">
         {/* Basic Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <Input
@@ -77,136 +114,329 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
               placeholder="Archetype name"
             />
           </div>
-          {/* Category removed - archetypes will be categorized by assessment type */}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <Textarea
-            value={editedArchetype.description}
-            onChange={(e) => setEditedArchetype({ ...editedArchetype, description: e.target.value })}
-            placeholder="Archetype description"
-            rows={3}
-          />
-        </div>
-
-        {/* Impact Metrics */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Relationship Impact (1-7)
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="7"
-              value={editedArchetype.impact_score}
-              onChange={(e) => setEditedArchetype({ ...editedArchetype, impact_score: parseInt(e.target.value) || 1 })}
-              className="w-24"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              How negatively this affects relationships
-            </p>
-          </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Growth Potential (1-7)
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="7"
-              value={editedArchetype.growth_potential_score || 1}
-              onChange={(e) => setEditedArchetype({ ...editedArchetype, growth_potential_score: parseInt(e.target.value) || 1 })}
-              className="w-24"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <Textarea
+              value={editedArchetype.description}
+              onChange={(e) => setEditedArchetype({ ...editedArchetype, description: e.target.value })}
+              placeholder="Archetype description"
+              rows={3}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Potential for positive transformation
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Awareness Difficulty (1-7)
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="7"
-              value={editedArchetype.awareness_difficulty_score || 1}
-              onChange={(e) => setEditedArchetype({ ...editedArchetype, awareness_difficulty_score: parseInt(e.target.value) || 1 })}
-              className="w-24"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              How hard to recognize this pattern
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Trigger Intensity (1-7)
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="7"
-              value={editedArchetype.trigger_intensity_score || 1}
-              onChange={(e) => setEditedArchetype({ ...editedArchetype, trigger_intensity_score: parseInt(e.target.value) || 1 })}
-              className="w-24"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              How easily activated under stress
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Integration Complexity (1-7)
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="7"
-              value={editedArchetype.integration_complexity_score || 1}
-              onChange={(e) => setEditedArchetype({ ...editedArchetype, integration_complexity_score: parseInt(e.target.value) || 1 })}
-              className="w-24"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              How challenging to integrate healthily
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Shadow Depth (1-7)
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="7"
-              value={editedArchetype.shadow_depth_score || 1}
-              onChange={(e) => setEditedArchetype({ ...editedArchetype, shadow_depth_score: parseInt(e.target.value) || 1 })}
-              className="w-24"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              How deep/unconscious the shadow aspects
-            </p>
           </div>
         </div>
 
-        {/* Linguistic Patterns */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Linguistic Patterns
-          </label>
-          <textarea
-            value={linguisticPatterns}
-            onChange={(e) => setLinguisticPatterns(e.target.value)}
-            placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly"
-            className="w-full h-24 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
-          />
-        </div>
+        {/* Tabbed Content */}
+        <Tabs defaultValue="metrics" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="metrics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Metrics
+            </TabsTrigger>
+            <TabsTrigger value="linguistic" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Linguistic
+            </TabsTrigger>
+            <TabsTrigger value="understanding" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Understanding
+            </TabsTrigger>
+            <TabsTrigger value="practices" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Practices
+            </TabsTrigger>
+            <TabsTrigger value="shadow" className="flex items-center gap-2">
+              <Moon className="h-4 w-4" />
+              Shadow & Resources
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="metrics" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Relationship Impact</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={editedArchetype.impact_score}
+                      onChange={(e) => setEditedArchetype({ ...editedArchetype, impact_score: parseInt(e.target.value) || 1 })}
+                      className="w-16"
+                    />
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-red-500 h-2 rounded-full transition-all"
+                          style={{ width: `${(editedArchetype.impact_score / 7) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    How negatively this affects relationships (1=minimal, 7=severe)
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Growth Potential</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={editedArchetype.growth_potential_score || 1}
+                      onChange={(e) => setEditedArchetype({ ...editedArchetype, growth_potential_score: parseInt(e.target.value) || 1 })}
+                      className="w-16"
+                    />
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-500 h-2 rounded-full transition-all"
+                          style={{ width: `${((editedArchetype.growth_potential_score || 1) / 7) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Potential for positive transformation (1=low, 7=high)
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Awareness Difficulty</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={editedArchetype.awareness_difficulty_score || 1}
+                      onChange={(e) => setEditedArchetype({ ...editedArchetype, awareness_difficulty_score: parseInt(e.target.value) || 1 })}
+                      className="w-16"
+                    />
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-orange-500 h-2 rounded-full transition-all"
+                          style={{ width: `${((editedArchetype.awareness_difficulty_score || 1) / 7) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    How hard to recognize this pattern (1=obvious, 7=hidden)
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Trigger Intensity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={editedArchetype.trigger_intensity_score || 1}
+                      onChange={(e) => setEditedArchetype({ ...editedArchetype, trigger_intensity_score: parseInt(e.target.value) || 1 })}
+                      className="w-16"
+                    />
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-purple-500 h-2 rounded-full transition-all"
+                          style={{ width: `${((editedArchetype.trigger_intensity_score || 1) / 7) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    How easily activated under stress (1=stable, 7=reactive)
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Integration Complexity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={editedArchetype.integration_complexity_score || 1}
+                      onChange={(e) => setEditedArchetype({ ...editedArchetype, integration_complexity_score: parseInt(e.target.value) || 1 })}
+                      className="w-16"
+                    />
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all"
+                          style={{ width: `${((editedArchetype.integration_complexity_score || 1) / 7) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    How challenging to integrate healthily (1=easy, 7=complex)
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Shadow Depth</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={editedArchetype.shadow_depth_score || 1}
+                      onChange={(e) => setEditedArchetype({ ...editedArchetype, shadow_depth_score: parseInt(e.target.value) || 1 })}
+                      className="w-16"
+                    />
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-gray-700 h-2 rounded-full transition-all"
+                          style={{ width: `${((editedArchetype.shadow_depth_score || 1) / 7) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    How deep/unconscious the shadow aspects (1=surface, 7=deep)
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="linguistic" className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Linguistic Patterns
+              </label>
+              <Textarea
+                value={linguisticPatterns}
+                onChange={(e) => setLinguisticPatterns(e.target.value)}
+                placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly"
+                rows={8}
+                className="resize-vertical"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Define language patterns that help identify this archetype in conversations
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="understanding" className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Theoretical Understanding
+              </label>
+              <Textarea
+                value={theoreticalUnderstanding}
+                onChange={(e) => setTheoreticalUnderstanding(e.target.value)}
+                placeholder="Core concepts, psychological theory, and foundational understanding of this archetype..."
+                rows={8}
+                className="resize-vertical"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Explain the core concepts and theory behind this archetype
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="practices" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Embodiment Practices
+                </label>
+                <Textarea
+                  value={embodimentPractices}
+                  onChange={(e) => setEmbodimentPractices(e.target.value)}
+                  placeholder="Physical exercises, breathing techniques, body awareness practices..."
+                  rows={6}
+                  className="resize-vertical"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Physical and experiential practices to embody this archetype
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Integration Practices
+                </label>
+                <Textarea
+                  value={integrationPractices}
+                  onChange={(e) => setIntegrationPractices(e.target.value)}
+                  placeholder="Daily life integration methods, habits, mindset shifts..."
+                  rows={6}
+                  className="resize-vertical"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Methods for integrating this archetype into daily life
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="shadow" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Shadow Work
+                </label>
+                <Textarea
+                  value={shadowWork}
+                  onChange={(e) => setShadowWork(e.target.value)}
+                  placeholder="Shadow aspects, potential pitfalls, and work to address them..."
+                  rows={6}
+                  className="resize-vertical"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Working with the shadow aspects and potential pitfalls
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Resources
+                </label>
+                <Textarea
+                  value={resources}
+                  onChange={(e) => setResources(e.target.value)}
+                  placeholder="Books, articles, videos, exercises, and other resources..."
+                  rows={6}
+                  className="resize-vertical"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Additional materials and references for deeper exploration
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
@@ -215,7 +445,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             Cancel
           </Button>
           <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="w-4 w-4 mr-2" />
             Save Changes
           </Button>
         </div>

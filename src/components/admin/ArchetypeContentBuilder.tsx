@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -74,13 +74,26 @@ interface Archetype {
   name: string
   description: string
   content?: ArchetypeContent
+  metrics?: {
+    impact_level?: number
+    complexity_score?: number
+    integration_difficulty?: number
+    shadow_intensity?: number
+  }
+  linguistic_patterns?: string
+  theoretical_understanding?: string
+  embodiment_practices?: string
+  integration_practices?: string
+  shadow_work?: string
+  resources?: string
+  structured_content?: ArchetypeContent
 }
 
 const PAGE_TYPES = [
-  { id: 'opening', name: 'Opening', icon: Heart, description: 'Contextual introduction to this archetype' },
-  { id: 'theoretical', name: 'Theoretical Understanding', icon: BookOpen, description: 'Core concepts and theory' },
-  { id: 'embodiment', name: 'Embodiment Practices', icon: Target, description: 'Physical and experiential practices' },
-  { id: 'integration', name: 'Integration Practices', icon: Moon, description: 'Daily life integration methods' },
+  { id: 'opening', name: 'Overview', icon: Heart, description: 'Contextual introduction to this archetype' },
+  { id: 'theoretical', name: 'Understanding', icon: BookOpen, description: 'Core concepts and theory' },
+  { id: 'embodiment', name: 'Embodiment', icon: Target, description: 'Physical and experiential practices' },
+  { id: 'integration', name: 'Integration', icon: Moon, description: 'Daily life integration methods' },
   { id: 'shadow', name: 'Shadow Work', icon: Moon, description: 'Working with shadow aspects' },
   { id: 'resources', name: 'Resources', icon: Library, description: 'Additional materials and references' }
 ]
@@ -128,8 +141,44 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
   useEffect(() => {
     const loadArchetypes = async () => {
       try {
-        // This would connect to your existing archetype service
-        // For now, using sample data
+        // Import the archetype service
+        const { ArchetypeService } = await import('@/lib/services/archetype.service')
+        const archetypeService = new ArchetypeService()
+
+        // Load all active archetypes
+        const loadedArchetypes = await archetypeService.getAllArchetypes()
+
+        // Transform to match our interface
+        const transformedArchetypes: Archetype[] = loadedArchetypes
+          .filter(a => a.is_active)
+          .map(a => ({
+            id: a.id,
+            name: a.name,
+            description: a.description,
+            metrics: a.psychology_profile as any, // Will be updated with proper metrics structure
+            linguistic_patterns: '', // Will be populated from linguistic_patterns table
+            theoretical_understanding: '',
+            embodiment_practices: '',
+            integration_practices: '',
+            shadow_work: '',
+            resources: '',
+            structured_content: {
+              opening: { blocks: [] },
+              theoretical: { blocks: [] },
+              embodiment: { blocks: [] },
+              integration: { blocks: [] },
+              shadow: { blocks: [] },
+              resources: { blocks: [] }
+            }
+          }))
+
+        setArchetypes(transformedArchetypes)
+        if (transformedArchetypes.length > 0) {
+          setSelectedArchetype(transformedArchetypes[0].id)
+        }
+      } catch (error) {
+        console.error('Error loading archetypes:', error)
+        // Fallback to sample data
         const sampleArchetypes: Archetype[] = [
           { id: 'hero', name: 'The Hero', description: 'The courageous leader who faces challenges' },
           { id: 'sage', name: 'The Sage', description: 'The wise teacher and seeker of truth' },
@@ -140,70 +189,86 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
         if (sampleArchetypes.length > 0) {
           setSelectedArchetype(sampleArchetypes[0].id)
         }
-      } catch (error) {
-        console.error('Error loading archetypes:', error)
       }
     }
 
     loadArchetypes()
   }, [])
 
-  const loadArchetypeContent = useCallback(async () => {
-    try {
-      setIsLoading(true)
-
-      // Initialize content with data from initialContent if available
-      const newContent: ArchetypeContent = {
-        opening: { blocks: [] },
-        theoretical: {
-          blocks: initialContent?.theoreticalUnderstanding ? [{
-            id: `block_${Date.now()}_theoretical`,
-            type: 'text',
-            content: { text: initialContent.theoreticalUnderstanding }
-          }] : []
-        },
-        embodiment: {
-          blocks: initialContent?.embodimentPractices ? [{
-            id: `block_${Date.now()}_embodiment`,
-            type: 'text',
-            content: { text: initialContent.embodimentPractices }
-          }] : []
-        },
-        integration: {
-          blocks: initialContent?.integrationPractices ? [{
-            id: `block_${Date.now()}_integration`,
-            type: 'text',
-            content: { text: initialContent.integrationPractices }
-          }] : []
-        },
-        shadow: { blocks: [] },
-        resources: {
-          blocks: initialContent?.resourceLinks?.map((link, index) => ({
-            id: `block_${Date.now()}_resource_${index}`,
-            type: 'resource_link' as const,
-            content: {
-              url: link,
-              title: `Resource ${index + 1}`,
-              description: 'Additional resource for deeper exploration'
-            }
-          })) || []
-        }
-      }
-
-      setContent(newContent)
-    } catch (error) {
-      console.error('Error loading archetype content:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [initialContent])
-
-  // Load content for selected archetype
+  // Auto-populate content when archetype is selected
   useEffect(() => {
     if (selectedArchetype) {
-      loadArchetypeContent()
+      const archetype = archetypes.find(a => a.id === selectedArchetype)
+      if (archetype) {
+        // Auto-populate content from archetype data
+        const newContent: ArchetypeContent = {
+          opening: {
+            blocks: archetype.description ? [{
+              id: `block_${Date.now()}_opening`,
+              type: 'text',
+              content: { text: archetype.description }
+            }] : []
+          },
+          theoretical: {
+            blocks: archetype.theoretical_understanding ? [{
+              id: `block_${Date.now()}_theoretical`,
+              type: 'text',
+              content: { text: archetype.theoretical_understanding }
+            }] : initialContent?.theoreticalUnderstanding ? [{
+              id: `block_${Date.now()}_theoretical_init`,
+              type: 'text',
+              content: { text: initialContent.theoreticalUnderstanding }
+            }] : []
+          },
+          embodiment: {
+            blocks: archetype.embodiment_practices ? [{
+              id: `block_${Date.now()}_embodiment`,
+              type: 'text',
+              content: { text: archetype.embodiment_practices }
+            }] : initialContent?.embodimentPractices ? [{
+              id: `block_${Date.now()}_embodiment_init`,
+              type: 'text',
+              content: { text: initialContent.embodimentPractices }
+            }] : []
+          },
+          integration: {
+            blocks: archetype.integration_practices ? [{
+              id: `block_${Date.now()}_integration`,
+              type: 'text',
+              content: { text: archetype.integration_practices }
+            }] : initialContent?.integrationPractices ? [{
+              id: `block_${Date.now()}_integration_init`,
+              type: 'text',
+              content: { text: initialContent.integrationPractices }
+            }] : []
+          },
+          shadow: {
+            blocks: archetype.shadow_work ? [{
+              id: `block_${Date.now()}_shadow`,
+              type: 'text',
+              content: { text: archetype.shadow_work }
+            }] : []
+          },
+          resources: {
+            blocks: archetype.resources ? [{
+              id: `block_${Date.now()}_resources`,
+              type: 'text',
+              content: { text: archetype.resources }
+            }] : initialContent?.resourceLinks?.length ?
+              initialContent.resourceLinks.map((link, index) => ({
+                id: `block_${Date.now()}_resource_${index}`,
+                type: 'resource_link',
+                content: { url: link, title: `Resource ${index + 1}` }
+              })) : []
+          }
+        }
+
+        setContent(newContent)
+      }
     }
-  }, [selectedArchetype, loadArchetypeContent])
+  }, [selectedArchetype, archetypes, initialContent])
+
+
 
   const addContentBlock = (pageId: string, blockType: string) => {
     const newBlock: ContentBlock = {
@@ -275,12 +340,26 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
 
     try {
       setIsLoading(true)
-      // Save content to your storage system
-      console.log('Saving content for archetype:', selectedArchetype, content)
-      
+
+      // Save content to the database using Supabase
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from('enhanced_archetypes')
+        .update({
+          structured_content: content,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedArchetype)
+
+      if (error) {
+        throw error
+      }
+
       // Call the callback if provided
       onContentChange?.(selectedArchetype, content)
-      
+
       // Show success message
       alert('Content saved successfully!')
     } catch (error) {
@@ -294,44 +373,30 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
 
 
   return (
-    <div className="w-full space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <BookOpen className="h-6 w-6" />
-            Archetype Content Builder
-          </h2>
-          <p className="text-muted-foreground">
-            Create rich, contextual content for each archetype - edit directly in the preview below
-          </p>
+    <div className="w-full space-y-4">
+      {/* Header with Save Button and Archetype Selection */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 max-w-md">
+          <Select value={selectedArchetype} onValueChange={setSelectedArchetype}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose an archetype to edit" />
+            </SelectTrigger>
+            <SelectContent>
+              {archetypes.map((archetype) => (
+                <SelectItem key={archetype.id} value={archetype.id}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{archetype.name}</span>
+                    <span className="text-sm text-muted-foreground">{archetype.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={saveContent} disabled={isLoading || !selectedArchetype}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Content
-          </Button>
-        </div>
-      </div>
-
-      {/* Archetype Selection */}
-      <div className="space-y-2">
-        <Label>Select Archetype to Edit</Label>
-        <Select value={selectedArchetype} onValueChange={setSelectedArchetype}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Choose an archetype to edit" />
-          </SelectTrigger>
-          <SelectContent>
-            {archetypes.map((archetype) => (
-              <SelectItem key={archetype.id} value={archetype.id}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{archetype.name}</span>
-                  <span className="text-sm text-muted-foreground">{archetype.description}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Button onClick={saveContent} disabled={isLoading || !selectedArchetype}>
+          <Save className="h-4 w-4 mr-2" />
+          Save Content
+        </Button>
       </div>
 
       {/* Live Preview Editor */}
@@ -423,33 +488,36 @@ function LivePreviewEditor({
 
       {/* Right Side - Content Pages */}
       <div className="col-span-8">
-        <Card className="h-full">
-          <CardHeader className="pb-4">
-            {/* Page Navigation */}
-            <div className="flex gap-2 overflow-x-auto">
+        <div className="h-full">
+          <div className="pb-4">
+            {/* Page Navigation - Clean tabs without borders */}
+            <div className="flex gap-1 flex-wrap">
               {PAGE_TYPES.map((page) => {
                 const hasContent = content[page.id as keyof ArchetypeContent]?.blocks.length > 0
+                const isActive = currentPage === page.id
                 return (
-                  <Button
+                  <button
                     key={page.id}
-                    variant={currentPage === page.id ? "default" : "outline"}
-                    size="sm"
                     onClick={() => setCurrentPage(page.id)}
-                    className="whitespace-nowrap relative"
+                    className={`px-3 py-2 text-sm font-medium rounded-t-lg transition-colors relative ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
                   >
                     {page.name}
                     {hasContent && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
                     )}
-                  </Button>
+                  </button>
                 )
               })}
             </div>
-          </CardHeader>
+          </div>
 
-          <CardContent className="space-y-6">
+          <div className="space-y-6 bg-white rounded-lg p-6">
             {/* Add Content Section */}
-            <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
+            <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Add Content Block:</h4>
               <div className="flex flex-wrap gap-2">
                 {BLOCK_TYPES.map((blockType) => {
@@ -500,8 +568,7 @@ function LivePreviewEditor({
                 </div>
               </SortableContext>
             </DndContext>
-          </CardContent>
-        </Card>
+          </div>
       </div>
     </div>
   )
