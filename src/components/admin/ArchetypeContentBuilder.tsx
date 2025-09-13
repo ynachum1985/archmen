@@ -145,13 +145,6 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
     loadArchetypes()
   }, [])
 
-  // Load content for selected archetype
-  useEffect(() => {
-    if (selectedArchetype) {
-      loadArchetypeContent()
-    }
-  }, [selectedArchetype, loadArchetypeContent])
-
   const loadArchetypeContent = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -201,6 +194,13 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
       setIsLoading(false)
     }
   }, [initialContent])
+
+  // Load content for selected archetype
+  useEffect(() => {
+    if (selectedArchetype) {
+      loadArchetypeContent()
+    }
+  }, [selectedArchetype, loadArchetypeContent])
 
   const addContentBlock = (pageId: string, blockType: string) => {
     const newBlock: ContentBlock = {
