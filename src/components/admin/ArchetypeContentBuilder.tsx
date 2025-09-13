@@ -19,8 +19,28 @@ import {
   Image as ImageIcon,
   Video,
   FileText,
-  Link as LinkIcon
+  Link as LinkIcon,
+  GripVertical
 } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface ContentBlock {
   id: string
@@ -72,9 +92,15 @@ const BLOCK_TYPES = [
 
 interface ArchetypeContentBuilderProps {
   onContentChange?: (archetypeId: string, content: ArchetypeContent) => void
+  initialContent?: {
+    theoreticalUnderstanding?: string
+    embodimentPractices?: string
+    integrationPractices?: string
+    resourceLinks?: string[]
+  }
 }
 
-export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBuilderProps) {
+export function ArchetypeContentBuilder({ onContentChange, initialContent }: ArchetypeContentBuilderProps) {
   const [archetypes, setArchetypes] = useState<Archetype[]>([])
   const [selectedArchetype, setSelectedArchetype] = useState<string>('')
   const [selectedPage, setSelectedPage] = useState<string>('opening')
@@ -87,6 +113,13 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
     resources: { blocks: [] }
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // Load archetypes from the existing database
   useEffect(() => {
@@ -122,20 +155,46 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
   const loadArchetypeContent = async () => {
     try {
       setIsLoading(true)
-      // Load existing content for this archetype
-      // This would connect to your content storage system
-      
-      // For now, initialize with empty content
-      const emptyContent: ArchetypeContent = {
+
+      // Initialize content with data from initialContent if available
+      const newContent: ArchetypeContent = {
         opening: { blocks: [] },
-        theoretical: { blocks: [] },
-        embodiment: { blocks: [] },
-        integration: { blocks: [] },
+        theoretical: {
+          blocks: initialContent?.theoreticalUnderstanding ? [{
+            id: `block_${Date.now()}_theoretical`,
+            type: 'text',
+            content: { text: initialContent.theoreticalUnderstanding }
+          }] : []
+        },
+        embodiment: {
+          blocks: initialContent?.embodimentPractices ? [{
+            id: `block_${Date.now()}_embodiment`,
+            type: 'text',
+            content: { text: initialContent.embodimentPractices }
+          }] : []
+        },
+        integration: {
+          blocks: initialContent?.integrationPractices ? [{
+            id: `block_${Date.now()}_integration`,
+            type: 'text',
+            content: { text: initialContent.integrationPractices }
+          }] : []
+        },
         shadow: { blocks: [] },
-        resources: { blocks: [] }
+        resources: {
+          blocks: initialContent?.resourceLinks?.map((link, index) => ({
+            id: `block_${Date.now()}_resource_${index}`,
+            type: 'resource_link' as const,
+            content: {
+              url: link,
+              title: `Resource ${index + 1}`,
+              description: 'Additional resource for deeper exploration'
+            }
+          })) || []
+        }
       }
-      
-      setContent(emptyContent)
+
+      setContent(newContent)
     } catch (error) {
       console.error('Error loading archetype content:', error)
     } finally {
@@ -186,6 +245,26 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
         blocks: prev[pageId as keyof ArchetypeContent].blocks.filter(block => block.id !== blockId)
       }
     }))
+  }
+
+  const handleDragEnd = (event: DragEndEvent, pageId: string) => {
+    const { active, over } = event
+
+    if (active.id !== over?.id) {
+      setContent(prev => {
+        const pageContent = prev[pageId as keyof ArchetypeContent]
+        const oldIndex = pageContent.blocks.findIndex(block => block.id === active.id)
+        const newIndex = pageContent.blocks.findIndex(block => block.id === over?.id)
+
+        return {
+          ...prev,
+          [pageId]: {
+            ...pageContent,
+            blocks: arrayMove(pageContent.blocks, oldIndex, newIndex)
+          }
+        }
+      })
+    }
   }
 
   const saveContent = async () => {
@@ -276,10 +355,6 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
             {PAGE_TYPES.map((page) => (
               <TabsContent key={page.id} value={page.id} className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">{page.name}</h3>
-                    <p className="text-sm text-muted-foreground">{page.description}</p>
-                  </div>
                   <div className="flex gap-2">
                     {BLOCK_TYPES.map((blockType) => {
                       const BlockIcon = blockType.icon
@@ -298,23 +373,34 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {selectedPageData?.blocks.map((block) => (
-                    <ContentBlockEditor
-                      key={block.id}
-                      block={block}
-                      onUpdate={(updates) => updateContentBlock(page.id, block.id, updates)}
-                      onRemove={() => removeContentBlock(page.id, block.id)}
-                    />
-                  ))}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(event) => handleDragEnd(event, page.id)}
+                >
+                  <SortableContext
+                    items={content[page.id as keyof ArchetypeContent]?.blocks.map(block => block.id) || []}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-4">
+                      {content[page.id as keyof ArchetypeContent]?.blocks.map((block) => (
+                        <SortableContentBlockEditor
+                          key={block.id}
+                          block={block}
+                          onUpdate={(updates) => updateContentBlock(page.id, block.id, updates)}
+                          onRemove={() => removeContentBlock(page.id, block.id)}
+                        />
+                      ))}
 
-                  {selectedPageData?.blocks.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No content blocks yet. Add some content using the buttons above.</p>
+                      {(content[page.id as keyof ArchetypeContent]?.blocks.length === 0) && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No content blocks yet. Add some content using the buttons above.</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </SortableContext>
+                </DndContext>
               </TabsContent>
             ))}
           </Tabs>
@@ -330,7 +416,34 @@ interface ContentBlockEditorProps {
   onRemove: () => void
 }
 
-function ContentBlockEditor({ block, onUpdate, onRemove }: ContentBlockEditorProps) {
+interface SortableContentBlockEditorProps extends ContentBlockEditorProps {}
+
+function SortableContentBlockEditor(props: SortableContentBlockEditorProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: props.block.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <ContentBlockEditor {...props} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  )
+}
+
+interface ContentBlockEditorPropsWithDrag extends ContentBlockEditorProps {
+  dragHandleProps?: any
+}
+
+function ContentBlockEditor({ block, onUpdate, onRemove, dragHandleProps }: ContentBlockEditorPropsWithDrag) {
   const blockType = BLOCK_TYPES.find(t => t.id === block.type)
   const Icon = blockType?.icon || FileText
 
@@ -339,6 +452,11 @@ function ContentBlockEditor({ block, onUpdate, onRemove }: ContentBlockEditorPro
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {dragHandleProps && (
+              <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                <GripVertical className="h-4 w-4 text-gray-400" />
+              </div>
+            )}
             <Icon className="h-4 w-4" />
             <span className="font-medium">{blockType?.name}</span>
           </div>
