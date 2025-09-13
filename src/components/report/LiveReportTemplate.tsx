@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, BookOpen, ExternalLink, Sparkles, Heart, Target, Moon, Library, Image as ImageIcon, Video } from 'lucide-react'
+import { BookOpen, ExternalLink, Sparkles, Heart, Target, Moon, Library, Video } from 'lucide-react'
 import Image from 'next/image'
 
 interface ContentBlock {

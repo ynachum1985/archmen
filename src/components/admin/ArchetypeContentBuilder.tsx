@@ -9,15 +9,13 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { 
-  BookOpen, 
-  Heart, 
-  Target, 
-  Moon, 
-  Library, 
-  Plus, 
-  Save, 
-  Eye,
+import {
+  BookOpen,
+  Heart,
+  Target,
+  Moon,
+  Library,
+  Save,
   Image as ImageIcon,
   Video,
   FileText,
@@ -73,11 +71,10 @@ const BLOCK_TYPES = [
 ]
 
 interface ArchetypeContentBuilderProps {
-  assessmentId?: string
   onContentChange?: (archetypeId: string, content: ArchetypeContent) => void
 }
 
-export function ArchetypeContentBuilder({ assessmentId, onContentChange }: ArchetypeContentBuilderProps) {
+export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBuilderProps) {
   const [archetypes, setArchetypes] = useState<Archetype[]>([])
   const [selectedArchetype, setSelectedArchetype] = useState<string>('')
   const [selectedPage, setSelectedPage] = useState<string>('opening')
@@ -118,11 +115,11 @@ export function ArchetypeContentBuilder({ assessmentId, onContentChange }: Arche
   // Load content for selected archetype
   useEffect(() => {
     if (selectedArchetype) {
-      loadArchetypeContent(selectedArchetype)
+      loadArchetypeContent()
     }
   }, [selectedArchetype])
 
-  const loadArchetypeContent = async (archetypeId: string) => {
+  const loadArchetypeContent = async () => {
     try {
       setIsLoading(true)
       // Load existing content for this archetype
@@ -213,7 +210,6 @@ export function ArchetypeContentBuilder({ assessmentId, onContentChange }: Arche
   }
 
   const selectedPageData = content[selectedPage as keyof ArchetypeContent]
-  const selectedPageInfo = PAGE_TYPES.find(p => p.id === selectedPage)
 
   return (
     <Card className="w-full">
@@ -303,7 +299,7 @@ export function ArchetypeContentBuilder({ assessmentId, onContentChange }: Arche
                 </div>
 
                 <div className="space-y-4">
-                  {selectedPageData?.blocks.map((block, index) => (
+                  {selectedPageData?.blocks.map((block) => (
                     <ContentBlockEditor
                       key={block.id}
                       block={block}
