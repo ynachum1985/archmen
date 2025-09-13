@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Save, X, BarChart3, Brain, Target, Moon, BookOpen, Library } from 'lucide-react'
+import { Save, X, BarChart3, Brain, Target, Moon, BookOpen } from 'lucide-react'
 
 interface Archetype {
   id: string

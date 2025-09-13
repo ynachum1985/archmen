@@ -18,7 +18,7 @@ import {
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 
-import { ArchetypeContentBuilder } from './ArchetypeContentBuilderNew'
+import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
