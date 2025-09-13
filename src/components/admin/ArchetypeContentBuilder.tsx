@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -150,9 +150,9 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
     if (selectedArchetype) {
       loadArchetypeContent()
     }
-  }, [selectedArchetype])
+  }, [selectedArchetype, loadArchetypeContent])
 
-  const loadArchetypeContent = async () => {
+  const loadArchetypeContent = useCallback(async () => {
     try {
       setIsLoading(true)
 
@@ -200,7 +200,7 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [initialContent])
 
   const addContentBlock = (pageId: string, blockType: string) => {
     const newBlock: ContentBlock = {
@@ -288,7 +288,7 @@ export function ArchetypeContentBuilder({ onContentChange, initialContent }: Arc
     }
   }
 
-  const selectedPageData = content[selectedPage as keyof ArchetypeContent]
+
 
   return (
     <Card className="w-full">
@@ -416,7 +416,9 @@ interface ContentBlockEditorProps {
   onRemove: () => void
 }
 
-interface SortableContentBlockEditorProps extends ContentBlockEditorProps {}
+interface SortableContentBlockEditorProps extends ContentBlockEditorProps {
+  // Extends ContentBlockEditorProps with sortable functionality
+}
 
 function SortableContentBlockEditor(props: SortableContentBlockEditorProps) {
   const {
@@ -440,7 +442,9 @@ function SortableContentBlockEditor(props: SortableContentBlockEditorProps) {
 }
 
 interface ContentBlockEditorPropsWithDrag extends ContentBlockEditorProps {
-  dragHandleProps?: any
+  dragHandleProps?: {
+    [key: string]: unknown
+  }
 }
 
 function ContentBlockEditor({ block, onUpdate, onRemove, dragHandleProps }: ContentBlockEditorPropsWithDrag) {
