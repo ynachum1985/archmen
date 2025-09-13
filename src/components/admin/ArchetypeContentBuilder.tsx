@@ -518,10 +518,6 @@ function LivePreviewEditor({
   )
 }
 
-
-  )
-}
-
 interface ContentBlockEditorProps {
   block: ContentBlock
   onUpdate: (updates: Partial<ContentBlock['content']>) => void
