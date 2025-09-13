@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -103,7 +103,7 @@ interface ArchetypeContentBuilderProps {
 export function ArchetypeContentBuilder({ onContentChange, initialContent }: ArchetypeContentBuilderProps) {
   const [archetypes, setArchetypes] = useState<Archetype[]>([])
   const [selectedArchetype, setSelectedArchetype] = useState<string>('')
-  const [selectedPage, setSelectedPage] = useState<string>('opening')
+
   const [content, setContent] = useState<ArchetypeContent>({
     opening: { blocks: [] },
     theoretical: { blocks: [] },
