@@ -416,9 +416,7 @@ interface ContentBlockEditorProps {
   onRemove: () => void
 }
 
-interface SortableContentBlockEditorProps extends ContentBlockEditorProps {
-  // Extends ContentBlockEditorProps with sortable functionality
-}
+type SortableContentBlockEditorProps = ContentBlockEditorProps
 
 function SortableContentBlockEditor(props: SortableContentBlockEditorProps) {
   const {
