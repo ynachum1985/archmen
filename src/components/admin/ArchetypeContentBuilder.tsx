@@ -60,20 +60,64 @@ const PAGE_TYPES = [
   { id: 'resources', name: 'Resources', icon: Library, description: 'Additional materials and references' }
 ]
 
-// Placeholder images for different archetypes
+// Placeholder images for different archetypes - mapped to actual archetype names
 const ARCHETYPE_IMAGES: Record<string, string> = {
-  'hero': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&crop=face',
-  'sage': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face',
-  'lover': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop&crop=face',
-  'caregiver': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop&crop=face',
-  'king': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=300&fit=crop&crop=face',
-  'warrior': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=300&fit=crop&crop=face',
-  'magician': 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=300&fit=crop&crop=face',
-  'explorer': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop&crop=face',
-  'creator': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face',
-  'ruler': 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop&crop=face',
-  'innocent': 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&h=300&fit=crop&crop=face',
-  'jester': 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=300&fit=crop&crop=face',
+  // Leadership & Authority
+  'theadvicegiver': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face',
+  'theadvocate': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop&crop=face',
+  'thealphamale': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=300&fit=crop&crop=face',
+  'thecommander': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=300&fit=crop&crop=face',
+
+  // Emotional & Caring
+  'theempath': 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=300&fit=crop&crop=face',
+  'theemotionalcoach': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop&crop=face',
+  'theharmonizer': 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=300&fit=crop&crop=face',
+  'thewhiteknight': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face',
+
+  // Romantic & Relationship
+  'thelover': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop&crop=face',
+  'theromanticealist': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop&crop=face',
+  'thegentleman': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=300&fit=crop&crop=face',
+
+  // Rebellious & Independent
+  'thebadboy': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop&crop=face',
+  'themaverick': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop&crop=face',
+  'theprovoateur': 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop&crop=face',
+  'thetrickster': 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop&crop=face',
+
+  // Wise & Philosophical
+  'thephilosopher': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop&crop=face',
+  'theguru': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop&crop=face',
+  'themagician': 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=300&fit=crop&crop=face',
+
+  // Traditional & Stoic
+  'thestoic': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=300&fit=crop&crop=face',
+  'thetraditionalist': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=300&fit=crop&crop=face',
+  'thebloke': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=300&fit=crop&crop=face',
+  'thepragmatist': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=300&fit=crop&crop=face',
+
+  // Problematic & Shadow
+  'thenarcissist': 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop&crop=face',
+  'themisogynist': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=300&fit=crop&crop=face',
+  'thesaboteur': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=300&fit=crop&crop=face',
+  'thewomaniser': 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop&crop=face',
+  'thecompulsiveliar': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=300&fit=crop&crop=face',
+
+  // Avoidant & Withdrawn
+  'theavoidant': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=300&fit=crop&crop=face',
+  'thestonewaller': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=300&fit=crop&crop=face',
+  'thedefeatist': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=300&fit=crop&crop=face',
+  'theunattainablelover': 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=300&fit=crop&crop=face',
+
+  // Evolved & Positive
+  'theempoweredman': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face',
+  'thenewmasculine': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face',
+  'theidealist': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop&crop=face',
+
+  // Provider & Practical
+  'thebreadwinner': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=300&fit=crop&crop=face',
+  'themrfixit': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=300&fit=crop&crop=face',
+
   // Default fallback
   'default': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face'
 }
