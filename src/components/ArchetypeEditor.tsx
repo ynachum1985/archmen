@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Save, X, BarChart3, Brain, Target, Moon, BookOpen } from 'lucide-react'
+import { Save, X, BarChart3, Brain, Moon, BookOpen } from 'lucide-react'
 
 interface Archetype {
   id: string
@@ -62,12 +62,6 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
   const [theoreticalUnderstanding, setTheoreticalUnderstanding] = useState(
     archetype.theoretical_understanding || ''
   )
-  const [embodimentPractices, setEmbodimentPractices] = useState(
-    archetype.embodiment_practices || ''
-  )
-  const [integrationPractices, setIntegrationPractices] = useState(
-    archetype.integration_practices || ''
-  )
   const [shadowWork, setShadowWork] = useState(
     archetype.shadow_work || ''
   )
@@ -80,8 +74,6 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
       ...editedArchetype,
       linguistic_patterns: linguisticPatterns,
       theoretical_understanding: theoreticalUnderstanding,
-      embodiment_practices: embodimentPractices,
-      integration_practices: integrationPractices,
       shadow_work: shadowWork,
       resources: resources
     }
@@ -128,7 +120,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
 
         {/* Tabbed Content */}
         <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="metrics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Metrics
@@ -140,10 +132,6 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             <TabsTrigger value="understanding" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Understanding
-            </TabsTrigger>
-            <TabsTrigger value="practices" className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Practices
             </TabsTrigger>
             <TabsTrigger value="shadow" className="flex items-center gap-2">
               <Moon className="h-4 w-4" />
@@ -365,41 +353,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             </div>
           </TabsContent>
 
-          <TabsContent value="practices" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Embodiment Practices
-                </label>
-                <Textarea
-                  value={embodimentPractices}
-                  onChange={(e) => setEmbodimentPractices(e.target.value)}
-                  placeholder="Physical exercises, breathing techniques, body awareness practices..."
-                  rows={6}
-                  className="resize-vertical"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Physical and experiential practices to embody this archetype
-                </p>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Integration Practices
-                </label>
-                <Textarea
-                  value={integrationPractices}
-                  onChange={(e) => setIntegrationPractices(e.target.value)}
-                  placeholder="Daily life integration methods, habits, mindset shifts..."
-                  rows={6}
-                  className="resize-vertical"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Methods for integrating this archetype into daily life
-                </p>
-              </div>
-            </div>
-          </TabsContent>
 
           <TabsContent value="shadow" className="space-y-4">
             <div className="space-y-4">

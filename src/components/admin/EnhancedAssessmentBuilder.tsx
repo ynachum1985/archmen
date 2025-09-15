@@ -275,25 +275,6 @@ export function EnhancedAssessmentBuilder({
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
-        <Button
-          variant="outline"
-          onClick={handleTest}
-          className="flex items-center gap-2"
-        >
-          <Eye className="h-4 w-4" />
-          Test Assessment
-        </Button>
-        <Button
-          onClick={handleSave}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <Save className="h-4 w-4" />
-          Save Assessment
-        </Button>
-      </div>
-
       <Tabs defaultValue="ai-setup" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="ai-setup">AI Setup</TabsTrigger>
@@ -578,6 +559,25 @@ export function EnhancedAssessmentBuilder({
                 </Link>
               </p>
             </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={handleTest}
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Test Assessment
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <Save className="h-4 w-4" />
+              Save Assessment
+            </Button>
           </div>
         </TabsContent>
 

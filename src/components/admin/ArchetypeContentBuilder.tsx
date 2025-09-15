@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Save, BookOpen, Heart, Target, Moon, Library } from 'lucide-react'
+import { Save, BookOpen, Heart, Target, Moon, Library, Type, Image, Video, Link, FileText } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 interface ContentBlock {
   id: string
@@ -128,7 +129,8 @@ interface ArchetypeContentBuilderProps {
 
 export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBuilderProps) {
   const [archetypes, setArchetypes] = useState<Archetype[]>([])
-  const [selectedArchetype, setSelectedArchetype] = useState<string>('')
+  const [selectedArchetypes, setSelectedArchetypes] = useState<string[]>([])
+  const [activeArchetypeTab, setActiveArchetypeTab] = useState<string>('')
   const [content] = useState<ArchetypeContent>({
     opening: { blocks: [] },
     theoretical: { blocks: [] },
@@ -139,6 +141,8 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
   })
   const [isLoading, setIsLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState('opening')
+  const [blocks, setBlocks] = useState<ContentBlock[]>([])
+  const [editingBlock, setEditingBlock] = useState<string | null>(null)
 
   // Load archetypes from the existing database
   useEffect(() => {
@@ -177,7 +181,8 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
         
         setArchetypes(transformedArchetypes)
         if (transformedArchetypes.length > 0) {
-          setSelectedArchetype(transformedArchetypes[0].id)
+          setSelectedArchetypes([transformedArchetypes[0].id])
+          setActiveArchetypeTab(transformedArchetypes[0].id)
         }
       } catch (error) {
         console.error('Error loading archetypes:', error)
@@ -190,7 +195,8 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
         ]
         setArchetypes(sampleArchetypes)
         if (sampleArchetypes.length > 0) {
-          setSelectedArchetype(sampleArchetypes[0].id)
+          setSelectedArchetypes([sampleArchetypes[0].id])
+          setActiveArchetypeTab(sampleArchetypes[0].id)
         }
       }
     }
@@ -199,7 +205,7 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
   }, [])
 
   const saveContent = async () => {
-    if (!selectedArchetype) return
+    if (!activeArchetypeTab) return
 
     try {
       setIsLoading(true)
@@ -214,14 +220,14 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
           structured_content: content,
           updated_at: new Date().toISOString()
         })
-        .eq('id', selectedArchetype)
-      
+        .eq('id', activeArchetypeTab)
+
       if (error) {
         throw error
       }
-      
+
       // Call the callback if provided
-      onContentChange?.(selectedArchetype, content)
+      onContentChange?.(activeArchetypeTab, content)
       
       // Show success message
       alert('Content saved successfully!')
@@ -233,17 +239,66 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
     }
   }
 
+  const addArchetypeTab = (archetypeId: string) => {
+    if (!selectedArchetypes.includes(archetypeId)) {
+      setSelectedArchetypes(prev => [...prev, archetypeId])
+      setActiveArchetypeTab(archetypeId)
+    }
+  }
+
+  const removeArchetypeTab = (archetypeId: string) => {
+    if (selectedArchetypes.length > 1) {
+      setSelectedArchetypes(prev => prev.filter(id => id !== archetypeId))
+      if (activeArchetypeTab === archetypeId) {
+        const remainingArchetypes = selectedArchetypes.filter(id => id !== archetypeId)
+        setActiveArchetypeTab(remainingArchetypes[0] || '')
+      }
+    }
+  }
+
+  const addBlock = (type: ContentBlock['type']) => {
+    const newBlock: ContentBlock = {
+      id: Date.now().toString(),
+      type,
+      content: {
+        text: type === 'text' ? 'Enter your content here...' : '',
+        title: type !== 'text' ? 'New ' + type : '',
+        description: '',
+        url: ''
+      }
+    }
+    setBlocks(prev => [...prev, newBlock])
+    setEditingBlock(newBlock.id)
+  }
+
+  const updateBlock = (blockId: string, updates: Partial<ContentBlock['content']>) => {
+    setBlocks(prev => prev.map(block =>
+      block.id === blockId
+        ? { ...block, content: { ...block.content, ...updates } }
+        : block
+    ))
+  }
+
+  const deleteBlock = (blockId: string) => {
+    setBlocks(prev => prev.filter(block => block.id !== blockId))
+    if (editingBlock === blockId) {
+      setEditingBlock(null)
+    }
+  }
+
   return (
     <div className="w-full space-y-4">
       {/* Header with Save Button and Archetype Selection */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 max-w-md">
-          <Select value={selectedArchetype} onValueChange={setSelectedArchetype}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choose an archetype to edit" />
+          <Select value="" onValueChange={addArchetypeTab}>
+            <SelectTrigger className="w-full border-0 shadow-none">
+              <SelectValue placeholder="Add archetype to edit" />
             </SelectTrigger>
             <SelectContent>
-              {archetypes.map((archetype) => (
+              {archetypes
+                .filter(archetype => !selectedArchetypes.includes(archetype.id))
+                .map((archetype) => (
                 <SelectItem key={archetype.id} value={archetype.id}>
                   <div className="flex flex-col">
                     <span className="font-medium">{archetype.name}</span>
@@ -254,14 +309,49 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={saveContent} disabled={isLoading || !selectedArchetype}>
+        <Button onClick={saveContent} disabled={isLoading || !activeArchetypeTab}>
           <Save className="h-4 w-4 mr-2" />
           Save Content
         </Button>
       </div>
 
+      {/* Archetype Tabs */}
+      {selectedArchetypes.length > 0 && (
+        <div className="flex gap-1 flex-wrap border-b border-gray-200">
+          {selectedArchetypes.map((archetypeId) => {
+            const archetype = archetypes.find(a => a.id === archetypeId)
+            if (!archetype) return null
+
+            return (
+              <div
+                key={archetypeId}
+                className={`flex items-center gap-2 px-3 py-2 rounded-t-lg cursor-pointer transition-colors ${
+                  activeArchetypeTab === archetypeId
+                    ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+                onClick={() => setActiveArchetypeTab(archetypeId)}
+              >
+                <span className="text-sm font-medium">{archetype.name}</span>
+                {selectedArchetypes.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      removeArchetypeTab(archetypeId)
+                    }}
+                    className="text-gray-400 hover:text-red-500 ml-1"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* Live Preview Editor */}
-      {selectedArchetype && (
+      {activeArchetypeTab && (
         <div className="grid grid-cols-12 gap-6 min-h-[600px]">
           {/* Left Side - Archetype Cards */}
           <div className="col-span-4 space-y-4">
@@ -271,7 +361,7 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
             <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
               <div className="relative h-32 overflow-hidden">
                 {(() => {
-                  const currentArchetype = archetypes.find(a => a.id === selectedArchetype)
+                  const currentArchetype = archetypes.find(a => a.id === activeArchetypeTab)
                   const archetypeName = currentArchetype?.name.toLowerCase().replace(/[^a-z]/g, '') || 'default'
                   const imageUrl = ARCHETYPE_IMAGES[archetypeName] || ARCHETYPE_IMAGES['default']
 
@@ -297,7 +387,7 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
               </div>
               <CardContent className="p-4">
                 <p className="text-sm text-blue-800">
-                  {archetypes.find(a => a.id === selectedArchetype)?.description}
+                  {archetypes.find(a => a.id === activeArchetypeTab)?.description}
                 </p>
               </CardContent>
             </Card>
@@ -333,10 +423,151 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
               </div>
 
               <div className="space-y-6 bg-white rounded-lg p-6">
-                <div className="text-center py-12 text-muted-foreground">
-                  <BookOpen className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-lg font-medium">Content Editor Coming Soon</p>
-                  <p className="text-sm">This will be the content editing interface for {PAGE_TYPES.find(p => p.id === currentPage)?.name}</p>
+                {/* Block Builder Header */}
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-medium">
+                    {PAGE_TYPES.find(p => p.id === currentPage)?.name} Content
+                  </h4>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBlock('text')}
+                      className="flex items-center gap-1"
+                    >
+                      <Type className="h-4 w-4" />
+                      Text
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBlock('image')}
+                      className="flex items-center gap-1"
+                    >
+                      <Image className="h-4 w-4" />
+                      Image
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBlock('video')}
+                      className="flex items-center gap-1"
+                    >
+                      <Video className="h-4 w-4" />
+                      Video
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBlock('resource_link')}
+                      className="flex items-center gap-1"
+                    >
+                      <Link className="h-4 w-4" />
+                      Link
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Blocks List */}
+                <div className="space-y-4">
+                  {blocks.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                      <p>No content blocks yet. Add some content using the buttons above.</p>
+                    </div>
+                  ) : (
+                    blocks.map((block) => (
+                      <div key={block.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            {block.type === 'text' && <Type className="h-4 w-4" />}
+                            {block.type === 'image' && <Image className="h-4 w-4" />}
+                            {block.type === 'video' && <Video className="h-4 w-4" />}
+                            {block.type === 'resource_link' && <Link className="h-4 w-4" />}
+                            <span className="text-sm font-medium capitalize">{block.type.replace('_', ' ')}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditingBlock(editingBlock === block.id ? null : block.id)}
+                            >
+                              {editingBlock === block.id ? 'Done' : 'Edit'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteBlock(block.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+
+                        {editingBlock === block.id ? (
+                          <div className="space-y-3">
+                            {block.type !== 'text' && (
+                              <div>
+                                <label className="block text-sm font-medium mb-1">Title</label>
+                                <Input
+                                  value={block.content.title || ''}
+                                  onChange={(e) => updateBlock(block.id, { title: e.target.value })}
+                                  placeholder="Enter title..."
+                                />
+                              </div>
+                            )}
+
+                            {block.type === 'text' ? (
+                              <div>
+                                <label className="block text-sm font-medium mb-1">Content</label>
+                                <textarea
+                                  value={block.content.text || ''}
+                                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+                                  className="w-full p-3 border border-gray-300 rounded-md resize-vertical"
+                                  rows={6}
+                                  placeholder="Enter your content here..."
+                                />
+                              </div>
+                            ) : (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">URL</label>
+                                  <Input
+                                    value={block.content.url || ''}
+                                    onChange={(e) => updateBlock(block.id, { url: e.target.value })}
+                                    placeholder={`Enter ${block.type} URL...`}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Description</label>
+                                  <textarea
+                                    value={block.content.description || ''}
+                                    onChange={(e) => updateBlock(block.id, { description: e.target.value })}
+                                    className="w-full p-3 border border-gray-300 rounded-md resize-vertical"
+                                    rows={3}
+                                    placeholder="Enter description..."
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-600">
+                            {block.type === 'text' ? (
+                              <p>{block.content.text?.substring(0, 100)}...</p>
+                            ) : (
+                              <div>
+                                <p className="font-medium">{block.content.title}</p>
+                                {block.content.url && <p className="text-blue-600">{block.content.url}</p>}
+                                {block.content.description && <p>{block.content.description.substring(0, 100)}...</p>}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
