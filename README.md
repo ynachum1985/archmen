@@ -2,7 +2,7 @@
 
 <!-- Production deployment: January 3, 2025 - Clean UI Version -->
 
-<!-- Deployment trigger: Enhanced archetype management system deployed -->
+<!-- Deployment trigger: Force fresh build with all fixes applied -->
 
 A sophisticated Next.js application that uses AI to analyze relationship patterns and provide personalized insights based on Jungian archetypes.
 
