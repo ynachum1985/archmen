@@ -5,7 +5,8 @@
   "framework": "nextjs",
   "env": {
     "NEXT_PUBLIC_APP_NAME": "ArchMen",
-    "NEXT_PUBLIC_APP_URL": "https://archmen.vercel.app"
+    "NEXT_PUBLIC_APP_URL": "https://archmen.vercel.app",
+    "DEPLOYMENT_TIMESTAMP": "2025-01-15T16:18:00Z"
   },
   "headers": [
     {
