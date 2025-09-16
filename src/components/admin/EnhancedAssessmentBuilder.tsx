@@ -79,7 +79,7 @@ interface EnhancedAssessmentConfig {
 interface EnhancedAssessmentBuilderProps {
   assessment?: EnhancedAssessmentConfig
   onSave: (config: EnhancedAssessmentConfig) => void
-  onTest: (config: EnhancedAssessmentConfig) => void
+  onTest?: (config: EnhancedAssessmentConfig) => void
 }
 
 const defaultConfig: EnhancedAssessmentConfig = {
@@ -178,8 +178,7 @@ The AI should freely choose from all available archetypes based on the evidence 
 
 export function EnhancedAssessmentBuilder({
   assessment,
-  onSave,
-  onTest
+  onSave
 }: EnhancedAssessmentBuilderProps) {
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(assessment || defaultConfig)
   const [categories, setCategories] = useState<AssessmentCategory[]>([])

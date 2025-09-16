@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Brain, Send, Loader2, MessageCircle, X, TestTube } from 'lucide-react'
+import { Send, Loader2, X, TestTube } from 'lucide-react'
 
 interface EnhancedAssessmentConfig {
   name: string
@@ -63,9 +61,9 @@ export function AssessmentTestingChat({ config, onClose }: AssessmentTestingChat
       generateInitialQuestion()
       setIsInitialized(true)
     }
-  }, [isInitialized])
+  }, [isInitialized, generateInitialQuestion])
 
-  const generateInitialQuestion = async () => {
+  const generateInitialQuestion = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch('/api/chat', {
@@ -108,7 +106,7 @@ Start the conversation with an engaging opening question that aligns with the as
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [config.combinedPrompt, config.minQuestions, config.maxQuestions, config.evidenceThreshold, config.adaptationSensitivity])
 
   const handleSendMessage = async () => {
     if (!currentInput.trim() || isLoading) return

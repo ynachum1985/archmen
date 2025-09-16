@@ -228,7 +228,7 @@ export class AssessmentIntegrationService {
           console.log('Saved to enhanced_assessments table')
           return enhancedData.id
         }
-      } catch (enhancedError) {
+      } catch {
         console.log('Enhanced assessments table not available, falling back to assessment_templates')
       }
 
