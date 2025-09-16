@@ -16,7 +16,6 @@ import {
   Search,
   FileText,
   Brain,
-  Database,
   Sparkles
 } from 'lucide-react'
 

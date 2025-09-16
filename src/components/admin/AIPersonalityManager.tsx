@@ -39,7 +39,7 @@ export function AIPersonalityManager() {
     emotional_attunement: 7
   })
   
-  const [generatingEmbeddings, setGeneratingEmbeddings] = useState<string | null>(null)
+
 
   useEffect(() => {
     loadPersonalities()
@@ -114,39 +114,7 @@ export function AIPersonalityManager() {
     })
   }
 
-  // Removed bulk embedding generation - now handled individually per personality
-
-  const handleGenerateEmbeddings = async (personality: AIPersonality) => {
-    setGeneratingEmbeddings(personality.id)
-    try {
-      const response = await fetch('/api/generate-embeddings/personality', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          personalityId: personality.id,
-          personalityName: personality.name,
-          content: {
-            description: personality.description,
-            openEndedQuestions: personality.open_ended_questions,
-            tone: personality.tone,
-            challengeLevel: personality.challenge_level,
-            emotionalAttunement: personality.emotional_attunement
-          }
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to generate embeddings')
-
-      const data = await response.json()
-      console.log(`Embeddings generated for ${personality.name}:`, data)
-      alert(`Embeddings generated successfully for ${personality.name}!`)
-    } catch (error) {
-      console.error(`Error generating embeddings for ${personality.name}:`, error)
-      alert(`Failed to generate embeddings for ${personality.name}. Please try again.`)
-    } finally {
-      setGeneratingEmbeddings(null)
-    }
-  }
+  // Removed bulk embedding generation - now handled individually per personality via dialog
 
   const startEdit = (personality: AIPersonality) => {
     setEditingPersonality(personality)
