@@ -134,9 +134,9 @@ export function SimplifiedAssessmentBuilder({
             <Eye className="h-4 w-4" />
             Test
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600"
           >
             <Save className="h-4 w-4" />
             Save Assessment
@@ -377,7 +377,7 @@ export function SimplifiedAssessmentBuilder({
             <Eye className="h-4 w-4 mr-2" />
             Test Assessment
           </Button>
-          <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600">
             <Save className="h-4 w-4 mr-2" />
             Save & Deploy
           </Button>

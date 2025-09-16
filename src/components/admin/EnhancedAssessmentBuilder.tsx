@@ -382,7 +382,7 @@ export function EnhancedAssessmentBuilder({
                             {category.name}
                           </SelectItem>
                         ))}
-                        <SelectItem value="create-new" className="text-blue-600 font-medium">
+                        <SelectItem value="create-new" className="text-emerald-600 font-medium">
                           + Create New Category
                         </SelectItem>
                       </>
@@ -554,7 +554,7 @@ export function EnhancedAssessmentBuilder({
               </Select>
               <p className="text-sm text-gray-500 mt-2">
                 Choose an AI personality that defines the questioning style and approach for this assessment.
-                <Link href="/admin?tab=ai-personality" className="text-blue-600 hover:text-blue-700 ml-1">
+                <Link href="/admin?tab=ai-personality" className="text-emerald-600 hover:text-emerald-700 ml-1">
                   Create or configure personalities here.
                 </Link>
               </p>
@@ -573,7 +573,7 @@ export function EnhancedAssessmentBuilder({
             </Button>
             <Button
               onClick={handleSave}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600"
             >
               <Save className="h-4 w-4" />
               Save Assessment
@@ -674,7 +674,7 @@ export function EnhancedAssessmentBuilder({
             <Button
               onClick={handleCreateCategory}
               disabled={!newCategory.name.trim()}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-emerald-500 hover:bg-emerald-600"
             >
               Create Category
             </Button>

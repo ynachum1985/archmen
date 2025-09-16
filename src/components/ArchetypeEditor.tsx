@@ -139,181 +139,163 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="metrics" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Relationship Impact</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="7"
-                      value={editedArchetype.impact_score}
-                      onChange={(e) => setEditedArchetype({ ...editedArchetype, impact_score: parseInt(e.target.value) || 1 })}
-                      className="w-16"
-                    />
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-red-500 h-2 rounded-full transition-all"
-                          style={{ width: `${(editedArchetype.impact_score / 7) * 100}%` }}
-                        />
-                      </div>
+          <TabsContent value="metrics" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Relationship Impact */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Relationship Impact</h4>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={editedArchetype.impact_score}
+                    onChange={(e) => setEditedArchetype({ ...editedArchetype, impact_score: parseInt(e.target.value) || 1 })}
+                    className="w-16"
+                  />
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-red-500 h-2 rounded-full transition-all"
+                        style={{ width: `${(editedArchetype.impact_score / 7) * 100}%` }}
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    How negatively this affects relationships (1=minimal, 7=severe)
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+                <p className="text-xs text-gray-500">
+                  How negatively this affects relationships (1=minimal, 7=severe)
+                </p>
+              </div>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Growth Potential</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="7"
-                      value={editedArchetype.growth_potential_score || 1}
-                      onChange={(e) => setEditedArchetype({ ...editedArchetype, growth_potential_score: parseInt(e.target.value) || 1 })}
-                      className="w-16"
-                    />
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full transition-all"
-                          style={{ width: `${((editedArchetype.growth_potential_score || 1) / 7) * 100}%` }}
-                        />
-                      </div>
+              {/* Growth Potential */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Growth Potential</h4>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={editedArchetype.growth_potential_score || 1}
+                    onChange={(e) => setEditedArchetype({ ...editedArchetype, growth_potential_score: parseInt(e.target.value) || 1 })}
+                    className="w-16"
+                  />
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-green-500 h-2 rounded-full transition-all"
+                        style={{ width: `${((editedArchetype.growth_potential_score || 1) / 7) * 100}%` }}
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Potential for positive transformation (1=low, 7=high)
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Potential for positive transformation (1=low, 7=high)
+                </p>
+              </div>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Awareness Difficulty</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="7"
-                      value={editedArchetype.awareness_difficulty_score || 1}
-                      onChange={(e) => setEditedArchetype({ ...editedArchetype, awareness_difficulty_score: parseInt(e.target.value) || 1 })}
-                      className="w-16"
-                    />
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-orange-500 h-2 rounded-full transition-all"
-                          style={{ width: `${((editedArchetype.awareness_difficulty_score || 1) / 7) * 100}%` }}
-                        />
-                      </div>
+              {/* Awareness Difficulty */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Awareness Difficulty</h4>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={editedArchetype.awareness_difficulty_score || 1}
+                    onChange={(e) => setEditedArchetype({ ...editedArchetype, awareness_difficulty_score: parseInt(e.target.value) || 1 })}
+                    className="w-16"
+                  />
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-orange-500 h-2 rounded-full transition-all"
+                        style={{ width: `${((editedArchetype.awareness_difficulty_score || 1) / 7) * 100}%` }}
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    How hard to recognize this pattern (1=obvious, 7=hidden)
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+                <p className="text-xs text-gray-500">
+                  How hard to recognize this pattern (1=obvious, 7=hidden)
+                </p>
+              </div>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Trigger Intensity</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="7"
-                      value={editedArchetype.trigger_intensity_score || 1}
-                      onChange={(e) => setEditedArchetype({ ...editedArchetype, trigger_intensity_score: parseInt(e.target.value) || 1 })}
-                      className="w-16"
-                    />
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-purple-500 h-2 rounded-full transition-all"
-                          style={{ width: `${((editedArchetype.trigger_intensity_score || 1) / 7) * 100}%` }}
-                        />
-                      </div>
+              {/* Trigger Intensity */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Trigger Intensity</h4>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={editedArchetype.trigger_intensity_score || 1}
+                    onChange={(e) => setEditedArchetype({ ...editedArchetype, trigger_intensity_score: parseInt(e.target.value) || 1 })}
+                    className="w-16"
+                  />
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-purple-500 h-2 rounded-full transition-all"
+                        style={{ width: `${((editedArchetype.trigger_intensity_score || 1) / 7) * 100}%` }}
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    How easily activated under stress (1=stable, 7=reactive)
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+                <p className="text-xs text-gray-500">
+                  How easily activated under stress (1=stable, 7=reactive)
+                </p>
+              </div>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Integration Complexity</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="7"
-                      value={editedArchetype.integration_complexity_score || 1}
-                      onChange={(e) => setEditedArchetype({ ...editedArchetype, integration_complexity_score: parseInt(e.target.value) || 1 })}
-                      className="w-16"
-                    />
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full transition-all"
-                          style={{ width: `${((editedArchetype.integration_complexity_score || 1) / 7) * 100}%` }}
-                        />
-                      </div>
+              {/* Integration Complexity */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Integration Complexity</h4>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={editedArchetype.integration_complexity_score || 1}
+                    onChange={(e) => setEditedArchetype({ ...editedArchetype, integration_complexity_score: parseInt(e.target.value) || 1 })}
+                    className="w-16"
+                  />
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-500 h-2 rounded-full transition-all"
+                        style={{ width: `${((editedArchetype.integration_complexity_score || 1) / 7) * 100}%` }}
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    How challenging to integrate healthily (1=easy, 7=complex)
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+                <p className="text-xs text-gray-500">
+                  How challenging to integrate healthily (1=easy, 7=complex)
+                </p>
+              </div>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Shadow Depth</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="7"
-                      value={editedArchetype.shadow_depth_score || 1}
-                      onChange={(e) => setEditedArchetype({ ...editedArchetype, shadow_depth_score: parseInt(e.target.value) || 1 })}
-                      className="w-16"
-                    />
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-gray-700 h-2 rounded-full transition-all"
-                          style={{ width: `${((editedArchetype.shadow_depth_score || 1) / 7) * 100}%` }}
-                        />
-                      </div>
+              {/* Shadow Depth */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Shadow Depth</h4>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={editedArchetype.shadow_depth_score || 1}
+                    onChange={(e) => setEditedArchetype({ ...editedArchetype, shadow_depth_score: parseInt(e.target.value) || 1 })}
+                    className="w-16"
+                  />
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-gray-700 h-2 rounded-full transition-all"
+                        style={{ width: `${((editedArchetype.shadow_depth_score || 1) / 7) * 100}%` }}
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    How deep/unconscious the shadow aspects (1=surface, 7=deep)
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+                <p className="text-xs text-gray-500">
+                  How deep/unconscious the shadow aspects (1=surface, 7=deep)
+                </p>
+              </div>
             </div>
           </TabsContent>
 
@@ -398,7 +380,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>
-          <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600">
             <Save className="w-4 w-4 mr-2" />
             Save Changes
           </Button>

@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X, Sparkles } from 'lucide-react'
 import { AIPersonality, NewAIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
+import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 
 export function AIPersonalityManager() {
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
@@ -243,15 +244,26 @@ export function AIPersonalityManager() {
                     {personality.is_active ? "Active" : "Inactive"}
                   </Badge>
                   <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleGenerateEmbeddings(personality)}
-                      disabled={generatingEmbeddings === personality.id}
-                      title={`Generate embeddings for ${personality.name}`}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </Button>
+                    <EmbeddingSettingsDialog
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-400 hover:text-emerald-600"
+                          title={`Embedding settings for ${personality.name}`}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                        </Button>
+                      }
+                      title={personality.name}
+                      description={`Configure embedding settings for the ${personality.name} AI personality`}
+                      itemId={personality.id}
+                      itemType="ai-personality"
+                      onSave={(settings) => {
+                        console.log(`Saving embedding settings for ${personality.name}:`, settings)
+                        // TODO: Save settings to database
+                      }}
+                    />
                     <Button
                       variant="ghost"
                       size="sm"

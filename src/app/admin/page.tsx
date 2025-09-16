@@ -27,7 +27,7 @@ import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessment
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
-import { EmbeddingConfigManager } from "@/components/admin/EmbeddingConfigManager"
+import { EmbeddingSettingsDialog } from "@/components/admin/EmbeddingSettingsDialog"
 
 // Commented out unused interfaces for simplified version
 /*
@@ -272,7 +272,7 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
             <TabsTrigger value="assessments" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Assessments
@@ -289,15 +289,6 @@ export default function AdminPage() {
               <Brain className="h-4 w-4" />
               AI Personality
             </TabsTrigger>
-            <TabsTrigger value="embeddings" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Embeddings
-            </TabsTrigger>
-
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
           </TabsList>
 
           {/* Assessments Tab - Overview of existing assessments */}
@@ -308,73 +299,13 @@ export default function AdminPage() {
                   <h2 className="text-xl font-medium">Assessment Overview</h2>
                   <p className="text-gray-600 text-sm">Manage and monitor your specialized archetype assessments</p>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-emerald-500 hover:bg-emerald-600">
                   <Plus className="w-4 h-4 mr-2" />
                   New Assessment
                 </Button>
               </div>
 
-              {/* Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-blue-600" />
-                      Report Preview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      See how assessment reports will look to users
-                    </p>
-                    <Button size="sm" variant="outline" asChild className="w-full">
-                      <a href="/admin/report-preview" target="_blank" rel="noopener noreferrer">
-                        View Live Preview
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
 
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-green-600" />
-                      Assessment Builder
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Create new assessments with AI configuration
-                    </p>
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => {
-                      const builderTab = document.querySelector('[value="builder"]') as HTMLElement
-                      builderTab?.click()
-                    }}>
-                      Open Builder
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Users className="h-4 w-4 text-purple-600" />
-                      Archetype Manager
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Manage archetype database and patterns
-                    </p>
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => {
-                      const archetypesTab = document.querySelector('[value="archetypes"]') as HTMLElement
-                      archetypesTab?.click()
-                    }}>
-                      Manage Archetypes
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
 
               {/* Main Assessment Section */}
               <Card className="border-2 border-teal-200 bg-teal-50">
@@ -465,7 +396,7 @@ export default function AdminPage() {
                 </div>
                 <div className="flex gap-2">
                   {/* Bulk Generate Embeddings button removed - now handled individually per archetype */}
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button className="bg-emerald-500 hover:bg-emerald-600">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Archetype
                   </Button>
@@ -530,19 +461,27 @@ export default function AdminPage() {
                           <p className="text-sm text-gray-600 mt-1">{archetype.description}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              // TODO: Add individual archetype embedding generation
-                              console.log(`Generate embeddings for ${archetype.name}`)
+                          <EmbeddingSettingsDialog
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-gray-400 hover:text-emerald-600"
+                                title={`Embedding settings for ${archetype.name}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Sparkles className="w-4 h-4" />
+                              </Button>
+                            }
+                            title={archetype.name}
+                            description={`Configure embedding settings for the ${archetype.name} archetype`}
+                            itemId={archetype.id}
+                            itemType="archetype"
+                            onSave={(settings) => {
+                              console.log(`Saving embedding settings for ${archetype.name}:`, settings)
+                              // TODO: Save settings to database
                             }}
-                            className="text-gray-400 hover:text-blue-600"
-                            title={`Generate embeddings for ${archetype.name}`}
-                          >
-                            <Sparkles className="w-4 h-4" />
-                          </Button>
+                          />
                           <div className="text-gray-400 text-xl font-light">
                             {expandedArchetype === archetype.id ? '−' : '+'}
                           </div>
@@ -571,13 +510,6 @@ export default function AdminPage() {
           <TabsContent value="ai-personality" className="mt-6">
             <AIPersonalityManager />
           </TabsContent>
-
-          {/* Embeddings Tab */}
-          <TabsContent value="embeddings" className="mt-6">
-            <EmbeddingConfigManager />
-          </TabsContent>
-
-
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="mt-6">
