@@ -276,21 +276,22 @@ export function EnhancedAssessmentBuilder({
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <Tabs defaultValue="ai-setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ai-setup">AI Setup</TabsTrigger>
+      <Tabs defaultValue="setup" className="space-y-6">
+        <TabsList className={`grid w-full ${assessment ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="reports">Report and Answers</TabsTrigger>
+          {assessment && <TabsTrigger value="testing">Testing</TabsTrigger>}
         </TabsList>
 
-        {/* AI Setup Tab */}
-        <TabsContent value="ai-setup" className="space-y-6">
-          {/* AI Personality Selection - Moved to top */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-blue-900">AI Personality</h4>
+        {/* Setup Tab */}
+        <TabsContent value="setup" className="space-y-6">
+          {/* AI Personality Selection */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-gray-900">AI Personality</h4>
               <Link
                 href="/admin?tab=ai-personality"
-                className="text-blue-600 hover:text-blue-700 text-xs font-medium flex items-center gap-1"
+                className="text-gray-600 hover:text-gray-700 text-xs font-medium flex items-center gap-1"
               >
                 <Plus className="h-3 w-3" />
                 Manage
@@ -300,7 +301,7 @@ export function EnhancedAssessmentBuilder({
               value={config.selectedPersonalityId || 'default'}
               onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
             >
-              <SelectTrigger className="h-9 text-sm border-blue-200 bg-white">
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Choose AI personality" />
               </SelectTrigger>
               <SelectContent>
@@ -318,9 +319,6 @@ export function EnhancedAssessmentBuilder({
                 )}
               </SelectContent>
             </Select>
-            <p className="text-xs text-blue-600 mt-1">
-              Choose an AI personality that defines the questioning style and approach.
-            </p>
           </div>
 
           {/* Basic Configuration */}
@@ -328,7 +326,7 @@ export function EnhancedAssessmentBuilder({
             {/* Basic Information */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="text-sm font-medium text-gray-900 mb-3">Basic Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name" className="text-sm">Assessment Name</Label>
                   <Input
@@ -349,210 +347,110 @@ export function EnhancedAssessmentBuilder({
                     className="mt-1 h-8 text-sm"
                   />
                 </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="category" className="text-sm">Category</Label>
-                    <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-800 h-6 px-2">
-                          <Plus className="h-3 w-3" />
-                          New
-                        </Button>
-                      </DialogTrigger>
-                    <DialogContent className="border-gray-200">
-                      <DialogHeader>
-                        <DialogTitle>Create New Category</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="categoryName">Category Name</Label>
-                          <Input
-                            id="categoryName"
-                            value={newCategory.name}
-                            onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                            placeholder="e.g., Spiritual Development"
-                            className="border-gray-200"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="categoryDescription">Description</Label>
-                          <Textarea
-                            id="categoryDescription"
-                            value={newCategory.description}
-                            onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Describe this category..."
-                            rows={2}
-                            className="border-gray-200"
-                          />
-                        </div>
-                        <div className="flex gap-4">
-                          <Button onClick={handleCreateCategory} className="flex-1">
-                            Create Category
-                          </Button>
-                          <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <Select
-                  value={config.category}
-                  onValueChange={(value) => {
-                    if (value === 'create-new') {
-                      setShowNewCategoryDialog(true)
-                    } else {
-                      setConfig(prev => ({ ...prev, category: value }))
-                    }
-                  }}
-                >
-                  <SelectTrigger className="mt-1 h-8 text-sm">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingCategories ? (
-                      <SelectItem value="loading" disabled>Loading categories...</SelectItem>
-                    ) : (
-                      <>
-                        {categories.map(category => (
-                          <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="create-new" className="text-emerald-600 font-medium">
-                          + Create New Category
-                        </SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-                </div>
               </div>
             </div>
 
-            {/* Description and Purpose */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="description" className="text-sm">Assessment Description</Label>
-                <Textarea
-                  id="description"
-                  value={config.description}
-                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe what this assessment measures..."
-                  className="mt-1 text-sm border-gray-200"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="purpose" className="text-sm">Assessment Purpose</Label>
-                <Textarea
-                  id="purpose"
-                  value={config.purpose}
-                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                  placeholder="Define the specific goals and outcomes..."
-                  className="mt-1 text-sm border-gray-200"
-                  rows={3}
-                />
-              </div>
-            </div>
 
-            {/* Question Settings */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Question Settings</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="minQuestions" className="text-sm">Min Questions</Label>
-                  <Input
-                    id="minQuestions"
-                    type="number"
-                    min="3"
-                    max="20"
-                    value={config.minQuestions}
-                    onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxQuestions" className="text-sm">Max Questions</Label>
-                  <Input
-                    id="maxQuestions"
-                    type="number"
-                    min="5"
-                    max="30"
-                    value={config.maxQuestions}
-                    onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="evidenceThreshold" className="text-sm">Evidence Threshold</Label>
-                  <Input
-                    id="evidenceThreshold"
-                    type="number"
-                    min="0.1"
-                    max="1.0"
-                    step="0.1"
-                    value={config.evidenceThreshold}
-                    onChange={(e) => setConfig(prev => ({ ...prev, evidenceThreshold: parseFloat(e.target.value) || 0.7 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="adaptationSensitivity" className="text-sm">Adaptation Sensitivity</Label>
-                  <Input
-                    id="adaptationSensitivity"
-                    type="number"
-                    min="0.1"
-                    max="1.0"
-                    step="0.1"
-                    value={config.adaptationSensitivity}
-                    onChange={(e) => setConfig(prev => ({ ...prev, adaptationSensitivity: parseFloat(e.target.value) || 0.5 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
+
+            {/* Question & Cycle Settings - Compact Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Question Settings */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Question Settings</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="minQuestions" className="text-xs">Min Questions</Label>
+                    <Input
+                      id="minQuestions"
+                      type="number"
+                      min="3"
+                      max="20"
+                      value={config.minQuestions}
+                      onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="maxQuestions" className="text-xs">Max Questions</Label>
+                    <Input
+                      id="maxQuestions"
+                      type="number"
+                      min="5"
+                      max="30"
+                      value={config.maxQuestions}
+                      onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="evidenceThreshold" className="text-xs">Evidence Threshold</Label>
+                    <Input
+                      id="evidenceThreshold"
+                      type="number"
+                      min="0.1"
+                      max="1.0"
+                      step="0.1"
+                      value={config.evidenceThreshold}
+                      onChange={(e) => setConfig(prev => ({ ...prev, evidenceThreshold: parseFloat(e.target.value) || 0.7 }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="adaptationSensitivity" className="text-xs">Adaptation Sensitivity</Label>
+                    <Input
+                      id="adaptationSensitivity"
+                      type="number"
+                      min="0.1"
+                      max="1.0"
+                      step="0.1"
+                      value={config.adaptationSensitivity}
+                      onChange={(e) => setConfig(prev => ({ ...prev, adaptationSensitivity: parseFloat(e.target.value) || 0.5 }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Cycle Settings */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Cycle Settings</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="maxCycles" className="text-sm">Max Cycles</Label>
-                  <Input
-                    id="maxCycles"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={config.cycleSettings.maxCycles}
-                    onChange={(e) => setConfig(prev => ({
-                      ...prev,
-                      cycleSettings: {
-                        ...prev.cycleSettings,
-                        maxCycles: parseInt(e.target.value) || 3
-                      }
-                    }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="evidencePerCycle" className="text-sm">Evidence Per Cycle</Label>
-                  <Input
-                    id="evidencePerCycle"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={config.cycleSettings.evidencePerCycle}
-                    onChange={(e) => setConfig(prev => ({
-                      ...prev,
-                      cycleSettings: {
-                        ...prev.cycleSettings,
-                        evidencePerCycle: parseInt(e.target.value) || 3
-                      }
-                    }))}
-                    className="mt-1 h-8 text-sm"
-                  />
+              {/* Cycle Settings */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Cycle Settings</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="maxCycles" className="text-xs">Max Cycles</Label>
+                    <Input
+                      id="maxCycles"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={config.cycleSettings.maxCycles}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        cycleSettings: {
+                          ...prev.cycleSettings,
+                          maxCycles: parseInt(e.target.value) || 3
+                        }
+                      }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="evidencePerCycle" className="text-xs">Evidence Per Cycle</Label>
+                    <Input
+                      id="evidencePerCycle"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={config.cycleSettings.evidencePerCycle}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        cycleSettings: {
+                          ...prev.cycleSettings,
+                          evidencePerCycle: parseInt(e.target.value) || 3
+                        }
+                      }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -563,21 +461,129 @@ export function EnhancedAssessmentBuilder({
           {/* Combined Prompt Section */}
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-900">Assessment Description & System Prompt</h3>
+
+            {/* Category - moved here */}
             <div>
-              <Label htmlFor="combinedPrompt">Combined Prompt (Description + Purpose + System Instructions)</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="category" className="text-sm">Category</Label>
+                <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-800 h-6 px-2">
+                      <Plus className="h-3 w-3" />
+                      New
+                    </Button>
+                  </DialogTrigger>
+                <DialogContent className="border-gray-200">
+                  <DialogHeader>
+                    <DialogTitle>Create New Category</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="categoryName">Category Name</Label>
+                      <Input
+                        id="categoryName"
+                        value={newCategory.name}
+                        onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Spiritual Development"
+                        className="border-gray-200"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="categoryDescription">Description</Label>
+                      <Textarea
+                        id="categoryDescription"
+                        value={newCategory.description}
+                        onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Describe this category..."
+                        rows={2}
+                        className="border-gray-200"
+                      />
+                    </div>
+                    <div className="flex gap-4">
+                      <Button onClick={handleCreateCategory} className="flex-1">
+                        Create Category
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <Select
+              value={config.category}
+              onValueChange={(value) => {
+                if (value === 'create-new') {
+                  setShowNewCategoryDialog(true)
+                } else {
+                  setConfig(prev => ({ ...prev, category: value }))
+                }
+              }}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingCategories ? (
+                  <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                ) : (
+                  <>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="create-new" className="text-emerald-600 font-medium">
+                      + Create New Category
+                    </SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Description and Purpose - moved here */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="description" className="text-sm">Assessment Description</Label>
               <Textarea
-                id="combinedPrompt"
-                value={config.combinedPrompt}
-                onChange={(e) => setConfig(prev => ({ ...prev, combinedPrompt: e.target.value }))}
-                placeholder="This will automatically combine your description, purpose, and system prompt. You can also edit it directly here..."
-                className="mt-1 font-mono text-sm border-gray-200"
-                rows={15}
+                id="description"
+                value={config.description}
+                onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Describe what this assessment measures..."
+                className="mt-1 text-sm border-gray-200"
+                rows={3}
               />
-              <p className="text-sm text-gray-500 mt-2">
-                This field automatically combines your assessment description, purpose, and system prompt. You can edit it directly or it will update when you change the individual fields above.
-              </p>
+            </div>
+            <div>
+              <Label htmlFor="purpose" className="text-sm">Assessment Purpose</Label>
+              <Textarea
+                id="purpose"
+                value={config.purpose}
+                onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
+                placeholder="Define the specific goals and outcomes..."
+                className="mt-1 text-sm border-gray-200"
+                rows={3}
+              />
             </div>
           </div>
+
+          <div>
+            <Label htmlFor="combinedPrompt">Combined Prompt (Description + Purpose + System Instructions)</Label>
+            <Textarea
+              id="combinedPrompt"
+              value={config.combinedPrompt}
+              onChange={(e) => setConfig(prev => ({ ...prev, combinedPrompt: e.target.value }))}
+              placeholder="This will automatically combine your description, purpose, and system prompt. You can also edit it directly here..."
+              className="mt-1 font-mono text-sm border-gray-200"
+              rows={15}
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              This field automatically combines your assessment description, purpose, and system prompt. You can edit it directly or it will update when you change the individual fields above.
+            </p>
+          </div>
+        </div>
 
           {/* Assessment Testing */}
           <div className="space-y-4">
@@ -633,6 +639,64 @@ export function EnhancedAssessmentBuilder({
 
 
         </TabsContent>
+
+        {/* Testing Tab - Only shown when editing an existing assessment */}
+        {assessment && (
+          <TabsContent value="testing" className="space-y-6">
+            <div className="bg-white border rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Test Assessment</h3>
+                  <p className="text-sm text-gray-600">
+                    Test your assessment configuration with a live chat interface
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowTestingChat(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Start Test
+                </Button>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Assessment Configuration Summary</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Questions:</span>
+                    <span className="ml-1 font-medium">{config.minQuestions}-{config.maxQuestions}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Duration:</span>
+                    <span className="ml-1 font-medium">{config.expectedDuration} min</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Category:</span>
+                    <span className="ml-1 font-medium">{config.category || 'Not set'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">AI Personality:</span>
+                    <span className="ml-1 font-medium">
+                      {personalities.find(p => p.id === config.selectedPersonalityId)?.name || 'Default'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Testing Instructions</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Click "Start Test" to open the assessment chat interface</li>
+                  <li>• Answer questions as a test user would to validate the flow</li>
+                  <li>• Check that the AI personality and questioning style match your expectations</li>
+                  <li>• Verify that the assessment reaches appropriate conclusions</li>
+                  <li>• Make adjustments to the configuration as needed</li>
+                </ul>
+              </div>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Testing Chat Modal */}

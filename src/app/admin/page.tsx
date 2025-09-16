@@ -113,6 +113,7 @@ export default function AdminPage() {
   // Editor states
   const [expandedArchetype, setExpandedArchetype] = useState<string | null>(null)
   const [editingArchetype, setEditingArchetype] = useState<Archetype | null>(null)
+  const [editingAssessment, setEditingAssessment] = useState<any>(null)
 
   // Load data from database
   useEffect(() => {
@@ -358,29 +359,13 @@ export default function AdminPage() {
                           variant="outline"
                           className="flex-1"
                           onClick={() => {
-                            // Switch to builder tab for editing
+                            // Switch to builder tab for editing with the selected assessment
+                            setEditingAssessment(category)
                             const builderTab = document.querySelector('[value="builder"]') as HTMLElement
                             builderTab?.click()
                           }}
                         >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            if (category.isMain) {
-                              // Open main assessment in new tab
-                              window.open('/', '_blank')
-                            } else {
-                              // Test other assessments
-                              console.log(`Testing ${category.name}`)
-                              alert(`Testing ${category.name} - This will open the assessment interface`)
-                            }
-                          }}
-                        >
-                          Test
+                          Edit Assessment
                         </Button>
                       </div>
                     </CardContent>
@@ -393,6 +378,7 @@ export default function AdminPage() {
           {/* Builder Tab - Assessment creation form */}
           <TabsContent value="builder" className="mt-6">
             <EnhancedAssessmentBuilder
+              assessment={editingAssessment}
               onSave={handleSaveEnhancedAssessment}
               onTest={handleTestEnhancedAssessment}
             />
