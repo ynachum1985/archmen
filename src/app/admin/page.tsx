@@ -154,7 +154,26 @@ export default function AdminPage() {
   })
 
   // Assessment categories for specialized assessments
-  const assessmentCategories = [
+  const assessmentCategories: Array<{
+    id: string
+    name: string
+    description: string
+    status: string
+    archetypeCount: number
+    questionCount: number
+    completionRate: number
+    isMain?: boolean
+  }> = [
+    {
+      id: 'main-assessment',
+      name: 'Main Assessment',
+      description: 'The primary assessment that appears on the homepage for new users',
+      status: 'Active',
+      archetypeCount: 55,
+      questionCount: 12,
+      completionRate: 85,
+      isMain: true
+    },
     {
       id: 'sexuality-intimacy',
       name: 'Sexuality & Intimacy',
@@ -293,68 +312,39 @@ export default function AdminPage() {
           {/* Assessments Tab - Overview of existing assessments */}
           <TabsContent value="assessments" className="mt-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-medium">Assessment Overview</h2>
-                  <p className="text-gray-600 text-sm">Manage and monitor your specialized archetype assessments</p>
-                </div>
+              <div className="flex items-center justify-end">
                 <Button className="bg-emerald-500 hover:bg-emerald-600">
                   <Plus className="w-4 h-4 mr-2" />
                   New Assessment
                 </Button>
               </div>
 
-
-
-              {/* Main Assessment Section */}
-              <Card className="border-2 border-teal-200 bg-teal-50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg text-teal-800">Homepage Main Assessment</CardTitle>
-                      <CardDescription className="text-teal-600">
-                        The primary assessment that appears on the homepage for new users
-                      </CardDescription>
-                    </div>
-                    <Badge variant="secondary" className="bg-teal-100 text-teal-800">Main</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm text-teal-700">
-                      Create or update the main assessment that users will see when they visit the homepage.
-                      This assessment should be designed to give users a taste of the full archetype analysis experience.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="bg-teal-600 hover:bg-teal-700"
-                        onClick={() => {
-                          // Switch to builder tab with main assessment preset
-                          const builderTab = document.querySelector('[value="builder"]') as HTMLElement
-                          builderTab?.click()
-                        }}
-                      >
-                        Create Main Assessment
-                      </Button>
-                      <Button size="sm" variant="outline" className="border-teal-600 text-teal-600">
-                        View Current
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Assessment Categories */}
+              {/* All Assessments Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {assessmentCategories.map((category) => (
-                  <Card key={category.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                  <Card
+                    key={category.id}
+                    className={`cursor-pointer hover:shadow-md transition-shadow ${
+                      category.isMain ? 'border-2 border-emerald-200 bg-emerald-50' : ''
+                    }`}
+                  >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{category.name}</CardTitle>
-                        <Badge variant="secondary">{category.status}</Badge>
+                        <CardTitle className={`text-lg ${category.isMain ? 'text-emerald-800' : ''}`}>
+                          {category.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {category.isMain && (
+                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
+                              Main
+                            </Badge>
+                          )}
+                          <Badge variant="secondary">{category.status}</Badge>
+                        </div>
                       </div>
-                      <CardDescription className="text-sm">{category.description}</CardDescription>
+                      <CardDescription className={`text-sm ${category.isMain ? 'text-emerald-600' : ''}`}>
+                        {category.description}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 text-sm text-gray-600">
@@ -363,10 +353,33 @@ export default function AdminPage() {
                         <div>Completion Rate: {category.completionRate}%</div>
                       </div>
                       <div className="flex gap-2 mt-4">
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            // Switch to builder tab for editing
+                            const builderTab = document.querySelector('[value="builder"]') as HTMLElement
+                            builderTab?.click()
+                          }}
+                        >
                           Edit
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            if (category.isMain) {
+                              // Open main assessment in new tab
+                              window.open('/', '_blank')
+                            } else {
+                              // Test other assessments
+                              console.log(`Testing ${category.name}`)
+                              alert(`Testing ${category.name} - This will open the assessment interface`)
+                            }
+                          }}
+                        >
                           Test
                         </Button>
                       </div>
