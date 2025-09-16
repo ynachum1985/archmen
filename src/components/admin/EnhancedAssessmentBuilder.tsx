@@ -19,6 +19,7 @@ import { CategoryService, type AssessmentCategory } from '@/lib/services/categor
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 
 import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
+import { AssessmentTestingChat } from './AssessmentTestingChat'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -175,10 +176,10 @@ The AI should freely choose from all available archetypes based on the evidence 
   }
 }
 
-export function EnhancedAssessmentBuilder({ 
-  assessment, 
-  onSave, 
-  onTest 
+export function EnhancedAssessmentBuilder({
+  assessment,
+  onSave,
+  onTest
 }: EnhancedAssessmentBuilderProps) {
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(assessment || defaultConfig)
   const [categories, setCategories] = useState<AssessmentCategory[]>([])
@@ -186,6 +187,7 @@ export function EnhancedAssessmentBuilder({
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isLoadingPersonalities, setIsLoadingPersonalities] = useState(true)
   const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false)
+  const [showTestingChat, setShowTestingChat] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: '', description: '', color: 'blue', icon: 'Folder' })
   const categoryService = new CategoryService()
 
@@ -259,7 +261,7 @@ export function EnhancedAssessmentBuilder({
   }
 
   const handleTest = () => {
-    onTest(config)
+    setShowTestingChat(true)
   }
 
   // Update combined prompt when relevant fields change
@@ -282,11 +284,48 @@ export function EnhancedAssessmentBuilder({
         </TabsList>
 
         {/* AI Setup Tab */}
-        <TabsContent value="ai-setup" className="space-y-8">
-          {/* Fixed AI Settings */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">AI Configuration Settings</h3>
+        <TabsContent value="ai-setup" className="space-y-6">
+          {/* AI Personality Selection - Moved to top */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-blue-900">AI Personality</h4>
+              <Link
+                href="/admin?tab=ai-personality"
+                className="text-blue-600 hover:text-blue-700 text-xs font-medium flex items-center gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                Manage
+              </Link>
+            </div>
+            <Select
+              value={config.selectedPersonalityId || 'default'}
+              onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
+            >
+              <SelectTrigger className="h-9 text-sm border-blue-200 bg-white">
+                <SelectValue placeholder="Choose AI personality" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingPersonalities ? (
+                  <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
+                ) : (
+                  <>
+                    <SelectItem value="default">Default personality</SelectItem>
+                    {personalities.map(personality => (
+                      <SelectItem key={personality.id} value={personality.id}>
+                        {personality.name} - {personality.description}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-blue-600 mt-1">
+              Choose an AI personality that defines the questioning style and approach.
+            </p>
+          </div>
 
+          {/* Basic Configuration */}
+          <div className="space-y-4">
             {/* Basic Information */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="text-sm font-medium text-gray-900 mb-3">Basic Information</h4>
@@ -390,6 +429,32 @@ export function EnhancedAssessmentBuilder({
                   </SelectContent>
                 </Select>
                 </div>
+              </div>
+            </div>
+
+            {/* Description and Purpose */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="description" className="text-sm">Assessment Description</Label>
+                <Textarea
+                  id="description"
+                  value={config.description}
+                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe what this assessment measures..."
+                  className="mt-1 text-sm border-gray-200"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="purpose" className="text-sm">Assessment Purpose</Label>
+                <Textarea
+                  id="purpose"
+                  value={config.purpose}
+                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
+                  placeholder="Define the specific goals and outcomes..."
+                  className="mt-1 text-sm border-gray-200"
+                  rows={3}
+                />
               </div>
             </div>
 
@@ -515,69 +580,31 @@ export function EnhancedAssessmentBuilder({
             </div>
           </div>
 
-          {/* AI Personality Selection */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">AI Personality</h3>
-              <Link
-                href="/admin?tab=ai-personality"
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                Manage Personalities
-              </Link>
-            </div>
-
-            <div>
-              <Label htmlFor="personality">Select AI Personality</Label>
-              <Select
-                value={config.selectedPersonalityId || 'default'}
-                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
-              >
-                <SelectTrigger className="mt-1 border-gray-200">
-                  <SelectValue placeholder="Choose an AI personality for this assessment" />
-                </SelectTrigger>
-                <SelectContent>
-                  {isLoadingPersonalities ? (
-                    <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
-                  ) : (
-                    <>
-                      <SelectItem value="default">No specific personality (use default)</SelectItem>
-                      {personalities.map(personality => (
-                        <SelectItem key={personality.id} value={personality.id}>
-                          {personality.name} - {personality.description}
-                        </SelectItem>
-                      ))}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-gray-500 mt-2">
-                Choose an AI personality that defines the questioning style and approach for this assessment.
-                <Link href="/admin?tab=ai-personality" className="text-emerald-600 hover:text-emerald-700 ml-1">
-                  Create or configure personalities here.
-                </Link>
+          {/* Assessment Testing */}
+          <div className="space-y-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h4 className="text-sm font-medium text-green-900 mb-3">Test Assessment</h4>
+              <p className="text-sm text-green-700 mb-4">
+                Test your assessment configuration with a live chatbot interface to see how it performs.
               </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleTest}
+                  className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-100"
+                >
+                  <Eye className="h-4 w-4" />
+                  Test Assessment
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600"
+                >
+                  <Save className="h-4 w-4" />
+                  Save Assessment
+                </Button>
+              </div>
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-            <Button
-              variant="outline"
-              onClick={handleTest}
-              className="flex items-center gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              Test Assessment
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600"
-            >
-              <Save className="h-4 w-4" />
-              Save Assessment
-            </Button>
           </div>
         </TabsContent>
 
@@ -608,6 +635,14 @@ export function EnhancedAssessmentBuilder({
 
         </TabsContent>
       </Tabs>
+
+      {/* Testing Chat Modal */}
+      {showTestingChat && (
+        <AssessmentTestingChat
+          config={config}
+          onClose={() => setShowTestingChat(false)}
+        />
+      )}
 
       {/* New Category Dialog */}
       <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>

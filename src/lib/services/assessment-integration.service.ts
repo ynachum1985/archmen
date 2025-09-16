@@ -198,6 +198,41 @@ export class AssessmentIntegrationService {
   // Create a main assessment from the Assessment Builder
   async createMainAssessment(assessmentConfig: Record<string, unknown>): Promise<string> {
     try {
+      // Try to save to enhanced_assessments table first
+      try {
+        const { data: enhancedData, error: enhancedError } = await this.supabase
+          .from('enhanced_assessments')
+          .insert({
+            name: assessmentConfig.name as string,
+            description: assessmentConfig.description as string,
+            category: assessmentConfig.category as string || 'main',
+            purpose: assessmentConfig.purpose as string,
+            expected_duration: assessmentConfig.expectedDuration as number,
+            system_prompt: assessmentConfig.systemPrompt as string,
+            min_questions: assessmentConfig.minQuestions as number,
+            max_questions: assessmentConfig.maxQuestions as number,
+            evidence_threshold: assessmentConfig.evidenceThreshold as number,
+            adaptation_sensitivity: assessmentConfig.adaptationSensitivity as number,
+            cycle_settings: assessmentConfig.cycleSettings as Record<string, unknown>,
+            selected_personality_id: assessmentConfig.selectedPersonalityId as string || null,
+            combined_prompt: assessmentConfig.combinedPrompt as string,
+            question_examples: assessmentConfig.questionExamples as Record<string, unknown>,
+            response_requirements: assessmentConfig.responseRequirements as Record<string, unknown>,
+            report_generation: assessmentConfig.reportGeneration as string,
+            is_active: true
+          })
+          .select()
+          .single()
+
+        if (enhancedData && !enhancedError) {
+          console.log('Saved to enhanced_assessments table')
+          return enhancedData.id
+        }
+      } catch (enhancedError) {
+        console.log('Enhanced assessments table not available, falling back to assessment_templates')
+      }
+
+      // Fallback to assessment_templates table
       const { data, error } = await this.supabase
         .from('assessment_templates')
         .insert({
@@ -214,7 +249,15 @@ export class AssessmentIntegrationService {
             responseRequirements: assessmentConfig.responseRequirements,
             adaptiveLogic: assessmentConfig.adaptiveLogic,
             reportGeneration: assessmentConfig.reportGeneration,
-            archetypeMapping: this.extractArchetypeMapping()
+            archetypeMapping: this.extractArchetypeMapping(),
+            // Enhanced fields
+            minQuestions: assessmentConfig.minQuestions,
+            maxQuestions: assessmentConfig.maxQuestions,
+            evidenceThreshold: assessmentConfig.evidenceThreshold,
+            adaptationSensitivity: assessmentConfig.adaptationSensitivity,
+            cycleSettings: assessmentConfig.cycleSettings,
+            selectedPersonalityId: assessmentConfig.selectedPersonalityId,
+            combinedPrompt: assessmentConfig.combinedPrompt
           })),
           is_active: true
         })
