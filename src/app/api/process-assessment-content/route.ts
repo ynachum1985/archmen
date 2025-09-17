@@ -62,11 +62,11 @@ async function generateEmbedding(text: string, model: string = 'text-embedding-3
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { 
-      assessmentId, 
-      textContent, 
-      fileContent, 
-      sourceUrl, 
+    const {
+      assessmentId,
+      textContent,
+      fileContent,
+      sourceUrl,
       contentType = 'text',
       settings = {
         chunkSize: 1000,
@@ -77,6 +77,27 @@ export async function POST(request: NextRequest) {
 
     if (!assessmentId) {
       return NextResponse.json({ error: 'Assessment ID is required' }, { status: 400 })
+    }
+
+    // Check if assessment exists, if not create it
+    let finalAssessmentId = assessmentId
+
+    // If assessmentId is not a UUID, try to find or create the assessment
+    if (!assessmentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      // Try to find existing assessment by name
+      const { data: existingAssessment } = await supabase
+        .from('enhanced_assessments')
+        .select('id')
+        .eq('name', assessmentId)
+        .single()
+
+      if (existingAssessment) {
+        finalAssessmentId = existingAssessment.id
+      } else {
+        return NextResponse.json({
+          error: 'Assessment not found. Please create the assessment first.'
+        }, { status: 404 })
+      }
     }
 
     // Determine content to process
@@ -97,7 +118,7 @@ export async function POST(request: NextRequest) {
     const { error: settingsError } = await supabase
       .from('assessment_embedding_settings')
       .upsert({
-        assessment_id: assessmentId,
+        assessment_id: finalAssessmentId,
         chunk_size: settings.chunkSize,
         chunk_overlap: settings.chunkOverlap,
         embedding_model: settings.embeddingModel,
@@ -130,7 +151,7 @@ export async function POST(request: NextRequest) {
           const embedding = await generateEmbedding(chunk.text, settings.embeddingModel)
           
           return {
-            assessment_id: assessmentId,
+            assessment_id: finalAssessmentId,
             content_type: contentType,
             chunk_text: chunk.text,
             chunk_index: chunk.index,
@@ -175,7 +196,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Successfully processed and embedded ${chunks.length} chunks`,
       data: {
-        assessmentId,
+        assessmentId: finalAssessmentId,
         chunksProcessed: chunks.length,
         totalCharacters: contentToProcess.length,
         settings: settings,

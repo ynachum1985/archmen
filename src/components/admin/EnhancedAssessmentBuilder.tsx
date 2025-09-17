@@ -21,6 +21,7 @@ import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personali
 import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import { AssessmentTestingChat } from './AssessmentTestingChat'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
+import { AssessmentContentDisplay } from './AssessmentContentDisplay'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -596,7 +597,13 @@ APPROACH:
               />
             </div>
 
-
+            {/* Content Display */}
+            {config.name && (
+              <AssessmentContentDisplay
+                assessmentId={config.id || config.name}
+                assessmentName={config.name}
+              />
+            )}
 
             {/* Category Content Upload - Bottom of Page */}
             {config.name && (
