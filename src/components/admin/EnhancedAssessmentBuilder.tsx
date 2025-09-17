@@ -311,15 +311,8 @@ export function EnhancedAssessmentBuilder({
         <TabsContent value="setup" className="space-y-6">
           {/* AI Personality Selection */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div>
               <h4 className="text-sm font-medium text-gray-900">AI Personality</h4>
-              <Link
-                href="/admin?tab=ai-personality"
-                className="text-gray-600 hover:text-gray-700 text-xs font-medium flex items-center gap-1"
-              >
-                <Plus className="h-3 w-3" />
-                Manage
-              </Link>
             </div>
             <Select
               value={config.selectedPersonalityId || 'default'}
@@ -482,95 +475,84 @@ export function EnhancedAssessmentBuilder({
 
           </div>
 
-          {/* Combined Prompt Section */}
+          {/* Assessment Configuration */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Assessment Description & System Prompt</h3>
+            <h3 className="text-lg font-medium text-gray-900">Assessment Configuration</h3>
 
-            {/* Category - moved here */}
+            {/* Assessment Title */}
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="category" className="text-sm">Category</Label>
-                <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-800 h-6 px-2">
-                      <Plus className="h-3 w-3" />
-                      New
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent className="border-gray-200">
-                  <DialogHeader>
-                    <DialogTitle>Create New Category</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="categoryName">Category Name</Label>
-                      <Input
-                        id="categoryName"
-                        value={newCategory.name}
-                        onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="e.g., Spiritual Development"
-                        className="border-gray-200"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="categoryDescription">Description</Label>
-                      <Textarea
-                        id="categoryDescription"
-                        value={newCategory.description}
-                        onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Describe this category..."
-                        rows={2}
-                        className="border-gray-200"
-                      />
-                    </div>
-                    <div className="flex gap-4">
-                      <Button onClick={handleCreateCategory} className="flex-1">
-                        Create Category
-                      </Button>
-                      <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Label htmlFor="assessmentTitle" className="text-sm font-medium">Assessment Title</Label>
+              <Input
+                id="assessmentTitle"
+                value={config.name}
+                onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value, category: e.target.value }))}
+                placeholder="e.g., Polyamory Relationship Assessment, Career Leadership Assessment"
+                className="mt-1 border-gray-200"
+              />
+              <p className="text-xs text-gray-500 mt-1">This title will be used as the category for organizing content</p>
             </div>
-            <Select
-              value={config.category}
-              onValueChange={(value) => {
-                if (value === 'create-new') {
-                  setShowNewCategoryDialog(true)
-                } else {
-                  setConfig(prev => ({ ...prev, category: value }))
-                }
-              }}
-            >
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingCategories ? (
-                  <SelectItem value="loading" disabled>Loading categories...</SelectItem>
-                ) : (
-                  <>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.name}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="create-new" className="text-emerald-600 font-medium">
-                      + Create New Category
-                    </SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
 
-            {/* Category Embedding Configuration */}
-            {config.category && config.category !== 'create-new' && (
+            {/* Description and Purpose */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="description" className="text-sm">Assessment Description</Label>
+                <Textarea
+                  id="description"
+                  value={config.description}
+                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe what this assessment measures..."
+                  className="mt-1 text-sm border-gray-200"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="purpose" className="text-sm">Assessment Purpose</Label>
+                <Textarea
+                  id="purpose"
+                  value={config.purpose}
+                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
+                  placeholder="Define the specific goals and outcomes..."
+                  className="mt-1 text-sm border-gray-200"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* System Prompt */}
+            <div>
+              <Label htmlFor="combinedPrompt" className="text-sm font-medium">Assessment System Prompt</Label>
+              <p className="text-xs text-gray-600 mb-2">
+                Define how the AI should conduct this assessment. This prompt will guide the AI's questioning style and analysis approach.
+              </p>
+              <Textarea
+                id="combinedPrompt"
+                value={config.combinedPrompt}
+                onChange={(e) => setConfig(prev => ({ ...prev, combinedPrompt: e.target.value }))}
+                placeholder={`Example for ${config.name || 'your assessment'}:
+
+You are an expert in ${config.name?.toLowerCase() || 'this topic'}. Your role is to help users understand their patterns and preferences through thoughtful questioning.
+
+FOCUS AREAS:
+- Key areas relevant to ${config.name || 'this assessment'}
+- Communication styles and needs
+- Behavioral patterns and preferences
+- Growth opportunities and challenges
+
+APPROACH:
+- Ask open-ended questions that require 2-3 sentence responses
+- Be non-judgmental and supportive
+- Draw insights from uploaded reference materials
+- Help users understand their authentic preferences without bias`}
+                className="mt-1 font-mono text-sm border-gray-200"
+                rows={12}
+              />
+            </div>
+
+            {/* Category Knowledge Base */}
+            {config.name && (
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-blue-900">Category Knowledge Base</h4>
+                  <h4 className="text-sm font-medium text-blue-900">Knowledge Base for "{config.name}"</h4>
                   <EmbeddingSettingsDialog
                     trigger={
                       <Button variant="outline" size="sm" className="flex items-center gap-1 border-blue-300 text-blue-700 hover:bg-blue-100">
@@ -578,18 +560,18 @@ export function EnhancedAssessmentBuilder({
                         Embedding Settings
                       </Button>
                     }
-                    title={`Embedding Settings for ${config.category}`}
-                    description={`Configure how ${config.category} content is processed and embedded for AI reference`}
-                    itemId={config.category}
+                    title={`Embedding Settings for ${config.name}`}
+                    description={`Configure how ${config.name} content is processed and embedded for AI reference`}
+                    itemId={config.name}
                     itemType="archetype"
                     onSave={(settings) => {
-                      console.log('Category embedding settings saved:', settings)
-                      // Here you would save the settings for this category
+                      console.log('Assessment embedding settings saved:', settings)
+                      // Here you would save the settings for this assessment
                     }}
                   />
                 </div>
                 <p className="text-sm text-blue-700 mb-3">
-                  Upload documents, books, and reference materials specific to {config.category}.
+                  Upload documents, books, and reference materials specific to {config.name}.
                   The AI will use this content to provide more informed and accurate assessments.
                 </p>
                 <div className="space-y-3">
@@ -605,15 +587,16 @@ export function EnhancedAssessmentBuilder({
                   <div>
                     <Label className="text-sm text-blue-900">Add Text Content</Label>
                     <Textarea
-                      placeholder={`Paste ${config.category} content, book excerpts, or reference material here...`}
-                      className="mt-1 border-blue-200 bg-white"
-                      rows={4}
+                      placeholder={`Paste ${config.name} content, book excerpts, or reference material here...`}
+                      className="mt-1 border-blue-200 bg-white resize-y overflow-y-auto"
+                      rows={6}
+                      style={{ minHeight: '120px', maxHeight: '300px' }}
                     />
                   </div>
                   <div>
                     <Label className="text-sm text-blue-900">Reference Links</Label>
                     <Input
-                      placeholder={`https://example.com/${config.category.toLowerCase()}-guide`}
+                      placeholder={`https://example.com/${config.name?.toLowerCase().replace(/\s+/g, '-')}-guide`}
                       className="mt-1 border-blue-200 bg-white"
                     />
                   </div>
@@ -623,76 +606,7 @@ export function EnhancedAssessmentBuilder({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Description and Purpose - moved here */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="description" className="text-sm">Assessment Description</Label>
-              <Textarea
-                id="description"
-                value={config.description}
-                onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe what this assessment measures..."
-                className="mt-1 text-sm border-gray-200"
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label htmlFor="purpose" className="text-sm">Assessment Purpose</Label>
-              <Textarea
-                id="purpose"
-                value={config.purpose}
-                onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                placeholder="Define the specific goals and outcomes..."
-                className="mt-1 text-sm border-gray-200"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="combinedPrompt">Combined Prompt (Description + Purpose + System Instructions)</Label>
-            <Textarea
-              id="combinedPrompt"
-              value={config.combinedPrompt}
-              onChange={(e) => setConfig(prev => ({ ...prev, combinedPrompt: e.target.value }))}
-              placeholder="This will automatically combine your description, purpose, and system prompt. You can also edit it directly here..."
-              className="mt-1 font-mono text-sm border-gray-200"
-              rows={15}
-            />
-            <p className="text-sm text-gray-500 mt-2">
-              This field automatically combines your assessment description, purpose, and system prompt. You can edit it directly or it will update when you change the individual fields above.
-            </p>
-          </div>
         </div>
-
-          {/* Assessment Testing */}
-          <div className="space-y-4">
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <h4 className="text-sm font-medium text-green-900 mb-3">Test Assessment</h4>
-              <p className="text-sm text-green-700 mb-4">
-                Test your assessment configuration with a live chatbot interface to see how it performs.
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={handleTest}
-                  className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-100"
-                >
-                  <Eye className="h-4 w-4" />
-                  Test Assessment
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600"
-                >
-                  <Save className="h-4 w-4" />
-                  Save Assessment
-                </Button>
-              </div>
-            </div>
-          </div>
         </TabsContent>
 
         {/* Report & Answers Tab */}
