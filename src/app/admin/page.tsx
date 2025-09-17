@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Settings,
   Users,
@@ -114,6 +115,52 @@ export default function AdminPage() {
   const [expandedArchetype, setExpandedArchetype] = useState<string | null>(null)
   const [editingArchetype, setEditingArchetype] = useState<Archetype | null>(null)
   const [editingAssessment, setEditingAssessment] = useState<any>(null)
+  const [showEditAssessmentDialog, setShowEditAssessmentDialog] = useState(false)
+
+  // Convert mock assessment data to EnhancedAssessmentConfig format
+  const convertToAssessmentConfig = (mockAssessment: any) => {
+    return {
+      name: mockAssessment.name,
+      description: mockAssessment.description,
+      category: mockAssessment.name.includes('Main') ? 'Relationship Assessment' : 'Specialized Assessment',
+      purpose: `This assessment is designed to ${mockAssessment.description.toLowerCase()}`,
+      expectedDuration: Math.ceil(mockAssessment.questionCount * 1.5), // Estimate based on question count
+      systemPrompt: `You are analyzing ${mockAssessment.name.toLowerCase()} patterns. Focus on identifying relevant archetypes through thoughtful questioning.`,
+      minQuestions: Math.max(8, mockAssessment.questionCount - 3),
+      maxQuestions: mockAssessment.questionCount + 3,
+      evidenceThreshold: 0.7,
+      adaptationSensitivity: 0.5,
+      cycleSettings: {
+        maxCycles: 3,
+        evidencePerCycle: 3
+      },
+      selectedPersonalityId: undefined,
+      combinedPrompt: `Assessment: ${mockAssessment.name}\n\nDescription: ${mockAssessment.description}\n\nPurpose: This assessment is designed to ${mockAssessment.description.toLowerCase()}`,
+      questionExamples: {
+        openEnded: [
+          "How do you typically approach relationships?",
+          "What patterns do you notice in your interactions?"
+        ],
+        followUp: [
+          "Can you tell me more about that?",
+          "How does that make you feel?"
+        ],
+        maxSentences: 3,
+        followUpPrompts: [
+          "Please elaborate on your experience",
+          "What specific examples come to mind?"
+        ]
+      },
+      reportGeneration: "Generate a comprehensive report based on the identified archetypes and patterns.",
+      reportAnswers: {
+        theoreticalUnderstanding: "Provide theoretical context for the identified archetypes",
+        embodimentPractices: "Suggest practices for embodying positive aspects",
+        integrationPractices: "Recommend integration exercises",
+        resourceLinks: [],
+        archetypeCards: []
+      }
+    }
+  }
 
   // Load data from database
   useEffect(() => {
@@ -359,10 +406,10 @@ export default function AdminPage() {
                           variant="outline"
                           className="flex-1"
                           onClick={() => {
-                            // Switch to builder tab for editing with the selected assessment
-                            setEditingAssessment(category)
-                            const builderTab = document.querySelector('[value="builder"]') as HTMLElement
-                            builderTab?.click()
+                            // Convert mock data to proper assessment config and open edit dialog
+                            const assessmentConfig = convertToAssessmentConfig(category)
+                            setEditingAssessment(assessmentConfig)
+                            setShowEditAssessmentDialog(true)
                           }}
                         >
                           Edit Assessment
@@ -529,6 +576,30 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
 
+        {/* Edit Assessment Dialog */}
+        <Dialog open={showEditAssessmentDialog} onOpenChange={setShowEditAssessmentDialog}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Assessment: {editingAssessment?.name}</DialogTitle>
+              <DialogDescription>
+                Modify the assessment configuration and settings. Changes will be reflected in the builder tab.
+              </DialogDescription>
+            </DialogHeader>
+
+            {editingAssessment && (
+              <div className="mt-4">
+                <EnhancedAssessmentBuilder
+                  assessment={editingAssessment}
+                  onSave={(config) => {
+                    handleSaveEnhancedAssessment(config)
+                    setShowEditAssessmentDialog(false)
+                  }}
+                  onTest={handleTestEnhancedAssessment}
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
       </div>
     </div>

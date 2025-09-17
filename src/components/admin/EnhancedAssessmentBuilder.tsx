@@ -190,6 +190,29 @@ export function EnhancedAssessmentBuilder({
   const [newCategory, setNewCategory] = useState({ name: '', description: '', color: 'blue', icon: 'Folder' })
   const categoryService = new CategoryService()
 
+  // Handle assessment prop changes
+  useEffect(() => {
+    if (assessment) {
+      // Merge assessment with default config to ensure all properties exist
+      setConfig({
+        ...defaultConfig,
+        ...assessment,
+        cycleSettings: {
+          ...defaultConfig.cycleSettings,
+          ...(assessment.cycleSettings || {})
+        },
+        reportAnswers: {
+          ...defaultConfig.reportAnswers,
+          ...(assessment.reportAnswers || {})
+        },
+        questionExamples: {
+          ...defaultConfig.questionExamples,
+          ...(assessment.questionExamples || {})
+        }
+      })
+    }
+  }, [assessment])
+
   useEffect(() => {
     const initialize = async () => {
       await loadCategories()
