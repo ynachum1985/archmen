@@ -189,6 +189,9 @@ export function EnhancedAssessmentBuilder({
   const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false)
   const [showTestingChat, setShowTestingChat] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: '', description: '', color: 'blue', icon: 'Folder' })
+  const [isProcessingContent, setIsProcessingContent] = useState(false)
+  const [textContent, setTextContent] = useState('')
+  const [referenceUrl, setReferenceUrl] = useState('')
   const categoryService = new CategoryService()
 
   // Handle assessment prop changes
@@ -285,6 +288,51 @@ export function EnhancedAssessmentBuilder({
 
   const handleTest = () => {
     setShowTestingChat(true)
+  }
+
+  const handleProcessContent = async () => {
+    if (!config.name || (!textContent.trim() && !referenceUrl.trim())) {
+      alert('Please enter an assessment title and some content to process.')
+      return
+    }
+
+    setIsProcessingContent(true)
+    try {
+      const response = await fetch('/api/process-assessment-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assessmentId: config.id || config.name, // Use ID if available, otherwise use name
+          textContent: textContent.trim(),
+          sourceUrl: referenceUrl.trim() || null,
+          contentType: 'text',
+          settings: {
+            chunkSize: 1000,
+            chunkOverlap: 200,
+            embeddingModel: 'text-embedding-3-small',
+            contextWindow: 4000,
+            semanticSearchEnabled: true
+          }
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert(`Success! Processed ${result.data.chunksProcessed} chunks from ${result.data.totalCharacters} characters.`)
+        setTextContent('') // Clear the text area after successful processing
+        setReferenceUrl('') // Clear the URL field
+      } else {
+        alert(`Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error processing content:', error)
+      alert('Failed to process content. Please try again.')
+    } finally {
+      setIsProcessingContent(false)
+    }
   }
 
   // Update combined prompt when relevant fields change
@@ -810,7 +858,11 @@ You can paste large amounts of text - the text area will scroll automatically.`}
                   <div>
                     <Label className="text-sm font-medium text-gray-700">Add Text Content</Label>
                     <Textarea
-                      placeholder={`Paste ${config.name} content, book excerpts, or reference material here...`}
+                      value={textContent}
+                      onChange={(e) => setTextContent(e.target.value)}
+                      placeholder={`Paste ${config.name} content, book excerpts, or reference material here...
+
+You can paste large amounts of text - the text area will scroll automatically.`}
                       className="mt-1 resize-y overflow-y-auto"
                       rows={4}
                       style={{ minHeight: '100px', maxHeight: '250px' }}
@@ -819,12 +871,29 @@ You can paste large amounts of text - the text area will scroll automatically.`}
                   <div>
                     <Label className="text-sm font-medium text-gray-700">Reference Links</Label>
                     <Input
+                      value={referenceUrl}
+                      onChange={(e) => setReferenceUrl(e.target.value)}
                       placeholder={`https://example.com/${config.name?.toLowerCase().replace(/\s+/g, '-')}-guide`}
                       className="mt-1"
                     />
                   </div>
-                  <Button size="sm" className="w-full">
-                    Process & Embed Content
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={handleProcessContent}
+                    disabled={isProcessingContent || !config.name || (!textContent.trim() && !referenceUrl.trim())}
+                  >
+                    {isProcessingContent ? (
+                      <>
+                        <span className="animate-spin mr-2">⚡</span>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <span className="mr-2">⚡</span>
+                        Process & Embed Content
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
