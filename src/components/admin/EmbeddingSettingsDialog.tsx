@@ -127,25 +127,47 @@ export function EmbeddingSettingsDialog({
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Chunk Size: {settings.chunkSize} characters</Label>
-                  <Slider
-                    value={[settings.chunkSize]}
-                    onValueChange={([value]) => setSettings(prev => ({ ...prev, chunkSize: value }))}
-                    max={2000}
-                    min={200}
-                    step={100}
-                    className="w-full"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <Slider
+                      value={[settings.chunkSize]}
+                      onValueChange={([value]) => setSettings(prev => ({ ...prev, chunkSize: value }))}
+                      max={2000}
+                      min={200}
+                      step={100}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      value={settings.chunkSize}
+                      onChange={(e) => setSettings(prev => ({ ...prev, chunkSize: parseInt(e.target.value) || 1000 }))}
+                      min={200}
+                      max={2000}
+                      className="w-20"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">Recommended: 800-1200 characters for category content</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Chunk Overlap: {settings.chunkOverlap} characters</Label>
-                  <Slider
-                    value={[settings.chunkOverlap]}
-                    onValueChange={([value]) => setSettings(prev => ({ ...prev, chunkOverlap: value }))}
-                    max={500}
-                    min={0}
-                    step={50}
-                    className="w-full"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <Slider
+                      value={[settings.chunkOverlap]}
+                      onValueChange={([value]) => setSettings(prev => ({ ...prev, chunkOverlap: value }))}
+                      max={500}
+                      min={0}
+                      step={50}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      value={settings.chunkOverlap}
+                      onChange={(e) => setSettings(prev => ({ ...prev, chunkOverlap: parseInt(e.target.value) || 200 }))}
+                      min={0}
+                      max={500}
+                      className="w-20"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">Overlap helps maintain context between chunks</p>
                 </div>
               </CardContent>
             </Card>
@@ -170,21 +192,39 @@ export function EmbeddingSettingsDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Context Window: {settings.contextWindow} tokens</Label>
-                  <Slider
-                    value={[settings.contextWindow]}
-                    onValueChange={([value]) => setSettings(prev => ({ ...prev, contextWindow: value }))}
-                    max={8000}
-                    min={1000}
-                    step={500}
-                    className="w-full"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <Slider
+                      value={[settings.contextWindow]}
+                      onValueChange={([value]) => setSettings(prev => ({ ...prev, contextWindow: value }))}
+                      max={8000}
+                      min={1000}
+                      step={500}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      value={settings.contextWindow}
+                      onChange={(e) => setSettings(prev => ({ ...prev, contextWindow: parseInt(e.target.value) || 4000 }))}
+                      min={1000}
+                      max={8000}
+                      className="w-20"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">Maximum tokens for AI context processing</p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={settings.enableSemanticSearch}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, enableSemanticSearch: checked }))}
-                  />
-                  <Label>Enable Semantic Search</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={settings.enableSemanticSearch}
+                      onCheckedChange={(checked) => setSettings(prev => ({ ...prev, enableSemanticSearch: checked }))}
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                    <Label className="font-medium">Enable Semantic Search</Label>
+                  </div>
+                  <p className="text-xs text-gray-600 ml-6">
+                    Uses vector embeddings to find semantically similar content rather than just keyword matching.
+                    This provides more contextually relevant results but requires more processing power.
+                  </p>
                 </div>
               </CardContent>
             </Card>
