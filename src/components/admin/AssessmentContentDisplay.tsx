@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, ExternalLink, FileText, Globe } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Trash2, ExternalLink, FileText, Globe, ChevronDown, ChevronRight } from 'lucide-react'
 
 interface ContentChunk {
   id: string
@@ -31,6 +32,7 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
   const [chunks, setChunks] = useState<ContentChunk[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     fetchContentChunks()
@@ -133,17 +135,38 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Knowledge Base Content
-        </CardTitle>
-        <CardDescription>
-          {chunks.length} content chunks uploaded for {assessmentName}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Knowledge Base Content
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {chunks.length} chunks
+                </Badge>
+                {isOpen ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </div>
+            </CardTitle>
+            <CardDescription>
+              {chunks.length} content chunks uploaded for {assessmentName}
+              {chunks.length > 0 && (
+                <span className="text-xs text-gray-500 ml-2">
+                  ({chunks.reduce((sum, chunk) => sum + chunk.chunk_size, 0).toLocaleString()} characters total)
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent>
         {chunks.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -151,7 +174,7 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
             <p className="text-sm">Use the knowledge base section above to add content</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-96 overflow-y-auto">
             {chunks.map((chunk, index) => (
               <div key={chunk.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
@@ -211,7 +234,9 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   )
 }

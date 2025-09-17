@@ -283,8 +283,49 @@ export function EnhancedAssessmentBuilder({
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Save to parent component
     onSave(config)
+
+    // Also sync to database
+    try {
+      const response = await fetch('/api/sync-assessments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assessment: {
+            name: config.name,
+            description: config.description,
+            category: config.category,
+            purpose: config.purpose,
+            systemPrompt: config.systemPrompt,
+            combinedPrompt: config.combinedPrompt,
+            minQuestions: config.minQuestions,
+            maxQuestions: config.maxQuestions,
+            evidenceThreshold: config.evidenceThreshold,
+            adaptationSensitivity: config.adaptationSensitivity,
+            expectedDuration: config.expectedDuration,
+            questionExamples: config.questionExamples,
+            responseRequirements: config.responseRequirements,
+            adaptiveLogic: config.cycleSettings,
+            cycleSettings: config.cycleSettings,
+            selectedPersonalityId: config.selectedPersonalityId,
+            reportGeneration: config.reportGeneration
+          }
+        })
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        console.log(`Assessment ${result.action} successfully in database`)
+      } else {
+        console.error('Failed to sync assessment to database:', result.error)
+      }
+    } catch (error) {
+      console.error('Error syncing assessment to database:', error)
+    }
   }
 
   const handleTest = () => {
