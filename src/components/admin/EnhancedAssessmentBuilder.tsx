@@ -20,6 +20,7 @@ import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personali
 
 import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import { AssessmentTestingChat } from './AssessmentTestingChat'
+import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -564,6 +565,64 @@ export function EnhancedAssessmentBuilder({
                 )}
               </SelectContent>
             </Select>
+
+            {/* Category Embedding Configuration */}
+            {config.category && config.category !== 'create-new' && (
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-blue-900">Category Knowledge Base</h4>
+                  <EmbeddingSettingsDialog
+                    trigger={
+                      <Button variant="outline" size="sm" className="flex items-center gap-1 border-blue-300 text-blue-700 hover:bg-blue-100">
+                        <span className="text-lg">✨</span>
+                        Embedding Settings
+                      </Button>
+                    }
+                    title={`Embedding Settings for ${config.category}`}
+                    description={`Configure how ${config.category} content is processed and embedded for AI reference`}
+                    itemId={config.category}
+                    itemType="archetype"
+                    onSave={(settings) => {
+                      console.log('Category embedding settings saved:', settings)
+                      // Here you would save the settings for this category
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-blue-700 mb-3">
+                  Upload documents, books, and reference materials specific to {config.category}.
+                  The AI will use this content to provide more informed and accurate assessments.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm text-blue-900">Upload Documents</Label>
+                    <Input
+                      type="file"
+                      multiple
+                      accept=".pdf,.txt,.doc,.docx"
+                      className="mt-1 border-blue-200 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm text-blue-900">Add Text Content</Label>
+                    <Textarea
+                      placeholder={`Paste ${config.category} content, book excerpts, or reference material here...`}
+                      className="mt-1 border-blue-200 bg-white"
+                      rows={4}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm text-blue-900">Reference Links</Label>
+                    <Input
+                      placeholder={`https://example.com/${config.category.toLowerCase()}-guide`}
+                      className="mt-1 border-blue-200 bg-white"
+                    />
+                  </div>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    Process & Embed Content
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Description and Purpose - moved here */}

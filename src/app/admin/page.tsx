@@ -578,7 +578,7 @@ export default function AdminPage() {
 
         {/* Edit Assessment Dialog */}
         <Dialog open={showEditAssessmentDialog} onOpenChange={setShowEditAssessmentDialog}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl">
+          <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-y-auto bg-white border border-gray-200 shadow-xl">
             <DialogHeader>
               <DialogTitle>Edit Assessment: {editingAssessment?.name}</DialogTitle>
               <DialogDescription>
