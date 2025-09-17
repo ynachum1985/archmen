@@ -55,14 +55,6 @@ export function AssessmentTestingChat({ config, onClose }: AssessmentTestingChat
   const [questionCount, setQuestionCount] = useState(0)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Initialize the conversation with the first question
-  useEffect(() => {
-    if (!isInitialized) {
-      generateInitialQuestion()
-      setIsInitialized(true)
-    }
-  }, [isInitialized, generateInitialQuestion])
-
   const generateInitialQuestion = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -107,6 +99,14 @@ Start the conversation with an engaging opening question that aligns with the as
       setIsLoading(false)
     }
   }, [config.combinedPrompt, config.minQuestions, config.maxQuestions, config.evidenceThreshold, config.adaptationSensitivity])
+
+  // Initialize the conversation with the first question
+  useEffect(() => {
+    if (!isInitialized) {
+      generateInitialQuestion()
+      setIsInitialized(true)
+    }
+  }, [isInitialized, generateInitialQuestion])
 
   const handleSendMessage = async () => {
     if (!currentInput.trim() || isLoading) return

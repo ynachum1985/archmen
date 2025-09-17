@@ -103,14 +103,10 @@ export function EmbeddingSettingsDialog({
         </DialogHeader>
 
         <Tabs defaultValue="config" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="config" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Configuration
-            </TabsTrigger>
-            <TabsTrigger value="generation" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Generation
             </TabsTrigger>
             <TabsTrigger value="testing" className="flex items-center gap-2">
               <TestTube className="h-4 w-4" />
@@ -245,33 +241,6 @@ export function EmbeddingSettingsDialog({
             </Card>
           </TabsContent>
 
-          <TabsContent value="generation" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Generate Embeddings</CardTitle>
-                <CardDescription>Create embeddings with current settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm text-gray-600">
-                  <p>Current configuration:</p>
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Chunk Size: {settings.chunkSize} characters</li>
-                    <li>Overlap: {settings.chunkOverlap} characters</li>
-                    <li>Model: {settings.embeddingModel}</li>
-                    <li>Context Window: {settings.contextWindow} tokens</li>
-                  </ul>
-                </div>
-                <Button 
-                  onClick={handleGenerateEmbeddings}
-                  disabled={isGenerating}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {isGenerating ? 'Generating...' : 'Generate Embeddings'}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="testing" className="space-y-4">
             <Card>

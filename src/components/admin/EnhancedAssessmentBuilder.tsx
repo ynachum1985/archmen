@@ -613,12 +613,7 @@ You can paste large amounts of text - the text area will scroll automatically.`}
                     <p className="text-xs text-gray-500 mt-1">Add external links to relevant resources</p>
                   </div>
 
-                  <div className="flex justify-end pt-2">
-                    <Button className="flex items-center gap-2">
-                      <span className="text-lg">⚡</span>
-                      Process & Embed Content
-                    </Button>
-                  </div>
+
                 </div>
               </div>
             )}
@@ -776,6 +771,64 @@ You can paste large amounts of text - the text area will scroll automatically.`}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Knowledge Base Section */}
+            {config.name && (
+              <div className="border border-gray-200 p-4 rounded-lg bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-gray-900">Knowledge Base for "{config.name}"</h4>
+                  <EmbeddingSettingsDialog
+                    trigger={
+                      <Button variant="outline" size="sm" className="flex items-center gap-1">
+                        <span className="text-lg">✨</span>
+                        Embedding Settings
+                      </Button>
+                    }
+                    title={`Embedding Settings for ${config.name}`}
+                    description={`Configure how ${config.name} content is processed and embedded for AI reference`}
+                    itemId={config.name}
+                    itemType="archetype"
+                    onSave={(settings) => {
+                      console.log('Assessment embedding settings saved:', settings)
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  Upload documents, books, and reference materials specific to {config.name}.
+                  The AI will use this content to provide more informed and accurate assessments.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Upload Documents</Label>
+                    <Input
+                      type="file"
+                      multiple
+                      accept=".pdf,.txt,.doc,.docx"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Add Text Content</Label>
+                    <Textarea
+                      placeholder={`Paste ${config.name} content, book excerpts, or reference material here...`}
+                      className="mt-1 resize-y overflow-y-auto"
+                      rows={4}
+                      style={{ minHeight: '100px', maxHeight: '250px' }}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Reference Links</Label>
+                    <Input
+                      placeholder={`https://example.com/${config.name?.toLowerCase().replace(/\s+/g, '-')}-guide`}
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button size="sm" className="w-full">
+                    Process & Embed Content
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
