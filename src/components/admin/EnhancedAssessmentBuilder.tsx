@@ -13,7 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Save,
   Eye,
-  Plus
+  Plus,
+  Zap,
+  DollarSign,
+  Clock,
+  BarChart3,
+  TestTube,
+  Sparkles
 } from 'lucide-react'
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
@@ -22,6 +28,7 @@ import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import { AssessmentTestingChat } from './AssessmentTestingChat'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { AssessmentContentDisplay } from './AssessmentContentDisplay'
+import { multiLLMService, LLMProvider, LLMConfig, LLM_PROVIDERS } from '@/lib/services/multi-llm.service'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -193,6 +200,17 @@ export function EnhancedAssessmentBuilder({
   const [isProcessingContent, setIsProcessingContent] = useState(false)
   const [textContent, setTextContent] = useState('')
   const [referenceUrl, setReferenceUrl] = useState('')
+
+  // LLM Testing states
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>('openai')
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4-turbo-preview')
+  const [testTemperature, setTestTemperature] = useState<number>(0.7)
+  const [testMaxTokens, setTestMaxTokens] = useState<number>(2000)
+  const [testPrompt, setTestPrompt] = useState<string>('')
+  const [testResults, setTestResults] = useState<any[]>([])
+  const [isTestingLLM, setIsTestingLLM] = useState<boolean>(false)
+  const [availableProviders, setAvailableProviders] = useState<LLMProvider[]>([])
+  const [showLLMComparison, setShowLLMComparison] = useState<boolean>(false)
   const categoryService = new CategoryService()
 
   // Handle assessment prop changes
@@ -223,9 +241,33 @@ export function EnhancedAssessmentBuilder({
       await loadCategories()
       await loadPersonalities()
       await initializeFileStorage()
+
+      // Initialize LLM testing
+      const service = multiLLMService.getInstance()
+      const providers = service.getAvailableProviders()
+      setAvailableProviders(providers)
+
+      if (providers.length > 0 && !selectedProvider) {
+        setSelectedProvider(providers[0])
+      }
     }
     initialize()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Set default test prompt based on assessment
+  useEffect(() => {
+    if (config.name && !testPrompt) {
+      setTestPrompt(`You are conducting the "${config.name}" assessment. A user responds: "I often find myself in situations where I feel overwhelmed by my partner's emotions, but I don't know how to help them without losing myself in the process."
+
+Please provide a thoughtful response that:
+1. Acknowledges their experience
+2. Asks a follow-up question to understand their relationship patterns
+3. Maintains the assessment's focus on ${config.category || 'relationship dynamics'}
+4. Uses an empathetic but professional tone
+
+Keep the response under 150 words and end with a specific question.`)
+    }
+  }, [config.name, config.category, testPrompt])
 
   const loadCategories = async () => {
     try {
@@ -326,6 +368,120 @@ export function EnhancedAssessmentBuilder({
     } catch (error) {
       console.error('Error syncing assessment to database:', error)
     }
+  }
+
+  // LLM Testing Functions
+  const runSingleLLMTest = async () => {
+    if (!selectedProvider || !selectedModel || !testPrompt.trim()) return
+
+    setIsTestingLLM(true)
+    try {
+      const service = multiLLMService.getInstance()
+      const startTime = Date.now()
+
+      const llmConfig: LLMConfig = {
+        provider: selectedProvider,
+        model: selectedModel,
+        temperature: testTemperature,
+        maxTokens: testMaxTokens
+      }
+
+      const systemPrompt = config.combinedPrompt || config.systemPrompt || `You are conducting the "${config.name}" assessment. Be empathetic and ask thoughtful follow-up questions.`
+
+      const result = await service.generateChatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: testPrompt }
+      ], llmConfig)
+
+      const responseTime = Date.now() - startTime
+
+      const testResult = {
+        provider: selectedProvider,
+        model: selectedModel,
+        response: result.content,
+        cost: result.cost,
+        responseTime,
+        usage: result.usage,
+        timestamp: new Date().toISOString()
+      }
+
+      setTestResults(prev => [testResult, ...prev])
+    } catch (error) {
+      console.error('LLM test failed:', error)
+      alert(`Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsTestingLLM(false)
+    }
+  }
+
+  const runLLMComparison = async () => {
+    setIsTestingLLM(true)
+    const results: any[] = []
+
+    // Test configurations for comparison
+    const testConfigs = [
+      { provider: 'openai' as LLMProvider, model: 'gpt-4-turbo-preview' },
+      { provider: 'openai' as LLMProvider, model: 'gpt-3.5-turbo' },
+      { provider: 'anthropic' as LLMProvider, model: 'claude-3-5-sonnet-20241022' },
+      { provider: 'anthropic' as LLMProvider, model: 'claude-3-haiku-20240307' },
+      { provider: 'kimi' as LLMProvider, model: 'moonshot-v1-8k' }
+    ]
+
+    for (const testConfig of testConfigs) {
+      if (!availableProviders.includes(testConfig.provider)) continue
+
+      try {
+        const service = multiLLMService.getInstance()
+        const startTime = Date.now()
+
+        const llmConfig: LLMConfig = {
+          ...testConfig,
+          temperature: testTemperature,
+          maxTokens: testMaxTokens
+        }
+
+        const systemPrompt = config.combinedPrompt || config.systemPrompt || `You are conducting the "${config.name}" assessment. Be empathetic and ask thoughtful follow-up questions.`
+
+        const result = await service.generateChatCompletion([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: testPrompt }
+        ], llmConfig)
+
+        const responseTime = Date.now() - startTime
+
+        results.push({
+          provider: testConfig.provider,
+          model: testConfig.model,
+          response: result.content,
+          cost: result.cost,
+          responseTime,
+          usage: result.usage,
+          timestamp: new Date().toISOString()
+        })
+
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 500))
+      } catch (error) {
+        console.error(`Test failed for ${testConfig.provider}/${testConfig.model}:`, error)
+      }
+    }
+
+    setTestResults(prev => [...results, ...prev])
+    setIsTestingLLM(false)
+  }
+
+  const clearTestResults = () => {
+    setTestResults([])
+  }
+
+  const getProviderColor = (provider: LLMProvider) => {
+    const colors = {
+      openai: 'bg-green-100 text-green-800',
+      anthropic: 'bg-orange-100 text-orange-800',
+      kimi: 'bg-blue-100 text-blue-800',
+      local: 'bg-purple-100 text-purple-800'
+    }
+    return colors[provider]
   }
 
   const handleTest = () => {
@@ -746,58 +902,275 @@ You can paste large amounts of text - the text area will scroll automatically.`}
         {/* Testing Tab - Only shown when editing an existing assessment */}
         {assessment && (
           <TabsContent value="testing" className="space-y-6">
-            <div className="bg-white border rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">Test Assessment</h3>
-                  <p className="text-sm text-gray-600">
-                    Test your assessment configuration with a live chat interface
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setShowTestingChat(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Eye className="h-4 w-4" />
-                  Start Test
-                </Button>
-              </div>
+            <Tabs defaultValue="chat-test" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="chat-test">Chat Test</TabsTrigger>
+                <TabsTrigger value="llm-test">LLM Testing</TabsTrigger>
+                <TabsTrigger value="results">Results ({testResults.length})</TabsTrigger>
+              </TabsList>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Assessment Configuration Summary</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Questions:</span>
-                    <span className="ml-1 font-medium">{config.minQuestions}-{config.maxQuestions}</span>
+              {/* Original Chat Testing */}
+              <TabsContent value="chat-test" className="space-y-4">
+                <div className="bg-white border rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">Test Assessment</h3>
+                      <p className="text-sm text-gray-600">
+                        Test your assessment configuration with a live chat interface
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setShowTestingChat(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Start Test
+                    </Button>
                   </div>
-                  <div>
-                    <span className="text-gray-600">Duration:</span>
-                    <span className="ml-1 font-medium">{config.expectedDuration} min</span>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Assessment Configuration Summary</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Questions:</span>
+                        <span className="ml-1 font-medium">{config.minQuestions}-{config.maxQuestions}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Duration:</span>
+                        <span className="ml-1 font-medium">{config.expectedDuration} min</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Category:</span>
+                        <span className="ml-1 font-medium">{config.category || 'Not set'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">AI Personality:</span>
+                        <span className="ml-1 font-medium">
+                          {personalities.find(p => p.id === config.selectedPersonalityId)?.name || 'Default'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-gray-600">Category:</span>
-                    <span className="ml-1 font-medium">{config.category || 'Not set'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">AI Personality:</span>
-                    <span className="ml-1 font-medium">
-                      {personalities.find(p => p.id === config.selectedPersonalityId)?.name || 'Default'}
-                    </span>
+
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h4 className="text-sm font-medium text-blue-900 mb-2">Testing Instructions</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Click "Start Test" to open the assessment chat interface</li>
+                      <li>• Answer questions as a test user would to validate the flow</li>
+                      <li>• Check that the AI personality and questioning style match your expectations</li>
+                      <li>• Verify that the assessment reaches appropriate conclusions</li>
+                      <li>• Make adjustments to the configuration as needed</li>
+                    </ul>
                   </div>
                 </div>
-              </div>
+              </TabsContent>
 
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">Testing Instructions</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Click "Start Test" to open the assessment chat interface</li>
-                  <li>• Answer questions as a test user would to validate the flow</li>
-                  <li>• Check that the AI personality and questioning style match your expectations</li>
-                  <li>• Verify that the assessment reaches appropriate conclusions</li>
-                  <li>• Make adjustments to the configuration as needed</li>
-                </ul>
-              </div>
-            </div>
+              {/* LLM Testing Tab */}
+              <TabsContent value="llm-test" className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TestTube className="h-5 w-5" />
+                        LLM Configuration
+                      </CardTitle>
+                      <CardDescription>Test different language models for your assessment</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Provider</Label>
+                          <Select value={selectedProvider} onValueChange={(value) => setSelectedProvider(value as LLMProvider)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableProviders.map(provider => (
+                                <SelectItem key={provider} value={provider}>
+                                  {LLM_PROVIDERS[provider].name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Model</Label>
+                          <Select value={selectedModel} onValueChange={setSelectedModel}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectedProvider && multiLLMService.getInstance().getProviderModels(selectedProvider).map(model => (
+                                <SelectItem key={model} value={model}>
+                                  {model}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Temperature: {testTemperature}</Label>
+                        <Slider
+                          value={[testTemperature]}
+                          onValueChange={(value) => setTestTemperature(value[0])}
+                          max={2}
+                          min={0}
+                          step={0.1}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Max Tokens</Label>
+                        <Input
+                          type="number"
+                          value={testMaxTokens}
+                          onChange={(e) => setTestMaxTokens(parseInt(e.target.value) || 2000)}
+                          min={100}
+                          max={4000}
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={runSingleLLMTest}
+                          disabled={isTestingLLM || !testPrompt.trim()}
+                          className="flex-1 flex items-center gap-2"
+                        >
+                          <TestTube className="h-4 w-4" />
+                          {isTestingLLM ? 'Testing...' : 'Test Single'}
+                        </Button>
+                        <Button
+                          onClick={runLLMComparison}
+                          disabled={isTestingLLM || !testPrompt.trim()}
+                          variant="outline"
+                          className="flex-1 flex items-center gap-2"
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                          {isTestingLLM ? 'Testing...' : 'Compare All'}
+                        </Button>
+                      </div>
+
+                      {testResults.length > 0 && (
+                        <Button
+                          onClick={clearTestResults}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Clear Results
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Test Prompt</CardTitle>
+                      <CardDescription>Customize the prompt to test how different models respond</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Textarea
+                        value={testPrompt}
+                        onChange={(e) => setTestPrompt(e.target.value)}
+                        placeholder="Enter your test prompt here..."
+                        className="min-h-[300px] resize-y"
+                      />
+                      <div className="mt-2 text-xs text-gray-500">
+                        This prompt will be sent to the selected LLM with your assessment's system prompt as context.
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Pricing Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Pricing Comparison
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {Object.entries(LLM_PROVIDERS).map(([provider, config]) => (
+                        <div key={provider} className="space-y-2">
+                          <Badge className={getProviderColor(provider as LLMProvider)}>
+                            {config.name}
+                          </Badge>
+                          {Object.entries(config.models).slice(0, 2).map(([model, pricing]) => (
+                            <div key={model} className="text-xs">
+                              <div className="font-medium">{model}</div>
+                              <div className="text-gray-500">
+                                {'inputCost' in pricing && 'outputCost' in pricing ? (
+                                  <>In: ${pricing.inputCost}/1K • Out: ${pricing.outputCost}/1K</>
+                                ) : 'inputCost' in pricing ? (
+                                  <>Combined: ${pricing.inputCost}/1K</>
+                                ) : (
+                                  'Free (Local)'
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Results Tab */}
+              <TabsContent value="results" className="space-y-4">
+                {testResults.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-8">
+                      <p className="text-gray-500">No test results yet. Run a test to see results here.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {testResults.map((result, index) => (
+                      <Card key={index}>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge className={getProviderColor(result.provider)}>
+                                {LLM_PROVIDERS[result.provider].name}
+                              </Badge>
+                              <span className="font-medium">{result.model}</span>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              {result.cost && (
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="h-3 w-3" />
+                                  ${result.cost.toFixed(4)}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {result.responseTime}ms
+                              </div>
+                              {result.usage && (
+                                <div className="flex items-center gap-1">
+                                  <Zap className="h-3 w-3" />
+                                  {result.usage.totalTokens} tokens
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="prose prose-sm max-w-none">
+                            <p className="whitespace-pre-wrap">{result.response}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         )}
       </Tabs>

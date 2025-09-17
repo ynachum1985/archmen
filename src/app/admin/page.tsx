@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input"
 
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
+import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
