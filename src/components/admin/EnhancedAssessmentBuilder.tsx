@@ -905,275 +905,89 @@ You can paste large amounts of text - the text area will scroll automatically.`}
         {/* Testing Tab - Only shown when editing an existing assessment */}
         {assessment && (
           <TabsContent value="testing" className="space-y-6">
-            <Tabs defaultValue="chat-test" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="chat-test">Chat Test</TabsTrigger>
-                <TabsTrigger value="llm-test">LLM Testing</TabsTrigger>
-                <TabsTrigger value="results">Results ({testResults.length})</TabsTrigger>
-              </TabsList>
-
-              {/* Original Chat Testing */}
-              <TabsContent value="chat-test" className="space-y-4">
-                <div className="bg-white border rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">Test Assessment</h3>
-                      <p className="text-sm text-gray-600">
-                        Test your assessment configuration with a live chat interface
-                      </p>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Assessment Testing</CardTitle>
+                    <CardDescription>
+                      Test this assessment with different LLM providers - experience it as a user would
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs">LLM Provider</Label>
+                      <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Select provider" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableProviders.map((provider) => (
+                            <SelectItem key={provider} value={provider}>
+                              {LLM_PROVIDERS[provider as keyof typeof LLM_PROVIDERS].name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Button
-                      onClick={() => setShowTestingChat(true)}
-                      className="flex items-center gap-2"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Start Test
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">Model</Label>
+                      <Select value={selectedModel} onValueChange={setSelectedModel}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Select model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedProvider && Object.keys(LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
+                            <SelectItem key={model} value={model}>
+                              {model}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedProvider && selectedModel && (
+                      <div className="text-xs text-gray-500">
+                        <div>Cost: ${LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS].models[selectedModel as keyof typeof LLM_PROVIDERS[typeof selectedProvider]['models']].inputCost}/1K in</div>
+                        <div>${LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS].models[selectedModel as keyof typeof LLM_PROVIDERS[typeof selectedProvider]['models']].outputCost}/1K out</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Chat Interface */}
+                  <div className="h-96 border rounded-lg p-4 bg-gray-50 overflow-y-auto">
+                    <p className="text-gray-500 text-center mt-40">
+                      Assessment chat interface will be implemented here
+                      <br />
+                      <span className="text-sm">This will function exactly like the user experience with the selected LLM provider</span>
+                    </p>
+                  </div>
+
+                  {/* Input Area */}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Type your response to the assessment question..."
+                      className="flex-1"
+                      disabled={!selectedProvider || !selectedModel}
+                    />
+                    <Button disabled={!selectedProvider || !selectedModel}>
+                      Send
                     </Button>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">Assessment Configuration Summary</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Questions:</span>
-                        <span className="ml-1 font-medium">{config.minQuestions}-{config.maxQuestions}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Duration:</span>
-                        <span className="ml-1 font-medium">{config.expectedDuration} min</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Category:</span>
-                        <span className="ml-1 font-medium">{config.category || 'Not set'}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">AI Personality:</span>
-                        <span className="ml-1 font-medium">
-                          {personalities.find(p => p.id === config.selectedPersonalityId)?.name || 'Default'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 className="text-sm font-medium text-blue-900 mb-2">Testing Instructions</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Click "Start Test" to open the assessment chat interface</li>
-                      <li>• Answer questions as a test user would to validate the flow</li>
-                      <li>• Check that the AI personality and questioning style match your expectations</li>
-                      <li>• Verify that the assessment reaches appropriate conclusions</li>
-                      <li>• Make adjustments to the configuration as needed</li>
-                    </ul>
-                  </div>
+                  {!selectedProvider || !selectedModel ? (
+                    <p className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                      Please select an LLM provider and model to start testing the assessment
+                    </p>
+                  ) : null}
                 </div>
-              </TabsContent>
+              </CardContent>
+            </Card>
 
-              {/* LLM Testing Tab */}
-              <TabsContent value="llm-test" className="space-y-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <TestTube className="h-5 w-5" />
-                        LLM Configuration
-                      </CardTitle>
-                      <CardDescription>Test different language models for your assessment</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Provider</Label>
-                          <Select value={selectedProvider} onValueChange={(value) => setSelectedProvider(value as LLMProvider)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableProviders.map(provider => (
-                                <SelectItem key={provider} value={provider}>
-                                  {LLM_PROVIDERS[provider].name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Model</Label>
-                          <Select value={selectedModel} onValueChange={setSelectedModel}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {selectedProvider && multiLLMService.getInstance().getProviderModels(selectedProvider).map(model => (
-                                <SelectItem key={model} value={model}>
-                                  {model}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Temperature: {testTemperature}</Label>
-                        <Slider
-                          value={[testTemperature]}
-                          onValueChange={(value) => setTestTemperature(value[0])}
-                          max={2}
-                          min={0}
-                          step={0.1}
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Max Tokens</Label>
-                        <Input
-                          type="number"
-                          value={testMaxTokens}
-                          onChange={(e) => setTestMaxTokens(parseInt(e.target.value) || 2000)}
-                          min={100}
-                          max={4000}
-                        />
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={runSingleLLMTest}
-                          disabled={isTestingLLM || !testPrompt.trim()}
-                          className="flex-1 flex items-center gap-2"
-                        >
-                          <TestTube className="h-4 w-4" />
-                          {isTestingLLM ? 'Testing...' : 'Test Single'}
-                        </Button>
-                        <Button
-                          onClick={runLLMComparison}
-                          disabled={isTestingLLM || !testPrompt.trim()}
-                          variant="outline"
-                          className="flex-1 flex items-center gap-2"
-                        >
-                          <BarChart3 className="h-4 w-4" />
-                          {isTestingLLM ? 'Testing...' : 'Compare All'}
-                        </Button>
-                      </div>
-
-                      {testResults.length > 0 && (
-                        <Button
-                          onClick={clearTestResults}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          Clear Results
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Test Prompt</CardTitle>
-                      <CardDescription>Customize the prompt to test how different models respond</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Textarea
-                        value={testPrompt}
-                        onChange={(e) => setTestPrompt(e.target.value)}
-                        placeholder="Enter your test prompt here..."
-                        className="min-h-[300px] resize-y"
-                      />
-                      <div className="mt-2 text-xs text-gray-500">
-                        This prompt will be sent to the selected LLM with your assessment's system prompt as context.
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Pricing Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5" />
-                      Pricing Comparison
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {Object.entries(LLM_PROVIDERS).map(([provider, config]) => (
-                        <div key={provider} className="space-y-2">
-                          <Badge className={getProviderColor(provider as LLMProvider)}>
-                            {config.name}
-                          </Badge>
-                          {Object.entries(config.models).slice(0, 2).map(([model, pricing]) => (
-                            <div key={model} className="text-xs">
-                              <div className="font-medium">{model}</div>
-                              <div className="text-gray-500">
-                                {'inputCost' in pricing && 'outputCost' in pricing ? (
-                                  <>In: ${pricing.inputCost}/1K • Out: ${pricing.outputCost}/1K</>
-                                ) : 'inputCost' in pricing ? (
-                                  <>Combined: ${pricing.inputCost}/1K</>
-                                ) : (
-                                  'Free (Local)'
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Results Tab */}
-              <TabsContent value="results" className="space-y-4">
-                {testResults.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-8">
-                      <p className="text-gray-500">No test results yet. Run a test to see results here.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {testResults.map((result, index) => (
-                      <Card key={index}>
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Badge className={getProviderColor(result.provider)}>
-                                {LLM_PROVIDERS[result.provider].name}
-                              </Badge>
-                              <span className="font-medium">{result.model}</span>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              {result.cost && (
-                                <div className="flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" />
-                                  ${result.cost.toFixed(4)}
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {result.responseTime}ms
-                              </div>
-                              {result.usage && (
-                                <div className="flex items-center gap-1">
-                                  <Zap className="h-3 w-3" />
-                                  {result.usage.totalTokens} tokens
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="prose prose-sm max-w-none">
-                            <p className="whitespace-pre-wrap">{result.response}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
           </TabsContent>
         )}
       </Tabs>
