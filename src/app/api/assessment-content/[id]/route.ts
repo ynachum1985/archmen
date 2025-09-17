@@ -11,13 +11,38 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params
+    let { id } = params
+
+    // Decode URL-encoded assessment ID/name
+    id = decodeURIComponent(id)
+
+    // If ID is not a UUID, try to find the assessment by name
+    let assessmentId = id
+    if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      const { data: assessment, error: assessmentError } = await supabase
+        .from('enhanced_assessments')
+        .select('id')
+        .eq('name', id)
+        .single()
+
+      if (assessmentError || !assessment) {
+        return NextResponse.json({
+          error: 'Assessment not found',
+          chunks: [],
+          settings: null,
+          totalChunks: 0,
+          totalCharacters: 0
+        }, { status: 404 })
+      }
+
+      assessmentId = assessment.id
+    }
 
     // Fetch content chunks for the assessment
     const { data: chunks, error } = await supabase
       .from('assessment_content_chunks')
       .select('*')
-      .eq('assessment_id', id)
+      .eq('assessment_id', assessmentId)
       .order('chunk_index', { ascending: true })
 
     if (error) {
@@ -29,7 +54,7 @@ export async function GET(
     const { data: settings, error: settingsError } = await supabase
       .from('assessment_embedding_settings')
       .select('*')
-      .eq('assessment_id', id)
+      .eq('assessment_id', assessmentId)
       .single()
 
     if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116 is "not found"

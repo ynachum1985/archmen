@@ -39,17 +39,22 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
   const fetchContentChunks = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/assessment-content/${assessmentId}`)
-      
+      setError(null)
+
+      // Encode the assessment ID for the URL
+      const encodedId = encodeURIComponent(assessmentId)
+      const response = await fetch(`/api/assessment-content/${encodedId}`)
+
       if (response.ok) {
         const data = await response.json()
         setChunks(data.chunks || [])
       } else {
-        setError('Failed to load content chunks')
+        const errorData = await response.json().catch(() => ({}))
+        setError(errorData.error || `Failed to load content chunks (${response.status})`)
       }
     } catch (error) {
       console.error('Error fetching content chunks:', error)
-      setError('Error loading content')
+      setError(`Error loading content: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsLoading(false)
     }
