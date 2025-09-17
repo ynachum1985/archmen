@@ -214,6 +214,12 @@ export function EnhancedAssessmentBuilder({
   const [isTestingLLM, setIsTestingLLM] = useState<boolean>(false)
   const [availableProviders, setAvailableProviders] = useState<LLMProvider[]>([])
   const [showLLMComparison, setShowLLMComparison] = useState<boolean>(false)
+
+  // Chat Testing state
+  const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
+  const [currentInput, setCurrentInput] = useState('')
+  const [isChatLoading, setIsChatLoading] = useState(false)
+  const [chatSession, setChatSession] = useState<{questionCount: number, responses: string[]}>({questionCount: 0, responses: []})
   const categoryService = new CategoryService()
 
   // Handle assessment prop changes
@@ -271,6 +277,135 @@ Please provide a thoughtful response that:
 Keep the response under 150 words and end with a specific question.`)
     }
   }, [config.name, config.category, testPrompt])
+
+  // Initialize chat when provider/model changes
+  useEffect(() => {
+    if (selectedProvider && selectedModel && assessment) {
+      initializeChat()
+    }
+  }, [selectedProvider, selectedModel, assessment])
+
+  // Initialize chat session
+  const initializeChat = async () => {
+    if (!assessment || !selectedProvider || !selectedModel) return
+
+    setChatMessages([])
+    setChatSession({questionCount: 0, responses: []})
+
+    // Send initial assessment question
+    setIsChatLoading(true)
+    try {
+      const response = await sendChatMessage('', true) // true for initial message
+      if (response) {
+        setChatMessages([{
+          role: 'assistant',
+          content: response,
+          timestamp: new Date()
+        }])
+      }
+    } catch (error) {
+      console.error('Failed to initialize chat:', error)
+    } finally {
+      setIsChatLoading(false)
+    }
+  }
+
+  // Send chat message
+  const sendChatMessage = async (userMessage: string, isInitial = false) => {
+    if (!selectedProvider || !selectedModel || (!userMessage.trim() && !isInitial)) return
+
+    setIsChatLoading(true)
+
+    try {
+      // Add user message to chat if not initial
+      if (!isInitial && userMessage.trim()) {
+        setChatMessages(prev => [...prev, {
+          role: 'user',
+          content: userMessage.trim(),
+          timestamp: new Date()
+        }])
+
+        // Update session
+        setChatSession(prev => ({
+          questionCount: prev.questionCount + 1,
+          responses: [...prev.responses, userMessage.trim()]
+        }))
+      }
+
+      // Prepare messages for API
+      const messages = [
+        {
+          role: 'system' as const,
+          content: config.combinedPrompt || config.systemPrompt || 'You are an AI assessment assistant.'
+        },
+        ...chatMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        })),
+        ...(userMessage.trim() ? [{
+          role: 'user' as const,
+          content: userMessage.trim()
+        }] : [])
+      ]
+
+      // Call the enhanced chat API with selected provider
+      const response = await fetch('/api/enhanced-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages,
+          assessmentId: assessment.id,
+          provider: selectedProvider,
+          model: selectedModel,
+          temperature: testTemperature,
+          maxTokens: testMaxTokens
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to get response')
+      }
+
+      const data = await response.json()
+
+      // Add AI response to chat
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.content,
+        timestamp: new Date()
+      }])
+
+      return data.content
+    } catch (error) {
+      console.error('Chat error:', error)
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date()
+      }])
+    } finally {
+      setIsChatLoading(false)
+    }
+  }
+
+  // Handle send message
+  const handleSendMessage = async () => {
+    if (!currentInput.trim() || isChatLoading) return
+
+    const message = currentInput.trim()
+    setCurrentInput('')
+    await sendChatMessage(message)
+  }
+
+  // Handle key press
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
+    }
+  }
 
   const loadCategories = async () => {
     try {
@@ -959,24 +1094,101 @@ You can paste large amounts of text - the text area will scroll automatically.`}
               <CardContent>
                 <div className="space-y-4">
                   {/* Chat Interface */}
-                  <div className="h-96 border rounded-lg p-4 bg-gray-50 overflow-y-auto">
-                    <p className="text-gray-500 text-center mt-40">
-                      Assessment chat interface will be implemented here
-                      <br />
-                      <span className="text-sm">This will function exactly like the user experience with the selected LLM provider</span>
-                    </p>
+                  <div className="h-96 border rounded-lg p-4 bg-white overflow-y-auto">
+                    {chatMessages.length === 0 ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <p className="text-gray-500 mb-2">
+                            {!selectedProvider || !selectedModel
+                              ? 'Select an LLM provider and model to start testing'
+                              : 'Chat will initialize when you select a provider and model'
+                            }
+                          </p>
+                          {selectedProvider && selectedModel && (
+                            <p className="text-sm text-blue-600">
+                              Using {LLM_PROVIDERS[selectedProvider].name} - {selectedModel}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {chatMessages.map((message, index) => (
+                          <div
+                            key={index}
+                            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-[80%] rounded-lg p-3 ${
+                                message.role === 'user'
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-100 text-gray-900'
+                              }`}
+                            >
+                              <p className="whitespace-pre-wrap">{message.content}</p>
+                              <p className="text-xs mt-1 opacity-70">
+                                {message.timestamp.toLocaleTimeString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                        {isChatLoading && (
+                          <div className="flex justify-start">
+                            <div className="bg-gray-100 rounded-lg p-3">
+                              <div className="flex items-center space-x-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                                <span className="text-sm text-gray-600">AI is thinking...</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Input Area */}
                   <div className="flex gap-2">
                     <Input
+                      value={currentInput}
+                      onChange={(e) => setCurrentInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
                       placeholder="Type your response to the assessment question..."
                       className="flex-1"
-                      disabled={!selectedProvider || !selectedModel}
+                      disabled={!selectedProvider || !selectedModel || isChatLoading}
                     />
-                    <Button disabled={!selectedProvider || !selectedModel}>
-                      Send
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!selectedProvider || !selectedModel || !currentInput.trim() || isChatLoading}
+                    >
+                      {isChatLoading ? 'Sending...' : 'Send'}
                     </Button>
+                  </div>
+
+                  {/* Status and Info */}
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-4">
+                      {selectedProvider && selectedModel && (
+                        <div className="text-gray-600">
+                          <span className="font-medium">Provider:</span> {LLM_PROVIDERS[selectedProvider].name} - {selectedModel}
+                        </div>
+                      )}
+                      {chatSession.questionCount > 0 && (
+                        <div className="text-gray-600">
+                          <span className="font-medium">Questions:</span> {chatSession.questionCount}
+                        </div>
+                      )}
+                    </div>
+
+                    {chatMessages.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={initializeChat}
+                        disabled={isChatLoading}
+                      >
+                        Reset Chat
+                      </Button>
+                    )}
                   </div>
 
                   {!selectedProvider || !selectedModel ? (
