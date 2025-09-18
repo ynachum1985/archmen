@@ -31,9 +31,9 @@ export async function POST(request: Request) {
 
     let result
 
-    // If this is for assessment testing with specific provider, use multi-LLM service
-    if (assessmentId && provider !== 'openai') {
-      const multiLLMService = MultiLLMService.getInstance()
+    // If this is for assessment testing, use multi-LLM service for all providers
+    if (assessmentId) {
+      const multiLLMService = new MultiLLMService()
 
       // Get assessment content for RAG if available
       let contextContent = ''

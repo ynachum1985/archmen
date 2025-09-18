@@ -691,63 +691,101 @@ Keep the response under 150 words and end with a specific question.`)
 
         {/* Setup Tab */}
         <TabsContent value="setup" className="space-y-6">
-          {/* AI Personality Selection */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 className="text-sm font-medium text-gray-900">AI Personality</h4>
+              <Label htmlFor="name">Assessment Name</Label>
+              <Input
+                id="name"
+                value={config.name}
+                onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+              />
             </div>
-            <Select
-              value={config.selectedPersonalityId || 'default'}
-              onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Choose AI personality" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingPersonalities ? (
-                  <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
-                ) : (
-                  <>
-                    <SelectItem value="default">Default personality</SelectItem>
-                    {personalities.map(personality => (
-                      <SelectItem key={personality.id} value={personality.id}>
-                        {personality.name} - {personality.description}
-                      </SelectItem>
-                    ))}
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Basic Configuration */}
-          <div className="space-y-4">
-            {/* Basic Information */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Basic Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name" className="text-sm">Assessment Name</Label>
-                  <Input
-                    id="name"
-                    value={config.name}
-                    onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Leadership Archetype Discovery"
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="duration" className="text-sm">Duration (min)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    value={config.expectedDuration}
-                    onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
+            <div>
+              <Label htmlFor="duration">Duration (min)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={config.expectedDuration}
+                onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={config.category}
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isLoadingCategories ? (
+                      <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                    ) : (
+                      categories.map(category => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
               </div>
             </div>
+            <div>
+              <Select
+                value={config.selectedPersonalityId || 'default'}
+                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose AI personality" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingPersonalities ? (
+                    <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
+                  ) : (
+                    <>
+                      <SelectItem value="default">Default personality</SelectItem>
+                      {personalities.map(personality => (
+                        <SelectItem key={personality.id} value={personality.id}>
+                          {personality.name} - {personality.description}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={config.description}
+                onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label htmlFor="purpose">Purpose</Label>
+              <Textarea
+                id="purpose"
+                value={config.purpose}
+                onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
+                rows={3}
+              />
+            </div>
+          </div>
 
 
 
@@ -854,9 +892,6 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
             </div>
 
-
-          </div>
-
           {/* Assessment Configuration */}
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-900">Assessment Configuration</h3>
@@ -921,22 +956,15 @@ Keep the response under 150 words and end with a specific question.`)
 
 
 
-            {/* Category Content Upload - Bottom of Page */}
             {config.name && (
-              <div className="border border-gray-200 p-6 rounded-lg bg-white">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900">Knowledge Base for "{config.name}"</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Upload documents, books, and reference materials specific to {config.name}.
-                      The AI will use this content to provide more informed and accurate assessments.
-                    </p>
-                  </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium">Knowledge Base</h4>
                   <EmbeddingSettingsDialog
                     trigger={
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
+                      <Button variant="outline" size="sm">
                         <span className="text-lg">✨</span>
-                        Embedding Settings
+                        Settings
                       </Button>
                     }
                     title={`Embedding Settings for ${config.name}`}
@@ -945,105 +973,67 @@ Keep the response under 150 words and end with a specific question.`)
                     itemType="archetype"
                     onSave={(settings) => {
                       console.log('Assessment embedding settings saved:', settings)
-                      // Here you would save the settings for this assessment
                     }}
                   />
                 </div>
 
-                <div className="space-y-6">
-                  {/* Documents Upload */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium text-gray-700">Upload Documents</Label>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        + Add More Documents
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      <Input
-                        type="file"
-                        multiple
-                        accept=".pdf,.txt,.doc,.docx"
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-gray-500">Supported formats: PDF, TXT, DOC, DOCX (max 10MB each)</p>
-                    </div>
-                  </div>
-
-                  {/* Text Content */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium text-gray-700">Add Text Content</Label>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        + Add More Text
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      <Textarea
-                        value={textContent}
-                        onChange={(e) => setTextContent(e.target.value)}
-                        placeholder={`Paste ${config.name} content, book excerpts, research papers, or reference material here...
-
-You can paste large amounts of text - the text area will scroll automatically.`}
-                        className="mt-1 resize-y overflow-y-auto"
-                        rows={8}
-                        style={{ minHeight: '200px', maxHeight: '500px' }}
-                      />
-                      <p className="text-xs text-gray-500">Paste content here - the text area can be resized and will scroll for large amounts of text</p>
-                    </div>
-                  </div>
-
-                  {/* Reference Links */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium text-gray-700">Reference Links</Label>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        + Add More Links
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      <Input
-                        value={referenceUrl}
-                        onChange={(e) => setReferenceUrl(e.target.value)}
-                        placeholder={`https://example.com/${config.name?.toLowerCase().replace(/\s+/g, '-')}-guide`}
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-gray-500">Add external links to relevant resources</p>
-                    </div>
-                  </div>
-
-                  {/* Process and Embed Button */}
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="text-sm text-gray-600">
-                      Ready to process and embed content for AI use
-                    </div>
-                    <Button
-                      onClick={() => handleProcessContent()}
-                      disabled={isProcessingContent || (!textContent.trim() && !referenceUrl.trim())}
-                      className="flex items-center gap-2"
-                    >
-                      {isProcessingContent ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-lg">🧠</span>
-                          Process & Embed Content
-                        </>
-                      )}
+                <div className="space-y-3">
+                  <div>
+                    <Input
+                      type="file"
+                      multiple
+                      accept=".pdf,.txt,.doc,.docx"
+                    />
+                    <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs">
+                      +
                     </Button>
                   </div>
+
+                  <div>
+                    <Textarea
+                      value={textContent}
+                      onChange={(e) => setTextContent(e.target.value)}
+                      rows={6}
+                    />
+                    <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs">
+                      +
+                    </Button>
+                  </div>
+
+                  <div>
+                    <Input
+                      value={referenceUrl}
+                      onChange={(e) => setReferenceUrl(e.target.value)}
+                      placeholder="https://example.com/reference"
+                    />
+                    <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs">
+                      +
+                    </Button>
+                  </div>
+
+                  <Button
+                    onClick={handleProcessContent}
+                    disabled={isProcessingContent || (!textContent.trim() && !referenceUrl.trim())}
+                    className="w-full"
+                  >
+                    {isProcessingContent ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <span className="mr-2">🧠</span>
+                        Process & Embed Content
+                      </>
+                    )}
+                  </Button>
                 </div>
 
-                {/* Content Display - Moved Below Upload Section */}
-                <div className="mt-6 pt-6 border-t">
-                  <AssessmentContentDisplay
-                    assessmentId={config.id || config.name}
-                    assessmentName={config.name}
-                  />
-                </div>
+                <AssessmentContentDisplay
+                  assessmentId={config.id || config.name}
+                  assessmentName={config.name}
+                />
               </div>
             )}
           </div>
@@ -1323,84 +1313,7 @@ You can paste large amounts of text - the text area will scroll automatically.`}
               </Select>
             </div>
 
-            {/* Knowledge Base Section */}
-            {config.name && (
-              <div className="border border-gray-200 p-4 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-gray-900">Knowledge Base for "{config.name}"</h4>
-                  <EmbeddingSettingsDialog
-                    trigger={
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
-                        <span className="text-lg">✨</span>
-                        Embedding Settings
-                      </Button>
-                    }
-                    title={`Embedding Settings for ${config.name}`}
-                    description={`Configure how ${config.name} content is processed and embedded for AI reference`}
-                    itemId={config.name}
-                    itemType="archetype"
-                    onSave={(settings) => {
-                      console.log('Assessment embedding settings saved:', settings)
-                    }}
-                  />
-                </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  Upload documents, books, and reference materials specific to {config.name}.
-                  The AI will use this content to provide more informed and accurate assessments.
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Upload Documents</Label>
-                    <Input
-                      type="file"
-                      multiple
-                      accept=".pdf,.txt,.doc,.docx"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Add Text Content</Label>
-                    <Textarea
-                      value={textContent}
-                      onChange={(e) => setTextContent(e.target.value)}
-                      placeholder={`Paste ${config.name} content, book excerpts, or reference material here...
 
-You can paste large amounts of text - the text area will scroll automatically.`}
-                      className="mt-1 resize-y overflow-y-auto"
-                      rows={4}
-                      style={{ minHeight: '100px', maxHeight: '250px' }}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Reference Links</Label>
-                    <Input
-                      value={referenceUrl}
-                      onChange={(e) => setReferenceUrl(e.target.value)}
-                      placeholder={`https://example.com/${config.name?.toLowerCase().replace(/\s+/g, '-')}-guide`}
-                      className="mt-1"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={handleProcessContent}
-                    disabled={isProcessingContent || !config.name || (!textContent.trim() && !referenceUrl.trim())}
-                  >
-                    {isProcessingContent ? (
-                      <>
-                        <span className="animate-spin mr-2">⚡</span>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <span className="mr-2">⚡</span>
-                        Process & Embed Content
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
