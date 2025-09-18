@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       ]
 
       // Use multi-LLM service
-      result = await multiLLMService.generateCompletion(contextualMessages, {
+      result = await multiLLMService.generateChatCompletion(contextualMessages, {
         provider,
         model,
         temperature,

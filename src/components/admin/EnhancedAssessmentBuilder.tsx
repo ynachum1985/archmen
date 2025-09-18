@@ -407,6 +407,48 @@ Keep the response under 150 words and end with a specific question.`)
     }
   }
 
+  // Handle process content
+  const handleProcessContent = async () => {
+    if (!config.name || (!textContent.trim() && !referenceUrl.trim())) return
+
+    setIsProcessingContent(true)
+    try {
+      const response = await fetch('/api/process-assessment-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assessmentId: config.id || config.name,
+          assessmentName: config.name,
+          textContent: textContent.trim(),
+          referenceUrl: referenceUrl.trim(),
+          category: config.category
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to process content')
+      }
+
+      const result = await response.json()
+      console.log('Content processed successfully:', result)
+
+      // Clear the inputs after successful processing
+      setTextContent('')
+      setReferenceUrl('')
+
+      // Show success message
+      alert('Content processed and embedded successfully!')
+
+    } catch (error) {
+      console.error('Error processing content:', error)
+      alert('Failed to process content. Please try again.')
+    } finally {
+      setIsProcessingContent(false)
+    }
+  }
+
   const loadCategories = async () => {
     try {
       await categoryService.initializeDefaultCategories()
@@ -626,61 +668,17 @@ Keep the response under 150 words and end with a specific question.`)
     setShowTestingChat(true)
   }
 
-  const handleProcessContent = async () => {
-    if (!config.name || (!textContent.trim() && !referenceUrl.trim())) {
-      alert('Please enter an assessment title and some content to process.')
-      return
-    }
 
-    setIsProcessingContent(true)
-    try {
-      const response = await fetch('/api/process-assessment-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          assessmentId: config.id || config.name, // Use ID if available, otherwise use name
-          textContent: textContent.trim(),
-          sourceUrl: referenceUrl.trim() || null,
-          contentType: 'text',
-          settings: {
-            chunkSize: 1000,
-            chunkOverlap: 200,
-            embeddingModel: 'text-embedding-3-small',
-            contextWindow: 4000,
-            semanticSearchEnabled: true
-          }
-        })
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        alert(`Success! Processed ${result.data.chunksProcessed} chunks from ${result.data.totalCharacters} characters.`)
-        setTextContent('') // Clear the text area after successful processing
-        setReferenceUrl('') // Clear the URL field
-      } else {
-        alert(`Error: ${result.error}`)
-      }
-    } catch (error) {
-      console.error('Error processing content:', error)
-      alert('Failed to process content. Please try again.')
-    } finally {
-      setIsProcessingContent(false)
-    }
-  }
 
   // Update combined prompt when relevant fields change
   useEffect(() => {
     const combinedPrompt = [
       config.description && `ASSESSMENT DESCRIPTION: ${config.description}`,
-      config.purpose && `ASSESSMENT PURPOSE: ${config.purpose}`,
-      config.systemPrompt && `SYSTEM INSTRUCTIONS: ${config.systemPrompt}`
+      config.purpose && `ASSESSMENT PURPOSE: ${config.purpose}`
     ].filter(Boolean).join('\n\n')
 
     setConfig(prev => ({ ...prev, combinedPrompt }))
-  }, [config.description, config.purpose, config.systemPrompt])
+  }, [config.description, config.purpose])
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -902,43 +900,26 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
             </div>
 
-            {/* System Prompt */}
-            <div>
-              <Label htmlFor="combinedPrompt" className="text-sm font-medium">Assessment System Prompt</Label>
-              <p className="text-xs text-gray-600 mb-2">
-                Define how the AI should conduct this assessment. This prompt will guide the AI's questioning style and analysis approach.
-              </p>
-              <Textarea
-                id="combinedPrompt"
-                value={config.combinedPrompt}
-                onChange={(e) => setConfig(prev => ({ ...prev, combinedPrompt: e.target.value }))}
-                placeholder={`Example for ${config.name || 'your assessment'}:
-
-You are an expert in ${config.name?.toLowerCase() || 'this topic'}. Your role is to help users understand their patterns and preferences through thoughtful questioning.
-
-FOCUS AREAS:
-- Key areas relevant to ${config.name || 'this assessment'}
-- Communication styles and needs
-- Behavioral patterns and preferences
-- Growth opportunities and challenges
-
-APPROACH:
-- Ask open-ended questions that require 2-3 sentence responses
-- Be non-judgmental and supportive
-- Draw insights from uploaded reference materials
-- Help users understand their authentic preferences without bias`}
-                className="mt-1 font-mono text-sm border-gray-200"
-                rows={12}
-              />
+            {/* AI Personality Note */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="text-blue-600 text-lg">🤖</div>
+                <div>
+                  <h4 className="text-sm font-medium text-blue-900 mb-1">AI Behavior Configuration</h4>
+                  <p className="text-sm text-blue-700">
+                    The AI's questioning style and approach is configured through the <strong>AI Personality</strong> selection above.
+                    Each personality has its own system prompt and behavioral patterns optimized for different assessment types.
+                  </p>
+                  {config.selectedPersonalityId && (
+                    <p className="text-xs text-blue-600 mt-2">
+                      Currently using: <strong>{personalities.find(p => p.id === config.selectedPersonalityId)?.name || 'Selected personality'}</strong>
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Content Display */}
-            {config.name && (
-              <AssessmentContentDisplay
-                assessmentId={config.id || config.name}
-                assessmentName={config.name}
-              />
-            )}
+
 
             {/* Category Content Upload - Bottom of Page */}
             {config.name && (
@@ -969,45 +950,103 @@ APPROACH:
                   />
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Upload Documents</Label>
-                    <Input
-                      type="file"
-                      multiple
-                      accept=".pdf,.txt,.doc,.docx"
-                      className="mt-1"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Supported formats: PDF, TXT, DOC, DOCX (max 10MB each)</p>
+                <div className="space-y-6">
+                  {/* Documents Upload */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-gray-700">Upload Documents</Label>
+                      <Button variant="outline" size="sm" className="text-xs">
+                        + Add More Documents
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Input
+                        type="file"
+                        multiple
+                        accept=".pdf,.txt,.doc,.docx"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500">Supported formats: PDF, TXT, DOC, DOCX (max 10MB each)</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Add Text Content</Label>
-                    <Textarea
-                      placeholder={`Paste ${config.name} content, book excerpts, research papers, or reference material here...
+                  {/* Text Content */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-gray-700">Add Text Content</Label>
+                      <Button variant="outline" size="sm" className="text-xs">
+                        + Add More Text
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Textarea
+                        value={textContent}
+                        onChange={(e) => setTextContent(e.target.value)}
+                        placeholder={`Paste ${config.name} content, book excerpts, research papers, or reference material here...
 
 You can paste large amounts of text - the text area will scroll automatically.`}
-                      className="mt-1 resize-y overflow-y-auto"
-                      rows={8}
-                      style={{ minHeight: '200px', maxHeight: '500px' }}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Paste content here - the text area can be resized and will scroll for large amounts of text</p>
+                        className="mt-1 resize-y overflow-y-auto"
+                        rows={8}
+                        style={{ minHeight: '200px', maxHeight: '500px' }}
+                      />
+                      <p className="text-xs text-gray-500">Paste content here - the text area can be resized and will scroll for large amounts of text</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Reference Links</Label>
-                    <Input
-                      placeholder={`https://example.com/${config.name?.toLowerCase().replace(/\s+/g, '-')}-guide`}
-                      className="mt-1"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Add external links to relevant resources</p>
+                  {/* Reference Links */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-gray-700">Reference Links</Label>
+                      <Button variant="outline" size="sm" className="text-xs">
+                        + Add More Links
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Input
+                        value={referenceUrl}
+                        onChange={(e) => setReferenceUrl(e.target.value)}
+                        placeholder={`https://example.com/${config.name?.toLowerCase().replace(/\s+/g, '-')}-guide`}
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500">Add external links to relevant resources</p>
+                    </div>
                   </div>
 
+                  {/* Process and Embed Button */}
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-gray-600">
+                      Ready to process and embed content for AI use
+                    </div>
+                    <Button
+                      onClick={() => handleProcessContent()}
+                      disabled={isProcessingContent || (!textContent.trim() && !referenceUrl.trim())}
+                      className="flex items-center gap-2"
+                    >
+                      {isProcessingContent ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-lg">🧠</span>
+                          Process & Embed Content
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
 
+                {/* Content Display - Moved Below Upload Section */}
+                <div className="mt-6 pt-6 border-t">
+                  <AssessmentContentDisplay
+                    assessmentId={config.id || config.name}
+                    assessmentName={config.name}
+                  />
                 </div>
               </div>
             )}
-        </div>
+          </div>
         </TabsContent>
 
         {/* Report & Answers Tab */}
@@ -1084,8 +1123,22 @@ You can paste large amounts of text - the text area will scroll automatically.`}
 
                     {selectedProvider && selectedModel && (
                       <div className="text-xs text-gray-500">
-                        <div>Cost: ${LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS].models[selectedModel as keyof typeof LLM_PROVIDERS[typeof selectedProvider]['models']].inputCost}/1K in</div>
-                        <div>${LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS].models[selectedModel as keyof typeof LLM_PROVIDERS[typeof selectedProvider]['models']].outputCost}/1K out</div>
+                        {(() => {
+                          const provider = LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS]
+                          const model = provider?.models[selectedModel as keyof typeof provider.models]
+                          if (model && 'inputCost' in model && 'outputCost' in model) {
+                            return (
+                              <>
+                                <div>Cost: ${model.inputCost}/1K in</div>
+                                <div>${model.outputCost}/1K out</div>
+                              </>
+                            )
+                          } else if (model && 'inputCost' in model) {
+                            return <div>Cost: ${model.inputCost}/1K tokens</div>
+                          } else {
+                            return <div>Free (Local)</div>
+                          }
+                        })()}
                       </div>
                     )}
                   </div>
