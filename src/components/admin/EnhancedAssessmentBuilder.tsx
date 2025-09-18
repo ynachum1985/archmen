@@ -691,99 +691,72 @@ Keep the response under 150 words and end with a specific question.`)
 
         {/* Setup Tab */}
         <TabsContent value="setup" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Assessment Configuration - Moved to Top */}
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Assessment Name</Label>
+              <Label htmlFor="assessmentTitle">Assessment Title</Label>
               <Input
-                id="name"
+                id="assessmentTitle"
                 value={config.name}
-                onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value, category: e.target.value }))}
               />
             </div>
-            <div>
-              <Label htmlFor="duration">Duration (min)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={config.expectedDuration}
-                onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="description">Assessment Description</Label>
+                <Textarea
+                  id="description"
+                  value={config.description}
+                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="purpose">Assessment Purpose</Label>
+                <Textarea
+                  id="purpose"
+                  value={config.purpose}
+                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
+                  rows={3}
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <div className="flex gap-2">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="duration">Duration (min)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={config.expectedDuration}
+                  onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+                />
+              </div>
+              <div>
                 <Select
-                  value={config.category}
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, category: value }))}
+                  value={config.selectedPersonalityId || 'default'}
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
                 >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select category" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose AI personality" />
                   </SelectTrigger>
                   <SelectContent>
-                    {isLoadingCategories ? (
-                      <SelectItem value="loading" disabled>Loading categories...</SelectItem>
+                    {isLoadingPersonalities ? (
+                      <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
                     ) : (
-                      categories.map(category => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      ))
+                      <>
+                        <SelectItem value="default">Default personality</SelectItem>
+                        {personalities.map(personality => (
+                          <SelectItem key={personality.id} value={personality.id}>
+                            {personality.name} - {personality.description}
+                          </SelectItem>
+                        ))}
+                      </>
                     )}
                   </SelectContent>
                 </Select>
-                <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
               </div>
-            </div>
-            <div>
-              <Select
-                value={config.selectedPersonalityId || 'default'}
-                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose AI personality" />
-                </SelectTrigger>
-                <SelectContent>
-                  {isLoadingPersonalities ? (
-                    <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
-                  ) : (
-                    <>
-                      <SelectItem value="default">Default personality</SelectItem>
-                      {personalities.map(personality => (
-                        <SelectItem key={personality.id} value={personality.id}>
-                          {personality.name} - {personality.description}
-                        </SelectItem>
-                      ))}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={config.description}
-                onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label htmlFor="purpose">Purpose</Label>
-              <Textarea
-                id="purpose"
-                value={config.purpose}
-                onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                rows={3}
-              />
             </div>
           </div>
 
@@ -892,67 +865,7 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
             </div>
 
-          {/* Assessment Configuration */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Assessment Configuration</h3>
 
-            {/* Assessment Title */}
-            <div>
-              <Label htmlFor="assessmentTitle" className="text-sm font-medium">Assessment Title</Label>
-              <Input
-                id="assessmentTitle"
-                value={config.name}
-                onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value, category: e.target.value }))}
-                placeholder="e.g., Polyamory Relationship Assessment, Career Leadership Assessment"
-                className="mt-1 border-gray-200"
-              />
-              <p className="text-xs text-gray-500 mt-1">This title will be used as the category for organizing content</p>
-            </div>
-
-            {/* Description and Purpose */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="description" className="text-sm">Assessment Description</Label>
-                <Textarea
-                  id="description"
-                  value={config.description}
-                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe what this assessment measures..."
-                  className="mt-1 text-sm border-gray-200"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="purpose" className="text-sm">Assessment Purpose</Label>
-                <Textarea
-                  id="purpose"
-                  value={config.purpose}
-                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                  placeholder="Define the specific goals and outcomes..."
-                  className="mt-1 text-sm border-gray-200"
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            {/* AI Personality Note */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="text-blue-600 text-lg">🤖</div>
-                <div>
-                  <h4 className="text-sm font-medium text-blue-900 mb-1">AI Behavior Configuration</h4>
-                  <p className="text-sm text-blue-700">
-                    The AI's questioning style and approach is configured through the <strong>AI Personality</strong> selection above.
-                    Each personality has its own system prompt and behavioral patterns optimized for different assessment types.
-                  </p>
-                  {config.selectedPersonalityId && (
-                    <p className="text-xs text-blue-600 mt-2">
-                      Currently using: <strong>{personalities.find(p => p.id === config.selectedPersonalityId)?.name || 'Selected personality'}</strong>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
 
 
 
@@ -970,43 +883,103 @@ Keep the response under 150 words and end with a specific question.`)
                     title={`Embedding Settings for ${config.name}`}
                     description={`Configure how ${config.name} content is processed and embedded for AI reference`}
                     itemId={config.name}
-                    itemType="archetype"
-                    onSave={(settings) => {
+                    itemType="assessment"
+                    onSave={async (settings) => {
                       console.log('Assessment embedding settings saved:', settings)
+                      // Save to Supabase
+                      try {
+                        const supabase = await import('@/lib/supabase/client').then(m => m.createClient())
+                        const { error } = await supabase
+                          .from('assessment_embedding_settings')
+                          .upsert({
+                            assessment_id: config.id || config.name,
+                            settings: settings,
+                            updated_at: new Date().toISOString()
+                          })
+                        if (error) {
+                          console.error('Error saving embedding settings:', error)
+                        } else {
+                          console.log('Embedding settings saved to Supabase')
+                        }
+                      } catch (error) {
+                        console.error('Error saving embedding settings:', error)
+                      }
                     }}
                   />
                 </div>
 
                 <div className="space-y-3">
                   <div>
+                    <Label className="text-sm">Upload Documents</Label>
                     <Input
                       type="file"
                       multiple
                       accept=".pdf,.txt,.doc,.docx"
+                      onChange={(e) => {
+                        // Handle file upload
+                        const files = e.target.files
+                        if (files && files.length > 0) {
+                          console.log('Files selected:', files)
+                          // Process files here
+                        }
+                      }}
                     />
-                    <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-1 h-6 px-2 text-xs"
+                      onClick={() => {
+                        // Add another file input
+                        const fileInput = document.createElement('input')
+                        fileInput.type = 'file'
+                        fileInput.multiple = true
+                        fileInput.accept = '.pdf,.txt,.doc,.docx'
+                        fileInput.click()
+                      }}
+                    >
                       +
                     </Button>
                   </div>
 
                   <div>
+                    <Label className="text-sm">Add Text Content</Label>
                     <Textarea
                       value={textContent}
                       onChange={(e) => setTextContent(e.target.value)}
+                      placeholder="Paste content here..."
                       rows={6}
                     />
-                    <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-1 h-6 px-2 text-xs"
+                      onClick={() => {
+                        // Add another text area (for now just focus existing one)
+                        const textarea = document.querySelector('textarea')
+                        if (textarea) textarea.focus()
+                      }}
+                    >
                       +
                     </Button>
                   </div>
 
                   <div>
+                    <Label className="text-sm">Reference Links</Label>
                     <Input
                       value={referenceUrl}
                       onChange={(e) => setReferenceUrl(e.target.value)}
                       placeholder="https://example.com/reference"
                     />
-                    <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-1 h-6 px-2 text-xs"
+                      onClick={() => {
+                        // Add another URL input (for now just focus existing one)
+                        const input = document.querySelector('input[placeholder*="reference"]')
+                        if (input) input.focus()
+                      }}
+                    >
                       +
                     </Button>
                   </div>
@@ -1036,7 +1009,6 @@ Keep the response under 150 words and end with a specific question.`)
                 />
               </div>
             )}
-          </div>
         </TabsContent>
 
         {/* Report & Answers Tab */}
