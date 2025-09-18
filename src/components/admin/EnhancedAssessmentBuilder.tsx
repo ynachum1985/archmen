@@ -729,40 +729,15 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="duration">Duration (min)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={config.expectedDuration}
-                  onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                />
-              </div>
-              <div>
-                <Select
-                  value={config.selectedPersonalityId || 'default'}
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose AI personality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingPersonalities ? (
-                      <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
-                    ) : (
-                      <>
-                        <SelectItem value="default">Default personality</SelectItem>
-                        {personalities.map(personality => (
-                          <SelectItem key={personality.id} value={personality.id}>
-                            {personality.name} - {personality.description}
-                          </SelectItem>
-                        ))}
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="duration">Duration (min)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={config.expectedDuration}
+                onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
+                className="w-32"
+              />
             </div>
           </div>
 
@@ -875,6 +850,33 @@ Keep the response under 150 words and end with a specific question.`)
 
 
 
+            {/* AI Personality Selection */}
+            <div>
+              <Label className="text-sm font-medium">AI Personality</Label>
+              <Select
+                value={config.selectedPersonalityId || 'default'}
+                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose AI personality" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingPersonalities ? (
+                    <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
+                  ) : (
+                    <>
+                      <SelectItem value="default">Default personality</SelectItem>
+                      {personalities.map(personality => (
+                        <SelectItem key={personality.id} value={personality.id}>
+                          {personality.name} - {personality.description}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             {config.name && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -919,25 +921,41 @@ Keep the response under 150 words and end with a specific question.`)
                   <div>
                     <Label className="text-sm">Upload Documents</Label>
                     {uploadedFiles.map((files, index) => (
-                      <div key={index} className="mt-1">
-                        <Input
-                          type="file"
-                          multiple
-                          accept=".pdf,.txt,.doc,.docx"
-                          onChange={(e) => {
-                            const newFiles = Array.from(e.target.files || [])
-                            if (newFiles.length > 0) {
-                              const updatedFiles = [...uploadedFiles]
-                              updatedFiles[index] = newFiles
-                              setUploadedFiles(updatedFiles)
-                              console.log('Files selected:', newFiles)
-                            }
-                          }}
-                        />
-                        {files.length > 0 && (
-                          <div className="text-xs text-gray-600 mt-1">
-                            {files.map(file => file.name).join(', ')}
-                          </div>
+                      <div key={index} className="mt-1 flex items-start gap-2">
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            multiple
+                            accept=".pdf,.txt,.doc,.docx"
+                            onChange={(e) => {
+                              const newFiles = Array.from(e.target.files || [])
+                              if (newFiles.length > 0) {
+                                const updatedFiles = [...uploadedFiles]
+                                updatedFiles[index] = newFiles
+                                setUploadedFiles(updatedFiles)
+                                console.log('Files selected:', newFiles)
+                              }
+                            }}
+                            className="file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                          />
+                          {files.length > 0 && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              {files.map(file => file.name).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                        {uploadedFiles.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-800"
+                            onClick={() => {
+                              const updatedFiles = uploadedFiles.filter((_, i) => i !== index)
+                              setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
+                            }}
+                          >
+                            −
+                          </Button>
                         )}
                       </div>
                     ))}
@@ -955,7 +973,7 @@ Keep the response under 150 words and end with a specific question.`)
                   <div>
                     <Label className="text-sm">Add Text Content</Label>
                     {textContents.map((content, index) => (
-                      <div key={index} className="mt-1">
+                      <div key={index} className="mt-1 flex items-start gap-2">
                         <Textarea
                           value={content}
                           onChange={(e) => {
@@ -965,7 +983,21 @@ Keep the response under 150 words and end with a specific question.`)
                           }}
                           placeholder={content ? "" : "Paste content here..."}
                           rows={6}
+                          className="flex-1"
                         />
+                        {textContents.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-800 mt-1"
+                            onClick={() => {
+                              const updatedContents = textContents.filter((_, i) => i !== index)
+                              setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
+                            }}
+                          >
+                            −
+                          </Button>
+                        )}
                       </div>
                     ))}
                     <Button
@@ -982,7 +1014,7 @@ Keep the response under 150 words and end with a specific question.`)
                   <div>
                     <Label className="text-sm">Reference Links</Label>
                     {referenceUrls.map((url, index) => (
-                      <div key={index} className="mt-1">
+                      <div key={index} className="mt-1 flex items-center gap-2">
                         <Input
                           value={url}
                           onChange={(e) => {
@@ -991,7 +1023,21 @@ Keep the response under 150 words and end with a specific question.`)
                             setReferenceUrls(updatedUrls)
                           }}
                           placeholder={url ? "" : "https://example.com/reference"}
+                          className="flex-1"
                         />
+                        {referenceUrls.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-800"
+                            onClick={() => {
+                              const updatedUrls = referenceUrls.filter((_, i) => i !== index)
+                              setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
+                            }}
+                          >
+                            −
+                          </Button>
+                        )}
                       </div>
                     ))}
                     <Button

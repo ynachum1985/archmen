@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 
 // LLM Provider Types
-export type LLMProvider = 'openai' | 'anthropic' | 'kimi' | 'local'
+export type LLMProvider = 'openai' | 'anthropic' | 'kimi' | 'groq' | 'perplexity' | 'together' | 'local'
 
 export interface LLMConfig {
   provider: LLMProvider
@@ -64,19 +64,50 @@ export const LLM_PROVIDERS = {
     }
   },
   kimi: {
-    name: 'Kimi AI',
+    name: 'Kimi AI (Moonshot)',
     models: {
       'moonshot-v1-8k': { inputCost: 0.0012, outputCost: 0.0012 },
       'moonshot-v1-32k': { inputCost: 0.0024, outputCost: 0.0024 },
       'moonshot-v1-128k': { inputCost: 0.0060, outputCost: 0.0060 }
     }
   },
+  groq: {
+    name: 'Groq',
+    models: {
+      'llama-3.1-405b-reasoning': { inputCost: 0.00059, outputCost: 0.00079 },
+      'llama-3.1-70b-versatile': { inputCost: 0.00059, outputCost: 0.00079 },
+      'llama-3.1-8b-instant': { inputCost: 0.00005, outputCost: 0.00008 },
+      'mixtral-8x7b-32768': { inputCost: 0.00024, outputCost: 0.00024 },
+      'gemma2-9b-it': { inputCost: 0.00020, outputCost: 0.00020 }
+    }
+  },
+  perplexity: {
+    name: 'Perplexity',
+    models: {
+      'llama-3.1-sonar-small-128k-online': { inputCost: 0.0002, outputCost: 0.0002 },
+      'llama-3.1-sonar-large-128k-online': { inputCost: 0.001, outputCost: 0.001 },
+      'llama-3.1-8b-instruct': { inputCost: 0.0002, outputCost: 0.0002 },
+      'llama-3.1-70b-instruct': { inputCost: 0.001, outputCost: 0.001 }
+    }
+  },
+  together: {
+    name: 'Together AI',
+    models: {
+      'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo': { inputCost: 0.00018, outputCost: 0.00018 },
+      'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo': { inputCost: 0.00088, outputCost: 0.00088 },
+      'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo': { inputCost: 0.005, outputCost: 0.005 },
+      'mistralai/Mixtral-8x7B-Instruct-v0.1': { inputCost: 0.0006, outputCost: 0.0006 }
+    }
+  },
   local: {
-    name: 'Local/Ollama',
+    name: 'Local (Ollama)',
     models: {
       'llama3.1:8b': { inputCost: 0, outputCost: 0 },
       'llama3.1:70b': { inputCost: 0, outputCost: 0 },
-      'mistral:7b': { inputCost: 0, outputCost: 0 }
+      'llama3.2:3b': { inputCost: 0, outputCost: 0 },
+      'qwen2.5:7b': { inputCost: 0, outputCost: 0 },
+      'mistral:7b': { inputCost: 0, outputCost: 0 },
+      'codellama:7b': { inputCost: 0, outputCost: 0 }
     }
   }
 } as const
@@ -84,6 +115,10 @@ export const LLM_PROVIDERS = {
 export class MultiLLMService {
   private openaiClient: OpenAI | null = null
   private anthropicClient: Anthropic | null = null
+  private kimiClient: OpenAI | null = null
+  private groqClient: OpenAI | null = null
+  private perplexityClient: OpenAI | null = null
+  private togetherClient: OpenAI | null = null
 
   constructor() {
     // Initialize clients based on available API keys
@@ -100,6 +135,42 @@ export class MultiLLMService {
         dangerouslyAllowBrowser: typeof window !== 'undefined'
       })
     }
+
+    // Kimi AI (Moonshot) - OpenAI-compatible API
+    if (process.env.KIMI_API_KEY) {
+      this.kimiClient = new OpenAI({
+        apiKey: process.env.KIMI_API_KEY,
+        baseURL: 'https://api.moonshot.cn/v1',
+        dangerouslyAllowBrowser: typeof window !== 'undefined'
+      })
+    }
+
+    // Groq - OpenAI-compatible API
+    if (process.env.GROQ_API_KEY) {
+      this.groqClient = new OpenAI({
+        apiKey: process.env.GROQ_API_KEY,
+        baseURL: 'https://api.groq.com/openai/v1',
+        dangerouslyAllowBrowser: typeof window !== 'undefined'
+      })
+    }
+
+    // Perplexity - OpenAI-compatible API
+    if (process.env.PERPLEXITY_API_KEY) {
+      this.perplexityClient = new OpenAI({
+        apiKey: process.env.PERPLEXITY_API_KEY,
+        baseURL: 'https://api.perplexity.ai',
+        dangerouslyAllowBrowser: typeof window !== 'undefined'
+      })
+    }
+
+    // Together AI - OpenAI-compatible API
+    if (process.env.TOGETHER_API_KEY) {
+      this.togetherClient = new OpenAI({
+        apiKey: process.env.TOGETHER_API_KEY,
+        baseURL: 'https://api.together.xyz/v1',
+        dangerouslyAllowBrowser: typeof window !== 'undefined'
+      })
+    }
   }
 
   async generateChatCompletion(
@@ -113,6 +184,12 @@ export class MultiLLMService {
         return this.generateAnthropicCompletion(messages, config)
       case 'kimi':
         return this.generateKimiCompletion(messages, config)
+      case 'groq':
+        return this.generateGroqCompletion(messages, config)
+      case 'perplexity':
+        return this.generatePerplexityCompletion(messages, config)
+      case 'together':
+        return this.generateTogetherCompletion(messages, config)
       case 'local':
         return this.generateLocalCompletion(messages, config)
       default:
@@ -255,6 +332,108 @@ export class MultiLLMService {
       } : undefined,
       cost,
       provider: 'kimi',
+      model: config.model
+    }
+  }
+
+  private async generateGroqCompletion(
+    messages: ChatMessage[],
+    config: LLMConfig
+  ): Promise<LLMResponse> {
+    if (!this.groqClient) {
+      throw new Error('Groq API key not configured')
+    }
+
+    const completion = await this.groqClient.chat.completions.create({
+      model: config.model,
+      messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+      temperature: config.temperature,
+      max_tokens: config.maxTokens
+    })
+
+    const usage = completion.usage
+    const modelPricing = LLM_PROVIDERS.groq.models[config.model as keyof typeof LLM_PROVIDERS.groq.models]
+    const cost = usage && modelPricing
+      ? ((usage.prompt_tokens * modelPricing.inputCost) + (usage.completion_tokens * modelPricing.outputCost)) / 1000
+      : undefined
+
+    return {
+      content: completion.choices[0]?.message?.content || '',
+      usage: usage ? {
+        inputTokens: usage.prompt_tokens,
+        outputTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens
+      } : undefined,
+      cost,
+      provider: 'groq',
+      model: config.model
+    }
+  }
+
+  private async generatePerplexityCompletion(
+    messages: ChatMessage[],
+    config: LLMConfig
+  ): Promise<LLMResponse> {
+    if (!this.perplexityClient) {
+      throw new Error('Perplexity API key not configured')
+    }
+
+    const completion = await this.perplexityClient.chat.completions.create({
+      model: config.model,
+      messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+      temperature: config.temperature,
+      max_tokens: config.maxTokens
+    })
+
+    const usage = completion.usage
+    const modelPricing = LLM_PROVIDERS.perplexity.models[config.model as keyof typeof LLM_PROVIDERS.perplexity.models]
+    const cost = usage && modelPricing
+      ? ((usage.prompt_tokens * modelPricing.inputCost) + (usage.completion_tokens * modelPricing.outputCost)) / 1000
+      : undefined
+
+    return {
+      content: completion.choices[0]?.message?.content || '',
+      usage: usage ? {
+        inputTokens: usage.prompt_tokens,
+        outputTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens
+      } : undefined,
+      cost,
+      provider: 'perplexity',
+      model: config.model
+    }
+  }
+
+  private async generateTogetherCompletion(
+    messages: ChatMessage[],
+    config: LLMConfig
+  ): Promise<LLMResponse> {
+    if (!this.togetherClient) {
+      throw new Error('Together AI API key not configured')
+    }
+
+    const completion = await this.togetherClient.chat.completions.create({
+      model: config.model,
+      messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+      temperature: config.temperature,
+      max_tokens: config.maxTokens
+    })
+
+    const usage = completion.usage
+    const modelPricing = LLM_PROVIDERS.together.models[config.model as keyof typeof LLM_PROVIDERS.together.models]
+    const cost = usage && modelPricing
+      ? ((usage.prompt_tokens * modelPricing.inputCost) + (usage.completion_tokens * modelPricing.outputCost)) / 1000
+      : undefined
+
+    return {
+      content: completion.choices[0]?.message?.content || '',
+      usage: usage ? {
+        inputTokens: usage.prompt_tokens,
+        outputTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens
+      } : undefined,
+      cost,
+      provider: 'together',
       model: config.model
     }
   }
