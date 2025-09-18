@@ -201,8 +201,9 @@ export function EnhancedAssessmentBuilder({
   const [showTestingChat, setShowTestingChat] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: '', description: '', color: 'blue', icon: 'Folder' })
   const [isProcessingContent, setIsProcessingContent] = useState(false)
-  const [textContent, setTextContent] = useState('')
-  const [referenceUrl, setReferenceUrl] = useState('')
+  const [textContents, setTextContents] = useState<string[]>([''])
+  const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
+  const [uploadedFiles, setUploadedFiles] = useState<File[][]>([[]])
 
   // LLM Testing states
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>('openai')
@@ -409,7 +410,10 @@ Keep the response under 150 words and end with a specific question.`)
 
   // Handle process content
   const handleProcessContent = async () => {
-    if (!config.name || (!textContent.trim() && !referenceUrl.trim())) return
+    const allTextContent = textContents.filter(text => text.trim()).join('\n\n')
+    const allReferenceUrls = referenceUrls.filter(url => url.trim())
+
+    if (!config.name || (!allTextContent && allReferenceUrls.length === 0)) return
 
     setIsProcessingContent(true)
     try {
@@ -421,8 +425,9 @@ Keep the response under 150 words and end with a specific question.`)
         body: JSON.stringify({
           assessmentId: config.id || config.name,
           assessmentName: config.name,
-          textContent: textContent.trim(),
-          referenceUrl: referenceUrl.trim(),
+          textContent: allTextContent,
+          referenceUrl: allReferenceUrls[0] || '',
+          referenceUrls: allReferenceUrls,
           category: config.category
         }),
       })
@@ -435,8 +440,9 @@ Keep the response under 150 words and end with a specific question.`)
       console.log('Content processed successfully:', result)
 
       // Clear the inputs after successful processing
-      setTextContent('')
-      setReferenceUrl('')
+      setTextContents([''])
+      setReferenceUrls([''])
+      setUploadedFiles([[]])
 
       // Show success message
       alert('Content processed and embedded successfully!')
@@ -909,76 +915,90 @@ Keep the response under 150 words and end with a specific question.`)
                 </div>
 
                 <div className="space-y-3">
+                  {/* Upload Documents */}
                   <div>
                     <Label className="text-sm">Upload Documents</Label>
-                    <Input
-                      type="file"
-                      multiple
-                      accept=".pdf,.txt,.doc,.docx"
-                      onChange={(e) => {
-                        // Handle file upload
-                        const files = e.target.files
-                        if (files && files.length > 0) {
-                          console.log('Files selected:', files)
-                          // Process files here
-                        }
-                      }}
-                    />
+                    {uploadedFiles.map((files, index) => (
+                      <div key={index} className="mt-1">
+                        <Input
+                          type="file"
+                          multiple
+                          accept=".pdf,.txt,.doc,.docx"
+                          onChange={(e) => {
+                            const newFiles = Array.from(e.target.files || [])
+                            if (newFiles.length > 0) {
+                              const updatedFiles = [...uploadedFiles]
+                              updatedFiles[index] = newFiles
+                              setUploadedFiles(updatedFiles)
+                              console.log('Files selected:', newFiles)
+                            }
+                          }}
+                        />
+                        {files.length > 0 && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            {files.map(file => file.name).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="mt-1 h-6 px-2 text-xs"
-                      onClick={() => {
-                        // Add another file input
-                        const fileInput = document.createElement('input')
-                        fileInput.type = 'file'
-                        fileInput.multiple = true
-                        fileInput.accept = '.pdf,.txt,.doc,.docx'
-                        fileInput.click()
-                      }}
+                      onClick={() => setUploadedFiles([...uploadedFiles, []])}
                     >
                       +
                     </Button>
                   </div>
 
+                  {/* Add Text Content */}
                   <div>
                     <Label className="text-sm">Add Text Content</Label>
-                    <Textarea
-                      value={textContent}
-                      onChange={(e) => setTextContent(e.target.value)}
-                      placeholder="Paste content here..."
-                      rows={6}
-                    />
+                    {textContents.map((content, index) => (
+                      <div key={index} className="mt-1">
+                        <Textarea
+                          value={content}
+                          onChange={(e) => {
+                            const updatedContents = [...textContents]
+                            updatedContents[index] = e.target.value
+                            setTextContents(updatedContents)
+                          }}
+                          placeholder={content ? "" : "Paste content here..."}
+                          rows={6}
+                        />
+                      </div>
+                    ))}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="mt-1 h-6 px-2 text-xs"
-                      onClick={() => {
-                        // Add another text area (for now just focus existing one)
-                        const textarea = document.querySelector('textarea')
-                        if (textarea) textarea.focus()
-                      }}
+                      onClick={() => setTextContents([...textContents, ''])}
                     >
                       +
                     </Button>
                   </div>
 
+                  {/* Reference Links */}
                   <div>
                     <Label className="text-sm">Reference Links</Label>
-                    <Input
-                      value={referenceUrl}
-                      onChange={(e) => setReferenceUrl(e.target.value)}
-                      placeholder="https://example.com/reference"
-                    />
+                    {referenceUrls.map((url, index) => (
+                      <div key={index} className="mt-1">
+                        <Input
+                          value={url}
+                          onChange={(e) => {
+                            const updatedUrls = [...referenceUrls]
+                            updatedUrls[index] = e.target.value
+                            setReferenceUrls(updatedUrls)
+                          }}
+                          placeholder={url ? "" : "https://example.com/reference"}
+                        />
+                      </div>
+                    ))}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="mt-1 h-6 px-2 text-xs"
-                      onClick={() => {
-                        // Add another URL input (for now just focus existing one)
-                        const input = document.querySelector('input[placeholder*="reference"]')
-                        if (input) input.focus()
-                      }}
+                      onClick={() => setReferenceUrls([...referenceUrls, ''])}
                     >
                       +
                     </Button>
@@ -986,7 +1006,7 @@ Keep the response under 150 words and end with a specific question.`)
 
                   <Button
                     onClick={handleProcessContent}
-                    disabled={isProcessingContent || (!textContent.trim() && !referenceUrl.trim())}
+                    disabled={isProcessingContent || (textContents.every(t => !t.trim()) && referenceUrls.every(u => !u.trim()) && uploadedFiles.every(files => files.length === 0))}
                     className="w-full"
                   >
                     {isProcessingContent ? (

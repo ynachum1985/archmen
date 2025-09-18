@@ -16,6 +16,8 @@ export async function POST(request: Request) {
       temperature = 0.7,
       maxTokens = 2000
     } = await request.json()
+
+    console.log('Enhanced chat request:', { provider, model, assessmentId, messagesCount: messages?.length })
     
     // Check if user is authenticated (optional for demo)
     const { data: { user } } = await supabase.auth.getUser()
@@ -33,6 +35,7 @@ export async function POST(request: Request) {
 
     // If this is for assessment testing, use multi-LLM service for all providers
     if (assessmentId) {
+      console.log('Creating MultiLLMService for assessment testing')
       const multiLLMService = new MultiLLMService()
 
       // Get assessment content for RAG if available
@@ -67,12 +70,14 @@ export async function POST(request: Request) {
       ]
 
       // Use multi-LLM service
+      console.log('Calling generateChatCompletion with:', { provider, model, temperature, maxTokens })
       result = await multiLLMService.generateChatCompletion(contextualMessages, {
         provider,
         model,
         temperature,
         maxTokens
       })
+      console.log('MultiLLM response received:', { provider: result.provider, model: result.model })
     } else {
       // Use enhanced AI service with RAG for default OpenAI
       result = await enhancedAIService.getInstance().generateResponse(
@@ -107,8 +112,12 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('Enhanced chat API error:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Failed to process enhanced chat request' },
+      {
+        error: 'Failed to process enhanced chat request',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
