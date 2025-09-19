@@ -140,8 +140,7 @@ export class MultiLLMService {
     if (process.env.KIMI_API_KEY) {
       this.kimiClient = new OpenAI({
         apiKey: process.env.KIMI_API_KEY,
-        baseURL: 'https://api.moonshot.cn/v1',
-        dangerouslyAllowBrowser: typeof window !== 'undefined'
+        baseURL: 'https://api.moonshot.cn/v1'
       })
     }
 
@@ -149,8 +148,7 @@ export class MultiLLMService {
     if (process.env.GROQ_API_KEY) {
       this.groqClient = new OpenAI({
         apiKey: process.env.GROQ_API_KEY,
-        baseURL: 'https://api.groq.com/openai/v1',
-        dangerouslyAllowBrowser: typeof window !== 'undefined'
+        baseURL: 'https://api.groq.com/openai/v1'
       })
     }
 
@@ -158,8 +156,7 @@ export class MultiLLMService {
     if (process.env.PERPLEXITY_API_KEY) {
       this.perplexityClient = new OpenAI({
         apiKey: process.env.PERPLEXITY_API_KEY,
-        baseURL: 'https://api.perplexity.ai',
-        dangerouslyAllowBrowser: typeof window !== 'undefined'
+        baseURL: 'https://api.perplexity.ai'
       })
     }
 
@@ -167,8 +164,7 @@ export class MultiLLMService {
     if (process.env.TOGETHER_API_KEY) {
       this.togetherClient = new OpenAI({
         apiKey: process.env.TOGETHER_API_KEY,
-        baseURL: 'https://api.together.xyz/v1',
-        dangerouslyAllowBrowser: typeof window !== 'undefined'
+        baseURL: 'https://api.together.xyz/v1'
       })
     }
   }

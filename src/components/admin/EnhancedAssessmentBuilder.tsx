@@ -876,7 +876,7 @@ Keep the response under 150 words and end with a specific question.`)
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose AI personality" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="animate-none">
                   {isLoadingPersonalities ? (
                     <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
                   ) : (
@@ -1139,7 +1139,7 @@ Keep the response under 150 words and end with a specific question.`)
                         <SelectTrigger className="w-40">
                           <SelectValue placeholder="Select provider" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="animate-none">
                           {availableProviders.map((provider) => (
                             <SelectItem key={provider} value={provider}>
                               {LLM_PROVIDERS[provider as keyof typeof LLM_PROVIDERS].name}
@@ -1155,7 +1155,7 @@ Keep the response under 150 words and end with a specific question.`)
                         <SelectTrigger className="w-48">
                           <SelectValue placeholder="Select model" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="animate-none">
                           {selectedProvider && Object.keys(LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
                             <SelectItem key={model} value={model}>
                               {model}
@@ -1354,7 +1354,7 @@ Keep the response under 150 words and end with a specific question.`)
                 <SelectTrigger className="col-span-3 bg-white border-gray-300 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 animate-none">
                   <SelectItem value="blue" className="hover:bg-gray-50">Blue</SelectItem>
                   <SelectItem value="green" className="hover:bg-gray-50">Green</SelectItem>
                   <SelectItem value="purple" className="hover:bg-gray-50">Purple</SelectItem>

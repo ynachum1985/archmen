@@ -89,13 +89,21 @@ export async function POST(request: Request) {
 
       // Use multi-LLM service
       console.log('Calling generateChatCompletion with:', { provider, model, temperature, maxTokens })
-      result = await multiLLMService.generateChatCompletion(contextualMessages, {
-        provider,
-        model,
-        temperature,
-        maxTokens
-      })
-      console.log('MultiLLM response received:', { provider: result.provider, model: result.model })
+      try {
+        result = await multiLLMService.generateChatCompletion(contextualMessages, {
+          provider,
+          model,
+          temperature,
+          maxTokens
+        })
+        console.log('MultiLLM response received:', { provider: result.provider, model: result.model })
+      } catch (llmError) {
+        console.error('MultiLLM service error:', llmError)
+        return NextResponse.json(
+          { error: `LLM service error: ${llmError instanceof Error ? llmError.message : 'Unknown error'}` },
+          { status: 500 }
+        )
+      }
     } else {
       // Use enhanced AI service with RAG for default OpenAI
       result = await enhancedAIService.getInstance().generateResponse(
