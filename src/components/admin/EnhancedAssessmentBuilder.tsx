@@ -375,7 +375,7 @@ Keep the response under 150 words and end with a specific question.`)
         },
         body: JSON.stringify({
           messages,
-          assessmentId: assessment.id,
+          assessmentId: config.id || config.name,
           provider: selectedProvider,
           model: selectedModel,
           temperature: testTemperature,
@@ -679,10 +679,10 @@ Keep the response under 150 words and end with a specific question.`)
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className={`grid w-full ${assessment ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="reports">Report and Answers</TabsTrigger>
-          {assessment && <TabsTrigger value="testing">Testing</TabsTrigger>}
+          <TabsTrigger value="testing">Testing</TabsTrigger>
         </TabsList>
 
         {/* Setup Tab */}
@@ -1104,9 +1104,8 @@ Keep the response under 150 words and end with a specific question.`)
 
         </TabsContent>
 
-        {/* Testing Tab - Only shown when editing an existing assessment */}
-        {assessment && (
-          <TabsContent value="testing" className="space-y-6">
+        {/* Testing Tab - Available for all assessments */}
+        <TabsContent value="testing" className="space-y-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1292,8 +1291,7 @@ Keep the response under 150 words and end with a specific question.`)
               </CardContent>
             </Card>
 
-          </TabsContent>
-        )}
+        </TabsContent>
       </Tabs>
 
       {/* Testing Chat Modal */}
