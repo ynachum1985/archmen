@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 
 // LLM Provider Types
-export type LLMProvider = 'openai' | 'anthropic' | 'kimi' | 'groq' | 'perplexity' | 'together' | 'local'
+export type LLMProvider = 'openai' | 'anthropic' | 'kimi' | 'groq' | 'perplexity' | 'together' | 'openrouter' | 'local'
 
 export interface LLMConfig {
   provider: LLMProvider
@@ -104,6 +104,31 @@ export const LLM_PROVIDERS = {
       'mistralai/Mixtral-8x7B-Instruct-v0.1': { inputCost: 0.0006, outputCost: 0.0006 }
     }
   },
+  openrouter: {
+    name: 'OpenRouter',
+    models: {
+      // OpenAI models via OpenRouter (often cheaper)
+      'openai/gpt-4-turbo': { inputCost: 0.01, outputCost: 0.03 },
+      'openai/gpt-4': { inputCost: 0.03, outputCost: 0.06 },
+      'openai/gpt-3.5-turbo': { inputCost: 0.0015, outputCost: 0.002 },
+      // Anthropic models via OpenRouter
+      'anthropic/claude-3.5-sonnet': { inputCost: 0.003, outputCost: 0.015 },
+      'anthropic/claude-3-haiku': { inputCost: 0.00025, outputCost: 0.00125 },
+      // Google models
+      'google/gemini-pro-1.5': { inputCost: 0.00125, outputCost: 0.005 },
+      'google/gemini-flash-1.5': { inputCost: 0.000075, outputCost: 0.0003 },
+      // Meta models
+      'meta-llama/llama-3.1-405b-instruct': { inputCost: 0.003, outputCost: 0.003 },
+      'meta-llama/llama-3.1-70b-instruct': { inputCost: 0.00088, outputCost: 0.00088 },
+      'meta-llama/llama-3.1-8b-instruct': { inputCost: 0.00018, outputCost: 0.00018 },
+      // Mistral models
+      'mistralai/mistral-large': { inputCost: 0.004, outputCost: 0.012 },
+      'mistralai/mistral-medium': { inputCost: 0.0027, outputCost: 0.0081 },
+      // Other popular models
+      'perplexity/llama-3.1-sonar-large-128k-online': { inputCost: 0.001, outputCost: 0.001 },
+      'qwen/qwen-2.5-72b-instruct': { inputCost: 0.0009, outputCost: 0.0009 }
+    }
+  },
   local: {
     name: 'Local (Ollama)',
     models: {
@@ -124,6 +149,7 @@ export class MultiLLMService {
   private groqClient: OpenAI | null = null
   private perplexityClient: OpenAI | null = null
   private togetherClient: OpenAI | null = null
+  private openrouterClient: OpenAI | null = null
 
   constructor() {
     // Initialize clients based on available API keys
@@ -170,6 +196,14 @@ export class MultiLLMService {
         baseURL: 'https://api.together.xyz/v1'
       })
     }
+
+    // OpenRouter - OpenAI-compatible API with access to many providers
+    if (process.env.OPENROUTER_API_KEY) {
+      this.openrouterClient = new OpenAI({
+        apiKey: process.env.OPENROUTER_API_KEY,
+        baseURL: 'https://openrouter.ai/api/v1'
+      })
+    }
   }
 
   async generateChatCompletion(
@@ -189,6 +223,8 @@ export class MultiLLMService {
         return this.generatePerplexityCompletion(messages, config)
       case 'together':
         return this.generateTogetherCompletion(messages, config)
+      case 'openrouter':
+        return this.generateOpenRouterCompletion(messages, config)
       case 'local':
         return this.generateLocalCompletion(messages, config)
       default:
@@ -429,6 +465,40 @@ export class MultiLLMService {
     }
   }
 
+  private async generateOpenRouterCompletion(
+    messages: ChatMessage[],
+    config: LLMConfig
+  ): Promise<LLMResponse> {
+    if (!this.openrouterClient) {
+      throw new Error('OpenRouter API key not configured')
+    }
+
+    const completion = await this.openrouterClient.chat.completions.create({
+      model: config.model,
+      messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+      temperature: config.temperature,
+      max_tokens: config.maxTokens
+    })
+
+    const usage = completion.usage
+    const modelPricing = LLM_PROVIDERS.openrouter.models[config.model as keyof typeof LLM_PROVIDERS.openrouter.models]
+    const cost = usage && modelPricing
+      ? ((usage.prompt_tokens * modelPricing.inputCost) + (usage.completion_tokens * modelPricing.outputCost)) / 1000
+      : undefined
+
+    return {
+      content: completion.choices[0]?.message?.content || '',
+      usage: usage ? {
+        inputTokens: usage.prompt_tokens,
+        outputTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens
+      } : undefined,
+      cost,
+      provider: 'openrouter',
+      model: config.model
+    }
+  }
+
   private async generateLocalCompletion(
     messages: ChatMessage[],
     config: LLMConfig
@@ -500,6 +570,7 @@ export class MultiLLMService {
     if (this.groqClient) providers.push('groq')
     if (this.perplexityClient) providers.push('perplexity')
     if (this.togetherClient) providers.push('together')
+    if (this.openrouterClient) providers.push('openrouter')
     providers.push('local') // Always available if Ollama is running
     return providers
   }
