@@ -219,6 +219,7 @@ export function EnhancedAssessmentBuilder({
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
   const [currentInput, setCurrentInput] = useState('')
   const [isChatLoading, setIsChatLoading] = useState(false)
+  const [isApiActivated, setIsApiActivated] = useState(false)
   const [chatSession, setChatSession] = useState<{questionCount: number, responses: string[]}>({questionCount: 0, responses: []})
 
 
@@ -291,12 +292,12 @@ Keep the response under 150 words and end with a specific question.`)
     }
   }, [config.name, config.category, testPrompt])
 
-  // Initialize chat when provider/model changes
+  // Initialize chat when provider/model changes and API is activated
   useEffect(() => {
-    if (selectedProvider && selectedModel && assessment) {
+    if (selectedProvider && selectedModel && assessment && isApiActivated) {
       initializeChat()
     }
-  }, [selectedProvider, selectedModel, assessment])
+  }, [selectedProvider, selectedModel, assessment, isApiActivated])
 
   // Initialize chat session
   const initializeChat = async () => {
@@ -326,6 +327,11 @@ Keep the response under 150 words and end with a specific question.`)
   // Send chat message
   const sendChatMessage = async (userMessage: string, isInitial = false) => {
     if (!selectedProvider || !selectedModel || (!userMessage.trim() && !isInitial)) return
+
+    if (!isApiActivated) {
+      console.log('API not activated, skipping chat message')
+      return
+    }
 
     setIsChatLoading(true)
 
@@ -406,6 +412,11 @@ Keep the response under 150 words and end with a specific question.`)
   // Handle send message
   const handleSendMessage = async () => {
     if (!currentInput.trim() || isChatLoading) return
+
+    if (!isApiActivated) {
+      alert('Please activate the API first to prevent accidental token usage.')
+      return
+    }
 
     const message = currentInput.trim()
     setCurrentInput('')
@@ -1158,6 +1169,15 @@ Keep the response under 150 words and end with a specific question.`)
                         })()}
                       </div>
                     )}
+
+                    <Button
+                      onClick={() => setIsApiActivated(!isApiActivated)}
+                      variant={isApiActivated ? "destructive" : "default"}
+                      size="sm"
+                      className="ml-4"
+                    >
+                      {isApiActivated ? "🔴 Deactivate API" : "🟢 Activate API"}
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -1171,6 +1191,8 @@ Keep the response under 150 words and end with a specific question.`)
                           <p className="text-gray-500 mb-2">
                             {!selectedProvider || !selectedModel
                               ? 'Select an LLM provider and model to start testing'
+                              : !isApiActivated
+                              ? 'Click "Activate API" to enable testing and prevent accidental token usage'
                               : 'Chat will initialize when you select a provider and model'
                             }
                           </p>
@@ -1228,7 +1250,7 @@ Keep the response under 150 words and end with a specific question.`)
                     />
                     <Button
                       onClick={handleSendMessage}
-                      disabled={!selectedProvider || !selectedModel || !currentInput.trim() || isChatLoading}
+                      disabled={!selectedProvider || !selectedModel || !currentInput.trim() || isChatLoading || !isApiActivated}
                     >
                       {isChatLoading ? 'Sending...' : 'Send'}
                     </Button>
