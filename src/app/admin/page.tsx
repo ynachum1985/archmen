@@ -126,6 +126,7 @@ export default function AdminPage() {
       description: mockAssessment.description,
       category: mockAssessment.name.includes('Main') ? 'Relationship Assessment' : 'Specialized Assessment',
       purpose: `This assessment is designed to ${mockAssessment.description.toLowerCase()}`,
+      assessmentPrompt: `You are conducting the "${mockAssessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences. Focus on one question at a time and avoid providing summaries or explanations.`,
       expectedDuration: Math.ceil(mockAssessment.questionCount * 1.5), // Estimate based on question count
       systemPrompt: `You are analyzing ${mockAssessment.name.toLowerCase()} patterns. Focus on identifying relevant archetypes through thoughtful questioning.`,
       minQuestions: Math.max(8, mockAssessment.questionCount - 3),
@@ -137,7 +138,6 @@ export default function AdminPage() {
         evidencePerCycle: 3
       },
       selectedPersonalityId: undefined,
-      combinedPrompt: `Assessment: ${mockAssessment.name}\n\nDescription: ${mockAssessment.description}\n\nPurpose: This assessment is designed to ${mockAssessment.description.toLowerCase()}`,
       questionExamples: {
         openEnded: [
           "How do you typically approach relationships?",
@@ -234,7 +234,7 @@ export default function AdminPage() {
       completionRate: 0
     },
     {
-      id: 'monogamy-polyamory',
+      id: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb',
       name: 'Monogamy vs. Polyamory',
       description: 'Assess relationship structure preferences and patterns',
       status: 'Active',
