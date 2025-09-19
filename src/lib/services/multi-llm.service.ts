@@ -505,7 +505,10 @@ export class MultiLLMService {
     const providers: LLMProvider[] = []
     if (this.openaiClient) providers.push('openai')
     if (this.anthropicClient) providers.push('anthropic')
-    if (process.env.KIMI_API_KEY) providers.push('kimi')
+    if (this.kimiClient) providers.push('kimi')
+    if (this.groqClient) providers.push('groq')
+    if (this.perplexityClient) providers.push('perplexity')
+    if (this.togetherClient) providers.push('together')
     providers.push('local') // Always available if Ollama is running
     return providers
   }

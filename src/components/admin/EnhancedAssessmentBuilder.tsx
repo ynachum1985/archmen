@@ -26,12 +26,12 @@ import {
 } from 'lucide-react'
 import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
+import { LLM_PROVIDERS, type LLMProvider, type LLMConfig, multiLLMService } from '@/lib/services/multi-llm.service'
 
 import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import { AssessmentTestingChat } from './AssessmentTestingChat'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { AssessmentContentDisplay } from './AssessmentContentDisplay'
-import { multiLLMService, LLMProvider, LLMConfig, LLM_PROVIDERS } from '@/lib/services/multi-llm.service'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -609,8 +609,10 @@ Keep the response under 150 words and end with a specific question.`)
       { provider: 'openai' as LLMProvider, model: 'gpt-4-turbo-preview' },
       { provider: 'openai' as LLMProvider, model: 'gpt-3.5-turbo' },
       { provider: 'anthropic' as LLMProvider, model: 'claude-3-5-sonnet-20241022' },
-      { provider: 'anthropic' as LLMProvider, model: 'claude-3-haiku-20240307' },
-      { provider: 'kimi' as LLMProvider, model: 'moonshot-v1-8k' }
+      { provider: 'kimi' as LLMProvider, model: 'moonshot-v1-8k' },
+      { provider: 'groq' as LLMProvider, model: 'llama-3.1-8b-instant' },
+      { provider: 'perplexity' as LLMProvider, model: 'llama-3.1-8b-instruct' },
+      { provider: 'together' as LLMProvider, model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo' }
     ]
 
     for (const testConfig of testConfigs) {
