@@ -58,6 +58,11 @@ export const LLM_PROVIDERS = {
   anthropic: {
     name: 'Anthropic',
     models: {
+      'claude-3-5-sonnet-20241022': { inputCost: 0.003, outputCost: 0.015 },
+      'claude-3-5-haiku-20241022': { inputCost: 0.001, outputCost: 0.005 },
+      'claude-3-opus-20240229': { inputCost: 0.015, outputCost: 0.075 },
+      'claude-3-sonnet-20240229': { inputCost: 0.003, outputCost: 0.015 },
+      'claude-3-haiku-20240307': { inputCost: 0.00025, outputCost: 0.00125 },
       'claude-2.1': { inputCost: 0.008, outputCost: 0.024 },
       'claude-2.0': { inputCost: 0.008, outputCost: 0.024 },
       'claude-instant-1.2': { inputCost: 0.0008, outputCost: 0.0024 }
@@ -245,48 +250,35 @@ export class MultiLLMService {
       throw new Error('Anthropic client not initialized')
     }
 
-    // Convert messages format for Anthropic (older SDK format)
+    // Convert messages format for Anthropic Messages API
     const systemMessage = messages.find(m => m.role === 'system')
     const conversationMessages = messages.filter(m => m.role !== 'system')
 
-    // Build prompt for older Anthropic SDK
-    let prompt = ''
-    if (systemMessage) {
-      prompt += `${systemMessage.content}\n\n`
-    }
-
-    for (const message of conversationMessages) {
-      if (message.role === 'user') {
-        prompt += `Human: ${message.content}\n\n`
-      } else {
-        prompt += `Assistant: ${message.content}\n\n`
-      }
-    }
-    prompt += 'Assistant:'
-
-    const completion = await this.anthropicClient.completions.create({
+    // Use the modern Messages API format
+    const completion = await this.anthropicClient.messages.create({
       model: config.model,
-      max_tokens_to_sample: config.maxTokens,
+      max_tokens: config.maxTokens,
       temperature: config.temperature,
-      prompt
+      system: systemMessage?.content,
+      messages: conversationMessages.map(msg => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content
+      }))
     })
 
-    // Estimate usage for older SDK (no usage data returned)
-    const estimatedInputTokens = Math.ceil(prompt.length / 4)
-    const estimatedOutputTokens = Math.ceil((completion.completion?.length || 0) / 4)
-
+    const usage = completion.usage
     const modelPricing = LLM_PROVIDERS.anthropic.models[config.model as keyof typeof LLM_PROVIDERS.anthropic.models]
-    const cost = modelPricing
-      ? (estimatedInputTokens * modelPricing.inputCost + estimatedOutputTokens * modelPricing.outputCost) / 1000
+    const cost = usage && modelPricing
+      ? ((usage.input_tokens * modelPricing.inputCost) + (usage.output_tokens * modelPricing.outputCost)) / 1000
       : undefined
 
     return {
-      content: completion.completion || '',
-      usage: {
-        inputTokens: estimatedInputTokens,
-        outputTokens: estimatedOutputTokens,
-        totalTokens: estimatedInputTokens + estimatedOutputTokens
-      },
+      content: completion.content[0]?.type === 'text' ? completion.content[0].text : '',
+      usage: usage ? {
+        inputTokens: usage.input_tokens,
+        outputTokens: usage.output_tokens,
+        totalTokens: usage.input_tokens + usage.output_tokens
+      } : undefined,
       cost,
       provider: 'anthropic',
       model: config.model
