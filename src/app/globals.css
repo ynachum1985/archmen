@@ -220,3 +220,19 @@
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* Disable dropdown animations completely */
+[data-radix-select-content],
+[data-radix-popper-content-wrapper],
+.radix-select-content {
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Force immediate appearance for all select content */
+[data-state="open"][data-radix-select-content] {
+  animation: none !important;
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+}

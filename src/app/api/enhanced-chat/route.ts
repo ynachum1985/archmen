@@ -17,7 +17,15 @@ export async function POST(request: Request) {
       maxTokens = 2000
     } = await request.json()
 
-    console.log('Enhanced chat request:', { provider, model, assessmentId, messagesCount: messages?.length })
+    console.log('=== Enhanced Chat API Request ===')
+    console.log('Provider:', provider, 'Model:', model)
+    console.log('Assessment ID:', assessmentId)
+    console.log('Messages count:', messages?.length)
+    console.log('Environment variables check:')
+    console.log('- OPENAI_API_KEY:', !!process.env.OPENAI_API_KEY)
+    console.log('- ANTHROPIC_API_KEY:', !!process.env.ANTHROPIC_API_KEY)
+    console.log('- KIMI_API_KEY:', !!process.env.KIMI_API_KEY)
+    console.log('- GROQ_API_KEY:', !!process.env.GROQ_API_KEY)
     
     // Check if user is authenticated (optional for demo)
     const { data: { user } } = await supabase.auth.getUser()
@@ -54,7 +62,18 @@ export async function POST(request: Request) {
         )
       }
 
-      const multiLLMService = new MultiLLMService()
+      console.log('Creating MultiLLMService instance...')
+      let multiLLMService
+      try {
+        multiLLMService = new MultiLLMService()
+        console.log('MultiLLMService created successfully')
+      } catch (serviceError) {
+        console.error('Failed to create MultiLLMService:', serviceError)
+        return NextResponse.json(
+          { error: `Failed to initialize LLM service: ${serviceError instanceof Error ? serviceError.message : 'Unknown error'}` },
+          { status: 500 }
+        )
+      }
 
       // Get assessment content for RAG if available
       let contextContent = ''
