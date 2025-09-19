@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/database'
 
 type Archetype = Database['public']['Tables']['enhanced_archetypes']['Row']
-type LinguisticPattern = Database['public']['Tables']['linguistic_patterns']['Row']
+
 type NewArchetype = Database['public']['Tables']['enhanced_archetypes']['Insert']
-type NewLinguisticPattern = Database['public']['Tables']['linguistic_patterns']['Insert']
+
 
 export class ArchetypeService {
   private supabase = createClient()
@@ -68,76 +68,8 @@ export class ArchetypeService {
     }
   }
 
-  async getAllLinguisticPatterns(): Promise<LinguisticPattern[]> {
-    const { data, error } = await this.supabase
-      .from('linguistic_patterns')
-      .select('*')
-      .order('archetype_name')
-
-    if (error) {
-      console.error('Error fetching linguistic patterns:', error)
-      throw error
-    }
-
-    return data || []
-  }
-
-  async getLinguisticPatternsByArchetype(archetypeName: string): Promise<LinguisticPattern[]> {
-    const { data, error } = await this.supabase
-      .from('linguistic_patterns')
-      .select('*')
-      .eq('archetype_name', archetypeName)
-
-    if (error) {
-      console.error('Error fetching linguistic patterns by archetype:', error)
-      throw error
-    }
-
-    return data || []
-  }
-
-  async createLinguisticPattern(pattern: NewLinguisticPattern): Promise<LinguisticPattern> {
-    const { data, error } = await this.supabase
-      .from('linguistic_patterns')
-      .insert(pattern)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating linguistic pattern:', error)
-      throw error
-    }
-
-    return data
-  }
-
-  async updateLinguisticPattern(id: string, updates: Partial<NewLinguisticPattern>): Promise<LinguisticPattern> {
-    const { data, error } = await this.supabase
-      .from('linguistic_patterns')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error updating linguistic pattern:', error)
-      throw error
-    }
-
-    return data
-  }
-
-  async deleteLinguisticPattern(id: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('linguistic_patterns')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting linguistic pattern:', error)
-      throw error
-    }
-  }
+  // Linguistic patterns are now stored directly in enhanced_archetypes table
+  // No separate linguistic_patterns table needed
 
   // Removed getArchetypeCategories - categories no longer used
 

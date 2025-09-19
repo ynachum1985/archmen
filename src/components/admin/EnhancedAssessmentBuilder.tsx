@@ -24,7 +24,7 @@ import {
   TestTube,
   Sparkles
 } from 'lucide-react'
-import { CategoryService, type AssessmentCategory } from '@/lib/services/category.service'
+
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 import { LLM_PROVIDERS, type LLMProvider, type LLMConfig, multiLLMService } from '@/lib/services/multi-llm.service'
 
@@ -195,13 +195,10 @@ export function EnhancedAssessmentBuilder({
   onSave
 }: EnhancedAssessmentBuilderProps) {
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(assessment || defaultConfig)
-  const [categories, setCategories] = useState<AssessmentCategory[]>([])
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isLoadingPersonalities, setIsLoadingPersonalities] = useState(true)
-  const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false)
   const [showTestingChat, setShowTestingChat] = useState(false)
-  const [newCategory, setNewCategory] = useState({ name: '', description: '', color: 'blue', icon: 'Folder' })
+
   const [isProcessingContent, setIsProcessingContent] = useState(false)
   const [textContents, setTextContents] = useState<string[]>([''])
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
@@ -223,7 +220,7 @@ export function EnhancedAssessmentBuilder({
   const [currentInput, setCurrentInput] = useState('')
   const [isChatLoading, setIsChatLoading] = useState(false)
   const [chatSession, setChatSession] = useState<{questionCount: number, responses: string[]}>({questionCount: 0, responses: []})
-  const categoryService = new CategoryService()
+
 
   // Handle assessment prop changes
   useEffect(() => {
@@ -250,7 +247,6 @@ export function EnhancedAssessmentBuilder({
 
   useEffect(() => {
     const initialize = async () => {
-      await loadCategories()
       await loadPersonalities()
       await initializeFileStorage()
 
@@ -471,17 +467,7 @@ Keep the response under 150 words and end with a specific question.`)
     }
   }
 
-  const loadCategories = async () => {
-    try {
-      await categoryService.initializeDefaultCategories()
-      const categoriesData = await categoryService.getAllCategories()
-      setCategories(categoriesData)
-    } catch (error) {
-      console.error('Error loading categories:', error)
-    } finally {
-      setIsLoadingCategories(false)
-    }
-  }
+
 
   const loadPersonalities = async () => {
     try {
@@ -508,24 +494,7 @@ Keep the response under 150 words and end with a specific question.`)
 
 
 
-  const handleCreateCategory = async () => {
-    try {
-      const createdCategory = await categoryService.createCategory({
-        name: newCategory.name,
-        description: newCategory.description,
-        color: newCategory.color,
-        icon: newCategory.icon,
-        is_active: true
-      })
 
-      setCategories(prev => [...prev, createdCategory])
-      setConfig(prev => ({ ...prev, category: createdCategory.name }))
-      setNewCategory({ name: '', description: '', color: 'blue', icon: 'Folder' })
-      setShowNewCategoryDialog(false)
-    } catch (error) {
-      console.error('Error creating category:', error)
-    }
-  }
 
   const handleSave = async () => {
     // Save to parent component
@@ -1313,80 +1282,8 @@ Keep the response under 150 words and end with a specific question.`)
         />
       )}
 
-      {/* New Category Dialog */}
-      <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create New Category</DialogTitle>
-            <DialogDescription>
-              Add a new assessment category with custom styling.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category-name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="category-name"
-                value={newCategory.name}
-                onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                className="col-span-3"
-                placeholder="e.g., Career Development"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category-description" className="text-right">
-                Description
-              </Label>
-              <Input
-                id="category-description"
-                value={newCategory.description}
-                onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                className="col-span-3"
-                placeholder="Brief description of the category"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category-color" className="text-right">
-                Color
-              </Label>
-              <Select
-                value={newCategory.color}
-                onValueChange={(value) => setNewCategory(prev => ({ ...prev, color: value }))}
-              >
-                <SelectTrigger className="col-span-3 bg-white border-gray-300 shadow-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 animate-none">
-                  <SelectItem value="blue" className="hover:bg-gray-50">Blue</SelectItem>
-                  <SelectItem value="green" className="hover:bg-gray-50">Green</SelectItem>
-                  <SelectItem value="purple" className="hover:bg-gray-50">Purple</SelectItem>
-                  <SelectItem value="orange" className="hover:bg-gray-50">Orange</SelectItem>
-                  <SelectItem value="red" className="hover:bg-gray-50">Red</SelectItem>
-                  <SelectItem value="indigo" className="hover:bg-gray-50">Indigo</SelectItem>
-                  <SelectItem value="pink" className="hover:bg-gray-50">Pink</SelectItem>
-                  <SelectItem value="teal" className="hover:bg-gray-50">Teal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
 
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateCategory}
-              disabled={!newCategory.name.trim()}
-              className="bg-emerald-500 hover:bg-emerald-600"
-            >
-              Create Category
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

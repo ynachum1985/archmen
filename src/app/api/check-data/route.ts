@@ -16,24 +16,14 @@ export async function GET() {
       console.error('Error fetching archetypes:', archetypesError)
     }
 
-    // Fetch linguistic patterns
-    const { data: patterns, error: patternsError } = await supabase
-      .from('linguistic_patterns')
-      .select('*')
-      .order('archetype_name')
-
-    if (patternsError) {
-      console.error('Error fetching patterns:', patternsError)
-    }
+    // Linguistic patterns are now stored in enhanced_archetypes table
+    // No separate linguistic_patterns table needed
 
     return NextResponse.json({
       archetypes: {
         data: archetypes || [],
-        count: archetypes?.length || 0
-      },
-      patterns: {
-        data: patterns || [],
-        count: patterns?.length || 0
+        count: archetypes?.length || 0,
+        linguistic_patterns_included: true // Patterns are now in archetypes table
       }
     })
   } catch (error) {
