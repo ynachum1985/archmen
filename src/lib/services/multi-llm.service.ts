@@ -292,8 +292,7 @@ export class MultiLLMService {
     // Kimi AI uses OpenAI-compatible API
     const kimiClient = new OpenAI({
       apiKey: process.env.KIMI_API_KEY || config.apiKey,
-      baseURL: 'https://api.moonshot.cn/v1',
-      dangerouslyAllowBrowser: typeof window !== 'undefined'
+      baseURL: 'https://api.moonshot.cn/v1'
     })
 
     const completion = await kimiClient.chat.completions.create({
@@ -305,8 +304,8 @@ export class MultiLLMService {
 
     const usage = completion.usage
     const modelPricing = LLM_PROVIDERS.kimi.models[config.model as keyof typeof LLM_PROVIDERS.kimi.models]
-    const cost = usage && modelPricing 
-      ? (usage.total_tokens * modelPricing.inputCost) / 1000
+    const cost = usage && modelPricing
+      ? ((usage.prompt_tokens * modelPricing.inputCost) + (usage.completion_tokens * modelPricing.outputCost)) / 1000
       : undefined
 
     return {
