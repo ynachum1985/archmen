@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 
 // LLM Provider Types
-export type LLMProvider = 'openai' | 'anthropic' | 'kimi' | 'groq' | 'perplexity' | 'together' | 'openrouter' | 'local'
+export type LLMProvider = 'openrouter' | 'openai' | 'anthropic' | 'kimi' | 'groq' | 'perplexity' | 'together' | 'local'
 
 export interface LLMConfig {
   provider: LLMProvider
@@ -42,6 +42,39 @@ export interface EmbeddingResponse {
 
 // Provider configurations with pricing
 export const LLM_PROVIDERS = {
+  openrouter: {
+    name: 'OpenRouter',
+    models: {
+      // OpenAI models via OpenRouter (often cheaper)
+      'openai/gpt-4-turbo': { inputCost: 0.01, outputCost: 0.03 },
+      'openai/gpt-4': { inputCost: 0.03, outputCost: 0.06 },
+      'openai/gpt-3.5-turbo': { inputCost: 0.0015, outputCost: 0.002 },
+      // Anthropic models via OpenRouter
+      'anthropic/claude-3.5-sonnet': { inputCost: 0.003, outputCost: 0.015 },
+      'anthropic/claude-3-haiku': { inputCost: 0.00025, outputCost: 0.00125 },
+      // Google models
+      'google/gemini-pro-1.5': { inputCost: 0.00125, outputCost: 0.005 },
+      'google/gemini-flash-1.5': { inputCost: 0.000075, outputCost: 0.0003 },
+      // Meta models
+      'meta-llama/llama-3.1-405b-instruct': { inputCost: 0.003, outputCost: 0.003 },
+      'meta-llama/llama-3.1-70b-instruct': { inputCost: 0.00088, outputCost: 0.00088 },
+      'meta-llama/llama-3.1-8b-instruct': { inputCost: 0.00018, outputCost: 0.00018 },
+      // Mistral models
+      'mistralai/mistral-large': { inputCost: 0.004, outputCost: 0.012 },
+      'mistralai/mistral-medium': { inputCost: 0.0027, outputCost: 0.0081 },
+      // Kimi AI models via OpenRouter
+      'deepseek/deepseek-chat': { inputCost: 0.00014, outputCost: 0.00028 },
+      'deepseek/deepseek-coder': { inputCost: 0.00014, outputCost: 0.00028 },
+      // DeepSeek models via OpenRouter (very affordable)
+      'moonshot/moonshot-v1-8k': { inputCost: 0.0012, outputCost: 0.0012 },
+      'moonshot/moonshot-v1-32k': { inputCost: 0.0024, outputCost: 0.0024 },
+      'moonshot/moonshot-v1-128k': { inputCost: 0.0060, outputCost: 0.0060 },
+      // Perplexity models with web search
+      'perplexity/llama-3.1-sonar-large-128k-online': { inputCost: 0.001, outputCost: 0.001 },
+      // Qwen models
+      'qwen/qwen-2.5-72b-instruct': { inputCost: 0.0009, outputCost: 0.0009 }
+    }
+  },
   openai: {
     name: 'OpenAI',
     models: {
@@ -102,31 +135,6 @@ export const LLM_PROVIDERS = {
       'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo': { inputCost: 0.00088, outputCost: 0.00088 },
       'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo': { inputCost: 0.005, outputCost: 0.005 },
       'mistralai/Mixtral-8x7B-Instruct-v0.1': { inputCost: 0.0006, outputCost: 0.0006 }
-    }
-  },
-  openrouter: {
-    name: 'OpenRouter',
-    models: {
-      // OpenAI models via OpenRouter (often cheaper)
-      'openai/gpt-4-turbo': { inputCost: 0.01, outputCost: 0.03 },
-      'openai/gpt-4': { inputCost: 0.03, outputCost: 0.06 },
-      'openai/gpt-3.5-turbo': { inputCost: 0.0015, outputCost: 0.002 },
-      // Anthropic models via OpenRouter
-      'anthropic/claude-3.5-sonnet': { inputCost: 0.003, outputCost: 0.015 },
-      'anthropic/claude-3-haiku': { inputCost: 0.00025, outputCost: 0.00125 },
-      // Google models
-      'google/gemini-pro-1.5': { inputCost: 0.00125, outputCost: 0.005 },
-      'google/gemini-flash-1.5': { inputCost: 0.000075, outputCost: 0.0003 },
-      // Meta models
-      'meta-llama/llama-3.1-405b-instruct': { inputCost: 0.003, outputCost: 0.003 },
-      'meta-llama/llama-3.1-70b-instruct': { inputCost: 0.00088, outputCost: 0.00088 },
-      'meta-llama/llama-3.1-8b-instruct': { inputCost: 0.00018, outputCost: 0.00018 },
-      // Mistral models
-      'mistralai/mistral-large': { inputCost: 0.004, outputCost: 0.012 },
-      'mistralai/mistral-medium': { inputCost: 0.0027, outputCost: 0.0081 },
-      // Other popular models
-      'perplexity/llama-3.1-sonar-large-128k-online': { inputCost: 0.001, outputCost: 0.001 },
-      'qwen/qwen-2.5-72b-instruct': { inputCost: 0.0009, outputCost: 0.0009 }
     }
   },
   local: {
@@ -473,11 +481,23 @@ export class MultiLLMService {
       throw new Error('OpenRouter API key not configured')
     }
 
+    console.log('OpenRouter API call:', {
+      model: config.model,
+      messagesCount: messages.length,
+      temperature: config.temperature,
+      maxTokens: config.maxTokens
+    })
+
     const completion = await this.openrouterClient.chat.completions.create({
       model: config.model,
       messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
       temperature: config.temperature,
-      max_tokens: config.maxTokens
+      max_tokens: config.maxTokens,
+      // OpenRouter specific headers
+      headers: {
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://archmen.vercel.app',
+        'X-Title': 'ArchMen Assessment Platform'
+      }
     })
 
     const usage = completion.usage
@@ -564,13 +584,13 @@ export class MultiLLMService {
   // Utility methods
   getAvailableProviders(): LLMProvider[] {
     const providers: LLMProvider[] = []
+    if (this.openrouterClient) providers.push('openrouter') // First priority
     if (this.openaiClient) providers.push('openai')
     if (this.anthropicClient) providers.push('anthropic')
     if (this.kimiClient) providers.push('kimi')
     if (this.groqClient) providers.push('groq')
     if (this.perplexityClient) providers.push('perplexity')
     if (this.togetherClient) providers.push('together')
-    if (this.openrouterClient) providers.push('openrouter')
     providers.push('local') // Always available if Ollama is running
     return providers
   }

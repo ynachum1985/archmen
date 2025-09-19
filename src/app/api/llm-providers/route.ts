@@ -5,40 +5,40 @@ export async function GET() {
   try {
     // Check which providers have API keys configured
     const availableProviders: LLMProvider[] = []
-    
+
+    // OpenRouter (first priority - gives access to many models)
+    if (process.env.OPENROUTER_API_KEY) {
+      availableProviders.push('openrouter')
+    }
+
     // OpenAI
     if (process.env.OPENAI_API_KEY) {
       availableProviders.push('openai')
     }
-    
+
     // Anthropic
     if (process.env.ANTHROPIC_API_KEY) {
       availableProviders.push('anthropic')
     }
-    
+
     // Kimi AI
     if (process.env.KIMI_API_KEY) {
       availableProviders.push('kimi')
     }
-    
+
     // Groq
     if (process.env.GROQ_API_KEY) {
       availableProviders.push('groq')
     }
-    
+
     // Perplexity
     if (process.env.PERPLEXITY_API_KEY) {
       availableProviders.push('perplexity')
     }
-    
+
     // Together AI
     if (process.env.TOGETHER_API_KEY) {
       availableProviders.push('together')
-    }
-
-    // OpenRouter
-    if (process.env.OPENROUTER_API_KEY) {
-      availableProviders.push('openrouter')
     }
 
     // Local is always available
