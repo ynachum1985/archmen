@@ -1077,7 +1077,6 @@ Keep the response under 150 words and end with a specific question.`)
                   assessmentName={config.name || 'New Assessment'}
                 />
               </div>
-            </div>
         </TabsContent>
 
         {/* Report & Answers Tab */}
