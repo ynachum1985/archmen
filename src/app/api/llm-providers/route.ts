@@ -35,7 +35,12 @@ export async function GET() {
     if (process.env.TOGETHER_API_KEY) {
       availableProviders.push('together')
     }
-    
+
+    // OpenRouter
+    if (process.env.OPENROUTER_API_KEY) {
+      availableProviders.push('openrouter')
+    }
+
     // Local is always available
     availableProviders.push('local')
     
