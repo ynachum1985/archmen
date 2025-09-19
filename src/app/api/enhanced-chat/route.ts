@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     console.log('- ANTHROPIC_API_KEY:', !!process.env.ANTHROPIC_API_KEY)
     console.log('- KIMI_API_KEY:', !!process.env.KIMI_API_KEY)
     console.log('- GROQ_API_KEY:', !!process.env.GROQ_API_KEY)
+    console.log('- OPENROUTER_API_KEY:', !!process.env.OPENROUTER_API_KEY)
     
     // Check if user is authenticated (optional for demo)
     const { data: { user } } = await supabase.auth.getUser()
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
 
       // Check if the requested provider is available
       const availableProviders = []
+      if (process.env.OPENROUTER_API_KEY) availableProviders.push('openrouter')
       if (process.env.OPENAI_API_KEY) availableProviders.push('openai')
       if (process.env.ANTHROPIC_API_KEY) availableProviders.push('anthropic')
       if (process.env.KIMI_API_KEY) availableProviders.push('kimi')
