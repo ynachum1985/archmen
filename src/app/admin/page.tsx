@@ -427,7 +427,6 @@ export default function AdminPage() {
           {/* Builder Tab - Assessment creation form */}
           <TabsContent value="builder" className="mt-6">
             <EnhancedAssessmentBuilder
-              assessment={editingAssessment}
               onSave={handleSaveEnhancedAssessment}
               onTest={handleTestEnhancedAssessment}
             />
