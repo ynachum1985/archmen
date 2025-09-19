@@ -121,6 +121,7 @@ export default function AdminPage() {
   // Convert mock assessment data to EnhancedAssessmentConfig format
   const convertToAssessmentConfig = (mockAssessment: any) => {
     return {
+      id: mockAssessment.id, // Include the assessment ID for API calls
       name: mockAssessment.name,
       description: mockAssessment.description,
       category: mockAssessment.name.includes('Main') ? 'Relationship Assessment' : 'Specialized Assessment',

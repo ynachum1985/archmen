@@ -35,6 +35,7 @@ import { AssessmentContentDisplay } from './AssessmentContentDisplay'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
+  id?: string | number // Add id property for database identification
   name: string
   description: string
   category: string
@@ -95,6 +96,7 @@ interface EnhancedAssessmentBuilderProps {
 }
 
 const defaultConfig: EnhancedAssessmentConfig = {
+  id: undefined, // Will be set when assessment is saved
   name: '',
   description: '',
   category: '',
