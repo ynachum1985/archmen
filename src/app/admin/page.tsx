@@ -310,14 +310,50 @@ export default function AdminPage() {
 
   const handleSaveArchetype = async (updatedArchetype: Archetype) => {
     try {
-      // Here you would typically save to the database
-      // For now, just update the local state
-      setArchetypes(prev => prev.map(a =>
-        a.id === updatedArchetype.id ? updatedArchetype : a
-      ))
-      console.log('Archetype saved:', updatedArchetype)
+      // Save to database using Supabase
+      const response = await fetch('/api/update-archetype', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: updatedArchetype.id,
+          updates: {
+            name: updatedArchetype.name,
+            description: updatedArchetype.description,
+            impact_score: updatedArchetype.impact_score,
+            growth_potential_score: updatedArchetype.growth_potential_score,
+            awareness_difficulty_score: updatedArchetype.awareness_difficulty_score,
+            trigger_intensity_score: updatedArchetype.trigger_intensity_score,
+            integration_complexity_score: updatedArchetype.integration_complexity_score,
+            shadow_depth_score: updatedArchetype.shadow_depth_score,
+            linguistic_patterns: updatedArchetype.linguistic_patterns,
+            theoretical_understanding: updatedArchetype.theoretical_understanding,
+            shadow_work: updatedArchetype.shadow_work,
+            integration_practices: updatedArchetype.integration_practices,
+            is_active: updatedArchetype.is_active
+          }
+        })
+      })
+
+      if (response.ok) {
+        const savedArchetype = await response.json()
+        // Update local state with saved data
+        setArchetypes(prev => prev.map(a =>
+          a.id === updatedArchetype.id ? savedArchetype.archetype : a
+        ))
+        console.log('Archetype saved successfully:', savedArchetype.archetype.name)
+
+        // Close the editor
+        setExpandedArchetype(null)
+        setEditingArchetype(null)
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to save archetype')
+      }
     } catch (error) {
       console.error('Error saving archetype:', error)
+      alert(`Error saving archetype: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

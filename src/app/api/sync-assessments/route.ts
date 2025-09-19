@@ -114,11 +114,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Fetch all assessments from database
+    // Fetch all assessments from database (admin panel should show all, not just active)
     const { data: assessments, error } = await supabase
       .from('enhanced_assessments')
       .select('*')
-      .eq('is_active', true)
       .order('created_at', { ascending: false })
 
     if (error) {

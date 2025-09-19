@@ -50,6 +50,10 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
       if (response.ok) {
         const data = await response.json()
         setChunks(data.chunks || [])
+      } else if (response.status === 404) {
+        // Assessment not found or no content yet - this is normal for new assessments
+        setChunks([])
+        setError(null)
       } else {
         const errorData = await response.json().catch(() => ({}))
         setError(errorData.error || `Failed to load content chunks (${response.status})`)

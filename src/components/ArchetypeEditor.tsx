@@ -23,8 +23,11 @@ interface Archetype {
   is_active: boolean | null
   created_at: string
   updated_at: string
-  // Consolidated linguistic data
+  // Separate content fields
   linguistic_patterns?: string
+  theoretical_understanding?: string
+  shadow_work?: string
+  integration_practices?: string
   metrics?: {
     impact_level?: number
     complexity_score?: number
@@ -46,11 +49,23 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
   const [linguisticPatterns, setLinguisticPatterns] = useState(
     archetype.linguistic_patterns || ''
   )
+  const [theoreticalUnderstanding, setTheoreticalUnderstanding] = useState(
+    archetype.theoretical_understanding || ''
+  )
+  const [shadowWork, setShadowWork] = useState(
+    archetype.shadow_work || ''
+  )
+  const [integrationPractices, setIntegrationPractices] = useState(
+    archetype.integration_practices || ''
+  )
 
   const handleSave = () => {
     const updated = {
       ...editedArchetype,
-      linguistic_patterns: linguisticPatterns
+      linguistic_patterns: linguisticPatterns,
+      theoretical_understanding: theoreticalUnderstanding,
+      shadow_work: shadowWork,
+      integration_practices: integrationPractices
     }
     onSave(updated)
   }
@@ -82,7 +97,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
 
         {/* Tabbed Content */}
         <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="metrics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Metrics
@@ -90,6 +105,14 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             <TabsTrigger value="linguistic" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
               Linguistic Patterns
+            </TabsTrigger>
+            <TabsTrigger value="understanding" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Understanding
+            </TabsTrigger>
+            <TabsTrigger value="shadow" className="flex items-center gap-2">
+              <Moon className="h-4 w-4" />
+              Shadow & Integration
             </TabsTrigger>
           </TabsList>
 
@@ -256,18 +279,72 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
           <TabsContent value="linguistic" className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comprehensive Linguistic Patterns
+                Linguistic Patterns (Behavioral, Emotional, Communication)
               </label>
               <Textarea
                 value={linguisticPatterns}
                 onChange={(e) => setLinguisticPatterns(e.target.value)}
-                placeholder="KEYWORDS: leadership, control, authority, responsibility, order&#10;&#10;PHRASES: 'I need to take charge', 'Let me handle this', 'Someone has to lead'&#10;&#10;EMOTIONAL PATTERNS: frustrated when not in control, protective of others, burden of responsibility&#10;&#10;BEHAVIORAL PATTERNS: takes initiative, makes decisions quickly, creates structure&#10;&#10;THEORETICAL UNDERSTANDING: Core concepts, psychological theory, foundational understanding&#10;&#10;SHADOW WORK: Potential pitfalls, unconscious patterns, areas for growth&#10;&#10;INTEGRATION PRACTICES: Exercises, techniques, and practices for healthy expression&#10;&#10;RESOURCES: Books, articles, videos, and references for deeper exploration"
-                rows={15}
+                placeholder="KEYWORDS: leadership, control, authority, responsibility, order&#10;&#10;PHRASES: 'I need to take charge', 'Let me handle this', 'Someone has to lead'&#10;&#10;EMOTIONAL PATTERNS: frustrated when not in control, protective of others, burden of responsibility&#10;&#10;BEHAVIORAL PATTERNS: takes initiative, makes decisions quickly, creates structure&#10;&#10;COMMUNICATION STYLE: Direct, authoritative, solution-focused"
+                rows={12}
                 className="resize-vertical"
               />
               <p className="text-xs text-gray-500 mt-2">
-                Comprehensive linguistic data for AI reference - include keywords, phrases, emotional patterns, behavioral patterns, theoretical understanding, shadow work, integration practices, and resources. This single field contains all linguistic information for easy AI access.
+                Behavioral, emotional, and communication patterns for AI language analysis and pattern matching.
               </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="understanding" className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Theoretical Understanding
+              </label>
+              <Textarea
+                value={theoreticalUnderstanding}
+                onChange={(e) => setTheoreticalUnderstanding(e.target.value)}
+                placeholder="Core psychological concepts, theoretical framework, foundational understanding of this archetype...&#10;&#10;Include relevant psychological theories, research findings, and conceptual foundations."
+                rows={12}
+                className="resize-vertical"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Core psychological concepts and theoretical framework for this archetype.
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="shadow" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Shadow Work
+                </label>
+                <Textarea
+                  value={shadowWork}
+                  onChange={(e) => setShadowWork(e.target.value)}
+                  placeholder="Potential pitfalls, unconscious patterns, areas for growth...&#10;&#10;Include shadow aspects, blind spots, and areas that need awareness."
+                  rows={8}
+                  className="resize-vertical"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Potential pitfalls and unconscious patterns to be aware of.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Integration Practices
+                </label>
+                <Textarea
+                  value={integrationPractices}
+                  onChange={(e) => setIntegrationPractices(e.target.value)}
+                  placeholder="Exercises, techniques, and practices for healthy expression...&#10;&#10;Include specific practices, exercises, and integration techniques."
+                  rows={8}
+                  className="resize-vertical"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Exercises and techniques for healthy expression and integration.
+                </p>
+              </div>
             </div>
           </TabsContent>
 
