@@ -5,7 +5,24 @@ import { MultiLLMService } from '@/lib/services/multi-llm.service'
 
 export async function POST(request: Request) {
   try {
+    console.log('=== Enhanced Chat API Started ===')
+    console.log('Creating Supabase client...')
     const supabase = await createClient()
+    console.log('Supabase client created successfully')
+
+    console.log('Parsing request body...')
+    let requestBody
+    try {
+      requestBody = await request.json()
+      console.log('Request body parsed successfully')
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError)
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+
     const {
       messages,
       personalityId,
@@ -15,7 +32,7 @@ export async function POST(request: Request) {
       model = 'gpt-4-turbo-preview',
       temperature = 0.7,
       maxTokens = 2000
-    } = await request.json()
+    } = requestBody
 
     console.log('=== Enhanced Chat API Request ===')
     console.log('Provider:', provider, 'Model:', model)
