@@ -110,26 +110,34 @@ export async function POST(request: Request) {
         }
       }
 
-      // Prepare messages with context and proper assessment instructions
-      const systemPrompt = `You are conducting a psychological assessment about relationship structure preferences, specifically focusing on monogamy vs. polyamory patterns. Your role is to ask thoughtful, open-ended questions that help reveal the user's underlying archetypes and relationship patterns.
+      // Get assessment configuration to use proper prompt
+      let assessmentPrompt = ''
+      if (assessmentId) {
+        try {
+          const { data: assessment } = await supabase
+            .from('enhanced_assessments')
+            .select('assessment_prompt, description, purpose')
+            .eq('id', assessmentId)
+            .single()
 
-IMPORTANT INSTRUCTIONS:
-1. Start by asking ONE open-ended question about their relationship preferences, experiences, or values
-2. Do NOT provide summaries, explanations, or overviews of the assessment
-3. Do NOT list multiple questions at once
-4. Ask questions that explore emotional patterns, attachment styles, and relationship dynamics
-5. Focus on understanding their authentic preferences rather than judging them
-6. Keep questions conversational and non-clinical
+          if (assessment) {
+            assessmentPrompt = assessment.assessment_prompt ||
+              `You are conducting the "${assessment.description || 'assessment'}" assessment. ${assessment.purpose || ''}`
+          }
+        } catch (error) {
+          console.error('Error fetching assessment prompt:', error)
+        }
+      }
 
-${contextContent ? `\nRelevant context about this assessment:\n${contextContent}` : ''}
-
-Begin by asking your first open-ended question about their relationship structure preferences or experiences.`
+      // Prepare messages with context and assessment prompt
+      const systemPrompt = assessmentPrompt ||
+        'You are conducting an assessment. Ask thoughtful, open-ended questions to understand the user better.'
 
       const contextualMessages = [
         ...messages.slice(0, -1), // Previous conversation
         {
           role: 'system',
-          content: systemPrompt
+          content: contextContent ? `${systemPrompt}\n\nRelevant context:\n${contextContent}` : systemPrompt
         },
         {
           role: 'user',

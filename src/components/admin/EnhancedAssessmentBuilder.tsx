@@ -40,8 +40,9 @@ interface EnhancedAssessmentConfig {
   description: string
   category: string
   purpose: string
+  assessmentPrompt: string // Dedicated prompt field for LLM instructions
   expectedDuration: number
-  
+
   // AI Configuration
   systemPrompt: string
 
@@ -57,7 +58,6 @@ interface EnhancedAssessmentConfig {
 
   // AI Personality
   selectedPersonalityId?: string
-  combinedPrompt: string // description + purpose + system prompt combined
   
   // Questioning Examples
   questionExamples: {
@@ -101,6 +101,7 @@ const defaultConfig: EnhancedAssessmentConfig = {
   description: '',
   category: '',
   purpose: '',
+  assessmentPrompt: '',
   expectedDuration: 15,
   systemPrompt: `You are an expert archetypal analyst with deep knowledge of human psychology and behavioral patterns. Your role is to identify archetypal patterns through natural conversation.
 
@@ -128,7 +129,6 @@ QUESTIONING STRATEGY:
 
   // AI Personality
   selectedPersonalityId: undefined,
-  combinedPrompt: '',
   questionExamples: {
     openEnded: [
       "Tell me about a time when you felt most authentic and true to yourself. What were you doing, and what made that moment special?",
@@ -353,7 +353,7 @@ Keep the response under 150 words and end with a specific question.`)
       const messages = [
         {
           role: 'system' as const,
-          content: config.combinedPrompt || config.systemPrompt || 'You are an AI assessment assistant.'
+          content: config.assessmentPrompt || config.systemPrompt || 'You are an AI assessment assistant.'
         },
         ...chatMessages.map(msg => ({
           role: msg.role,
@@ -545,7 +545,7 @@ Keep the response under 150 words and end with a specific question.`)
             category: config.category,
             purpose: config.purpose,
             systemPrompt: config.systemPrompt,
-            combinedPrompt: config.combinedPrompt,
+            assessmentPrompt: config.assessmentPrompt,
             minQuestions: config.minQuestions,
             maxQuestions: config.maxQuestions,
             evidenceThreshold: config.evidenceThreshold,
@@ -588,7 +588,7 @@ Keep the response under 150 words and end with a specific question.`)
         maxTokens: testMaxTokens
       }
 
-      const systemPrompt = config.combinedPrompt || config.systemPrompt || `You are conducting the "${config.name}" assessment. Be empathetic and ask thoughtful follow-up questions.`
+      const systemPrompt = config.assessmentPrompt || config.systemPrompt || `You are conducting the "${config.name}" assessment. Be empathetic and ask thoughtful follow-up questions.`
 
       const result = await service.generateChatCompletion([
         { role: 'system', content: systemPrompt },
@@ -644,7 +644,7 @@ Keep the response under 150 words and end with a specific question.`)
           maxTokens: testMaxTokens
         }
 
-        const systemPrompt = config.combinedPrompt || config.systemPrompt || `You are conducting the "${config.name}" assessment. Be empathetic and ask thoughtful follow-up questions.`
+        const systemPrompt = config.assessmentPrompt || config.systemPrompt || `You are conducting the "${config.name}" assessment. Be empathetic and ask thoughtful follow-up questions.`
 
         const result = await service.generateChatCompletion([
           { role: 'system', content: systemPrompt },
@@ -694,15 +694,7 @@ Keep the response under 150 words and end with a specific question.`)
 
 
 
-  // Update combined prompt when relevant fields change
-  useEffect(() => {
-    const combinedPrompt = [
-      config.description && `ASSESSMENT DESCRIPTION: ${config.description}`,
-      config.purpose && `ASSESSMENT PURPOSE: ${config.purpose}`
-    ].filter(Boolean).join('\n\n')
 
-    setConfig(prev => ({ ...prev, combinedPrompt }))
-  }, [config.description, config.purpose])
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -743,6 +735,16 @@ Keep the response under 150 words and end with a specific question.`)
                   value={config.purpose}
                   onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
                   rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="assessmentPrompt">Assessment Prompt</Label>
+                <Textarea
+                  id="assessmentPrompt"
+                  value={config.assessmentPrompt}
+                  onChange={(e) => setConfig(prev => ({ ...prev, assessmentPrompt: e.target.value }))}
+                  rows={4}
+                  placeholder="Enter the specific prompt instructions for the LLM conducting this assessment..."
                 />
               </div>
             </div>

@@ -22,7 +22,7 @@ interface EnhancedAssessmentConfig {
     evidencePerCycle: number
   }
   selectedPersonalityId?: string
-  combinedPrompt: string
+  assessmentPrompt: string
   questionExamples: {
     openEnded: string[]
     followUp: string[]
@@ -63,7 +63,7 @@ export function AssessmentTestingChat({ config, onClose }: AssessmentTestingChat
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [],
-          systemPrompt: `${config.combinedPrompt}
+          systemPrompt: `${config.assessmentPrompt}
 
 You are conducting an assessment with the following configuration:
 - Min Questions: ${config.minQuestions}
@@ -98,7 +98,7 @@ Start the conversation with an engaging opening question that aligns with the as
     } finally {
       setIsLoading(false)
     }
-  }, [config.combinedPrompt, config.minQuestions, config.maxQuestions, config.evidenceThreshold, config.adaptationSensitivity])
+  }, [config.assessmentPrompt, config.minQuestions, config.maxQuestions, config.evidenceThreshold, config.adaptationSensitivity])
 
   // Initialize the conversation with the first question
   useEffect(() => {
@@ -131,7 +131,7 @@ Start the conversation with an engaging opening question that aligns with the as
             role: m.role === 'ai' ? 'assistant' : 'user',
             content: m.content
           })),
-          systemPrompt: `${config.combinedPrompt}
+          systemPrompt: `${config.assessmentPrompt}
 
 Current question count: ${questionCount}
 Min questions: ${config.minQuestions}
