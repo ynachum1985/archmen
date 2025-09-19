@@ -290,17 +290,23 @@ export class MultiLLMService {
     config: LLMConfig
   ): Promise<LLMResponse> {
     // Kimi AI uses OpenAI-compatible API
+    if (!process.env.KIMI_API_KEY && !config.apiKey) {
+      throw new Error('Kimi API key not configured')
+    }
+
     const kimiClient = new OpenAI({
       apiKey: process.env.KIMI_API_KEY || config.apiKey,
       baseURL: 'https://api.moonshot.cn/v1'
     })
 
+    console.log('Kimi API call with model:', config.model)
     const completion = await kimiClient.chat.completions.create({
       model: config.model,
       messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
       temperature: config.temperature,
       max_tokens: config.maxTokens
     })
+    console.log('Kimi API response received')
 
     const usage = completion.usage
     const modelPricing = LLM_PROVIDERS.kimi.models[config.model as keyof typeof LLM_PROVIDERS.kimi.models]
