@@ -660,12 +660,16 @@ Keep the response under 150 words and end with a specific question.`)
 
   const getProviderColor = (provider: LLMProvider) => {
     const colors = {
+      openrouter: 'bg-indigo-100 text-indigo-800',
       openai: 'bg-green-100 text-green-800',
       anthropic: 'bg-orange-100 text-orange-800',
       kimi: 'bg-blue-100 text-blue-800',
+      groq: 'bg-yellow-100 text-yellow-800',
+      perplexity: 'bg-teal-100 text-teal-800',
+      together: 'bg-pink-100 text-pink-800',
       local: 'bg-purple-100 text-purple-800'
     }
-    return colors[provider]
+    return colors[provider] || 'bg-gray-100 text-gray-800'
   }
 
   const handleTest = () => {
