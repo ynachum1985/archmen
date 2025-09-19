@@ -36,6 +36,24 @@ export async function POST(request: Request) {
     // If this is for assessment testing, use multi-LLM service for all providers
     if (assessmentId) {
       console.log('Creating MultiLLMService for assessment testing')
+
+      // Check if the requested provider is available
+      const availableProviders = []
+      if (process.env.OPENAI_API_KEY) availableProviders.push('openai')
+      if (process.env.ANTHROPIC_API_KEY) availableProviders.push('anthropic')
+      if (process.env.KIMI_API_KEY) availableProviders.push('kimi')
+      if (process.env.GROQ_API_KEY) availableProviders.push('groq')
+      if (process.env.PERPLEXITY_API_KEY) availableProviders.push('perplexity')
+      if (process.env.TOGETHER_API_KEY) availableProviders.push('together')
+      availableProviders.push('local')
+
+      if (!availableProviders.includes(provider)) {
+        return NextResponse.json(
+          { error: `Provider ${provider} is not available. Available providers: ${availableProviders.join(', ')}` },
+          { status: 400 }
+        )
+      }
+
       const multiLLMService = new MultiLLMService()
 
       // Get assessment content for RAG if available

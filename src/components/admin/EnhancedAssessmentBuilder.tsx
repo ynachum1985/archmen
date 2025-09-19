@@ -252,13 +252,27 @@ export function EnhancedAssessmentBuilder({
       await loadPersonalities()
       await initializeFileStorage()
 
-      // Initialize LLM testing
-      const service = multiLLMService.getInstance()
-      const providers = service.getAvailableProviders()
-      setAvailableProviders(providers)
+      // Initialize LLM testing - get providers from server
+      try {
+        const response = await fetch('/api/llm-providers')
+        if (response.ok) {
+          const data = await response.json()
+          setAvailableProviders(data.providers)
 
-      if (providers.length > 0 && !selectedProvider) {
-        setSelectedProvider(providers[0])
+          if (data.providers.length > 0 && !selectedProvider) {
+            setSelectedProvider(data.providers[0])
+          }
+        } else {
+          console.error('Failed to fetch LLM providers')
+          // Fallback to local only
+          setAvailableProviders(['local'])
+          setSelectedProvider('local')
+        }
+      } catch (error) {
+        console.error('Error fetching LLM providers:', error)
+        // Fallback to local only
+        setAvailableProviders(['local'])
+        setSelectedProvider('local')
       }
     }
     initialize()
