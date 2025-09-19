@@ -578,7 +578,13 @@ export default function AdminPage() {
         </Tabs>
 
         {/* Edit Assessment Dialog */}
-        <Dialog open={showEditAssessmentDialog} onOpenChange={setShowEditAssessmentDialog}>
+        <Dialog open={showEditAssessmentDialog} onOpenChange={(open) => {
+          setShowEditAssessmentDialog(open)
+          if (!open) {
+            // Clear editing assessment when dialog closes to prevent Builder tab contamination
+            setEditingAssessment(null)
+          }
+        }}>
           <DialogContent className="!max-w-none !w-[calc(100vw-1rem)] !max-h-[calc(100vh-1rem)] overflow-y-auto bg-white border border-gray-200 shadow-xl p-6" style={{ width: 'calc(100vw - 1rem)', maxWidth: 'none' }}>
             <DialogHeader>
               <DialogTitle>Edit Assessment: {editingAssessment?.name}</DialogTitle>
@@ -594,6 +600,7 @@ export default function AdminPage() {
                   onSave={(config) => {
                     handleSaveEnhancedAssessment(config)
                     setShowEditAssessmentDialog(false)
+                    setEditingAssessment(null)
                   }}
                   onTest={handleTestEnhancedAssessment}
                 />
