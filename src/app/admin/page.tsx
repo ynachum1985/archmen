@@ -215,7 +215,7 @@ export default function AdminPage() {
     isMain?: boolean
   }> = [
     {
-      id: 'main-assessment',
+      id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'Main Assessment',
       description: 'The primary assessment that appears on the homepage for new users',
       status: 'Active',
@@ -225,7 +225,7 @@ export default function AdminPage() {
       isMain: true
     },
     {
-      id: 'sexuality-intimacy',
+      id: '550e8400-e29b-41d4-a716-446655440002',
       name: 'Sexuality & Intimacy',
       description: 'Explore sexual archetypes and intimacy patterns in relationships',
       status: 'Draft',
@@ -243,7 +243,7 @@ export default function AdminPage() {
       completionRate: 78
     },
     {
-      id: 'relationship-patterns',
+      id: '550e8400-e29b-41d4-a716-446655440003',
       name: 'Relationship Patterns',
       description: 'Identify recurring relationship dynamics and complexes',
       status: 'Draft',
@@ -252,7 +252,7 @@ export default function AdminPage() {
       completionRate: 0
     },
     {
-      id: 'patriarchy-influence',
+      id: '550e8400-e29b-41d4-a716-446655440004',
       name: 'Patriarchy\'s Influence',
       description: 'Examine how patriarchal conditioning affects relational dynamics',
       status: 'Draft',
@@ -261,7 +261,7 @@ export default function AdminPage() {
       completionRate: 0
     },
     {
-      id: 'consent-boundaries',
+      id: '550e8400-e29b-41d4-a716-446655440005',
       name: 'Consent & Boundaries',
       description: 'Assess understanding and practice of consent and emotional safety',
       status: 'Draft',
@@ -270,7 +270,7 @@ export default function AdminPage() {
       completionRate: 0
     },
     {
-      id: 'modern-dating',
+      id: '550e8400-e29b-41d4-a716-446655440006',
       name: 'Modern Dating',
       description: 'Navigate contemporary dating challenges and patterns',
       status: 'Active',
