@@ -23,14 +23,8 @@ interface Archetype {
   is_active: boolean | null
   created_at: string
   updated_at: string
-  linguisticPattern?: LinguisticPattern
-  // New fields
+  // Consolidated linguistic data
   linguistic_patterns?: string
-  theoretical_understanding?: string
-  embodiment_practices?: string
-  integration_practices?: string
-  shadow_work?: string
-  resources?: string
   metrics?: {
     impact_level?: number
     complexity_score?: number
@@ -39,13 +33,7 @@ interface Archetype {
   }
 }
 
-interface LinguisticPattern {
-  id: string
-  archetype_name: string
-  patterns: string | null // Simplified to single text field
-  created_at: string
-  updated_at: string
-}
+
 
 interface ArchetypeEditorProps {
   archetype: Archetype
@@ -56,38 +44,13 @@ interface ArchetypeEditorProps {
 export default function ArchetypeEditor({ archetype, onSave, onCancel }: ArchetypeEditorProps) {
   const [editedArchetype, setEditedArchetype] = useState<Archetype>(archetype)
   const [linguisticPatterns, setLinguisticPatterns] = useState(
-    archetype.linguisticPattern?.patterns || archetype.linguistic_patterns || ''
-  )
-  const [theoreticalUnderstanding, setTheoreticalUnderstanding] = useState(
-    archetype.theoretical_understanding || ''
-  )
-  const [shadowWork, setShadowWork] = useState(
-    archetype.shadow_work || ''
-  )
-  const [resources, setResources] = useState(
-    archetype.resources || ''
+    archetype.linguistic_patterns || ''
   )
 
   const handleSave = () => {
     const updated = {
       ...editedArchetype,
-      linguistic_patterns: linguisticPatterns,
-      theoretical_understanding: theoreticalUnderstanding,
-      shadow_work: shadowWork,
-      resources: resources
-    }
-
-    if (!updated.linguisticPattern) {
-      updated.linguisticPattern = {
-        id: '',
-        archetype_name: updated.name,
-        patterns: linguisticPatterns,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    } else {
-      updated.linguisticPattern.patterns = linguisticPatterns
-      updated.linguisticPattern.updated_at = new Date().toISOString()
+      linguistic_patterns: linguisticPatterns
     }
     onSave(updated)
   }
@@ -119,22 +82,14 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
 
         {/* Tabbed Content */}
         <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="metrics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Metrics
             </TabsTrigger>
             <TabsTrigger value="linguistic" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
-              Linguistic
-            </TabsTrigger>
-            <TabsTrigger value="understanding" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Understanding
-            </TabsTrigger>
-            <TabsTrigger value="shadow" className="flex items-center gap-2">
-              <Moon className="h-4 w-4" />
-              Shadow & Resources
+              Linguistic Patterns
             </TabsTrigger>
           </TabsList>
 
@@ -301,76 +256,22 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
           <TabsContent value="linguistic" className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Linguistic Patterns
+                Comprehensive Linguistic Patterns
               </label>
               <Textarea
                 value={linguisticPatterns}
                 onChange={(e) => setLinguisticPatterns(e.target.value)}
-                placeholder="Keywords: leadership, control, authority&#10;Phrases: I need to take charge, Let me handle this&#10;Emotional: frustrated when not in control, protective&#10;Behavioral: takes initiative, makes decisions quickly"
-                rows={8}
+                placeholder="KEYWORDS: leadership, control, authority, responsibility, order&#10;&#10;PHRASES: 'I need to take charge', 'Let me handle this', 'Someone has to lead'&#10;&#10;EMOTIONAL PATTERNS: frustrated when not in control, protective of others, burden of responsibility&#10;&#10;BEHAVIORAL PATTERNS: takes initiative, makes decisions quickly, creates structure&#10;&#10;THEORETICAL UNDERSTANDING: Core concepts, psychological theory, foundational understanding&#10;&#10;SHADOW WORK: Potential pitfalls, unconscious patterns, areas for growth&#10;&#10;INTEGRATION PRACTICES: Exercises, techniques, and practices for healthy expression&#10;&#10;RESOURCES: Books, articles, videos, and references for deeper exploration"
+                rows={15}
                 className="resize-vertical"
               />
               <p className="text-xs text-gray-500 mt-2">
-                Define language patterns that help identify this archetype in conversations
-              </p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="understanding" className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Theoretical Understanding
-              </label>
-              <Textarea
-                value={theoreticalUnderstanding}
-                onChange={(e) => setTheoreticalUnderstanding(e.target.value)}
-                placeholder="Core concepts, psychological theory, and foundational understanding of this archetype..."
-                rows={8}
-                className="resize-vertical"
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Explain the core concepts and theory behind this archetype
+                Comprehensive linguistic data for AI reference - include keywords, phrases, emotional patterns, behavioral patterns, theoretical understanding, shadow work, integration practices, and resources. This single field contains all linguistic information for easy AI access.
               </p>
             </div>
           </TabsContent>
 
 
-
-          <TabsContent value="shadow" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Shadow Work
-                </label>
-                <Textarea
-                  value={shadowWork}
-                  onChange={(e) => setShadowWork(e.target.value)}
-                  placeholder="Shadow aspects, potential pitfalls, and work to address them..."
-                  rows={6}
-                  className="resize-vertical"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Working with the shadow aspects and potential pitfalls
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Resources
-                </label>
-                <Textarea
-                  value={resources}
-                  onChange={(e) => setResources(e.target.value)}
-                  placeholder="Books, articles, videos, exercises, and other resources..."
-                  rows={6}
-                  className="resize-vertical"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Additional materials and references for deeper exploration
-                </p>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
 
         {/* Action Buttons */}
