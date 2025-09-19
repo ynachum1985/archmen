@@ -124,15 +124,13 @@ export class MultiLLMService {
     // Initialize clients based on available API keys
     if (process.env.OPENAI_API_KEY) {
       this.openaiClient = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-        dangerouslyAllowBrowser: typeof window !== 'undefined'
+        apiKey: process.env.OPENAI_API_KEY
       })
     }
 
     if (process.env.ANTHROPIC_API_KEY) {
       this.anthropicClient = new Anthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY,
-        dangerouslyAllowBrowser: typeof window !== 'undefined'
+        apiKey: process.env.ANTHROPIC_API_KEY
       })
     }
 

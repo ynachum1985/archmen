@@ -221,18 +221,15 @@
   transform: rotateY(180deg);
 }
 
-/* Disable dropdown animations completely */
-[data-radix-select-content],
-[data-radix-popper-content-wrapper],
-.radix-select-content {
-  animation: none !important;
-  transform: none !important;
-  transition: none !important;
+/* Disable dropdown animations while preserving positioning */
+[data-radix-select-content] {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
 }
 
-/* Force immediate appearance for all select content */
-[data-state="open"][data-radix-select-content] {
+/* Disable popper animations */
+[data-radix-popper-content-wrapper] {
   animation: none !important;
-  transform: translateY(0) !important;
-  opacity: 1 !important;
+  transition: none !important;
 }
