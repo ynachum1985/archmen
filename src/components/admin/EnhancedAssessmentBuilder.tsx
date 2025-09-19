@@ -877,10 +877,9 @@ Keep the response under 150 words and end with a specific question.`)
               </Select>
             </div>
 
-            {config.name && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium">Knowledge Base</h4>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">Knowledge Base</h4>
                   <EmbeddingSettingsDialog
                     trigger={
                       <Button variant="outline" size="sm">
@@ -888,9 +887,9 @@ Keep the response under 150 words and end with a specific question.`)
                         Settings
                       </Button>
                     }
-                    title={`Embedding Settings for ${config.name}`}
-                    description={`Configure how ${config.name} content is processed and embedded for AI reference`}
-                    itemId={config.name}
+                    title={`Embedding Settings for ${config.name || 'New Assessment'}`}
+                    description={`Configure how ${config.name || 'this assessment'} content is processed and embedded for AI reference`}
+                    itemId={config.id || config.name || 'new-assessment'}
                     itemType="assessment"
                     onSave={async (settings) => {
                       console.log('Assessment embedding settings saved:', settings)
@@ -1071,10 +1070,10 @@ Keep the response under 150 words and end with a specific question.`)
 
                 <AssessmentContentDisplay
                   assessmentId={config.id || config.name}
-                  assessmentName={config.name}
+                  assessmentName={config.name || 'New Assessment'}
                 />
               </div>
-            )}
+            </div>
         </TabsContent>
 
         {/* Report & Answers Tab */}

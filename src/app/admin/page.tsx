@@ -118,21 +118,70 @@ export default function AdminPage() {
   const [editingAssessment, setEditingAssessment] = useState<any>(null)
   const [showEditAssessmentDialog, setShowEditAssessmentDialog] = useState(false)
 
-  // Convert mock assessment data to EnhancedAssessmentConfig format
-  const convertToAssessmentConfig = (mockAssessment: any) => {
+  // Convert assessment data from Supabase to EnhancedAssessmentConfig format
+  const convertToAssessmentConfig = (assessment: any) => {
+    // If this is already a full assessment from Supabase, use it directly
+    if (assessment.system_prompt || assessment.combined_prompt) {
+      return {
+        id: assessment.id,
+        name: assessment.name,
+        description: assessment.description,
+        category: assessment.category || 'Relationship Assessment',
+        purpose: assessment.purpose || `This assessment is designed to ${assessment.description?.toLowerCase() || 'assess relationship patterns'}`,
+        assessmentPrompt: assessment.system_prompt || `You are conducting the "${assessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences.`,
+        expectedDuration: assessment.expected_duration || 20,
+        systemPrompt: assessment.system_prompt || `You are analyzing ${assessment.name?.toLowerCase() || 'relationship'} patterns.`,
+        minQuestions: assessment.min_questions || 8,
+        maxQuestions: assessment.max_questions || 15,
+        evidenceThreshold: (assessment.evidence_threshold || 0.7) * 100, // Convert to percentage
+        adaptationSensitivity: (assessment.adaptation_sensitivity || 0.5) * 100,
+        cycleSettings: assessment.cycle_settings || {
+          maxCycles: 3,
+          evidencePerCycle: 3
+        },
+        selectedPersonalityId: assessment.selected_personality_id,
+        combinedPrompt: assessment.combined_prompt,
+        questionExamples: assessment.question_examples || {
+          openEnded: [
+            "How do you typically approach relationships?",
+            "What patterns do you notice in your interactions?"
+          ],
+          followUp: [
+            "Can you tell me more about that?",
+            "How does that make you feel?"
+          ],
+          maxSentences: 3,
+          followUpPrompts: [
+            "Please elaborate on your experience",
+            "What specific examples come to mind?"
+          ]
+        },
+        responseRequirements: assessment.response_requirements || {},
+        reportGeneration: assessment.report_generation || "Generate a comprehensive report based on the identified archetypes and patterns.",
+        reportAnswers: {
+          theoreticalUnderstanding: "Provide theoretical context for the identified archetypes",
+          embodimentPractices: "Suggest practices for embodying positive aspects",
+          integrationPractices: "Recommend integration exercises",
+          resourceLinks: [],
+          archetypeCards: []
+        }
+      }
+    }
+
+    // Fallback for simplified assessment data (from the grid display)
     return {
-      id: mockAssessment.id, // Include the assessment ID for API calls
-      name: mockAssessment.name,
-      description: mockAssessment.description,
-      category: mockAssessment.name.includes('Main') ? 'Relationship Assessment' : 'Specialized Assessment',
-      purpose: `This assessment is designed to ${mockAssessment.description.toLowerCase()}`,
-      assessmentPrompt: `You are conducting the "${mockAssessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences. Focus on one question at a time and avoid providing summaries or explanations.`,
-      expectedDuration: Math.ceil(mockAssessment.questionCount * 1.5), // Estimate based on question count
-      systemPrompt: `You are analyzing ${mockAssessment.name.toLowerCase()} patterns. Focus on identifying relevant archetypes through thoughtful questioning.`,
-      minQuestions: Math.max(8, mockAssessment.questionCount - 3),
-      maxQuestions: mockAssessment.questionCount + 3,
-      evidenceThreshold: 0.7,
-      adaptationSensitivity: 0.5,
+      id: assessment.id,
+      name: assessment.name,
+      description: assessment.description,
+      category: assessment.isMain ? 'Relationship Assessment' : 'Specialized Assessment',
+      purpose: `This assessment is designed to ${assessment.description?.toLowerCase() || 'assess relationship patterns'}`,
+      assessmentPrompt: `You are conducting the "${assessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences.`,
+      expectedDuration: Math.ceil(assessment.questionCount * 1.5),
+      systemPrompt: `You are analyzing ${assessment.name?.toLowerCase() || 'relationship'} patterns.`,
+      minQuestions: Math.max(8, assessment.questionCount - 3),
+      maxQuestions: assessment.questionCount + 3,
+      evidenceThreshold: 70,
+      adaptationSensitivity: 50,
       cycleSettings: {
         maxCycles: 3,
         evidencePerCycle: 3
@@ -203,8 +252,8 @@ export default function AdminPage() {
     return matchesSearch
   })
 
-  // Assessment categories for specialized assessments
-  const assessmentCategories: Array<{
+  // Assessment categories loaded from Supabase
+  const [assessmentCategories, setAssessmentCategories] = useState<Array<{
     id: string
     name: string
     description: string
@@ -213,72 +262,40 @@ export default function AdminPage() {
     questionCount: number
     completionRate: number
     isMain?: boolean
-  }> = [
-    {
-      id: '550e8400-e29b-41d4-a716-446655440001',
-      name: 'Main Assessment',
-      description: 'The primary assessment that appears on the homepage for new users',
-      status: 'Active',
-      archetypeCount: 55,
-      questionCount: 12,
-      completionRate: 85,
-      isMain: true
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440002',
-      name: 'Sexuality & Intimacy',
-      description: 'Explore sexual archetypes and intimacy patterns in relationships',
-      status: 'Draft',
-      archetypeCount: 12,
-      questionCount: 15,
-      completionRate: 0
-    },
-    {
-      id: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb',
-      name: 'Monogamy vs. Polyamory',
-      description: 'Assess relationship structure preferences and patterns',
-      status: 'Active',
-      archetypeCount: 8,
-      questionCount: 12,
-      completionRate: 78
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440003',
-      name: 'Relationship Patterns',
-      description: 'Identify recurring relationship dynamics and complexes',
-      status: 'Draft',
-      archetypeCount: 15,
-      questionCount: 18,
-      completionRate: 0
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440004',
-      name: 'Patriarchy\'s Influence',
-      description: 'Examine how patriarchal conditioning affects relational dynamics',
-      status: 'Draft',
-      archetypeCount: 10,
-      questionCount: 14,
-      completionRate: 0
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440005',
-      name: 'Consent & Boundaries',
-      description: 'Assess understanding and practice of consent and emotional safety',
-      status: 'Draft',
-      archetypeCount: 9,
-      questionCount: 16,
-      completionRate: 0
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440006',
-      name: 'Modern Dating',
-      description: 'Navigate contemporary dating challenges and patterns',
-      status: 'Active',
-      archetypeCount: 11,
-      questionCount: 13,
-      completionRate: 45
+  }>>([])
+  const [loadingAssessments, setLoadingAssessments] = useState(true)
+
+  // Load assessments from Supabase
+  const loadAssessments = async () => {
+    try {
+      setLoadingAssessments(true)
+      const response = await fetch('/api/sync-assessments')
+      const data = await response.json()
+
+      if (data.success && data.assessments) {
+        const formattedAssessments = data.assessments.map((assessment: any) => ({
+          id: assessment.id,
+          name: assessment.name,
+          description: assessment.description || '',
+          status: assessment.is_active ? 'Active' : 'Draft',
+          archetypeCount: 0, // TODO: Calculate from archetype_focus
+          questionCount: assessment.min_questions || 8,
+          completionRate: 0, // TODO: Calculate from usage data
+          isMain: assessment.category === 'main'
+        }))
+        setAssessmentCategories(formattedAssessments)
+      }
+    } catch (error) {
+      console.error('Error loading assessments:', error)
+    } finally {
+      setLoadingAssessments(false)
     }
-  ]
+  }
+
+  // Load assessments on component mount
+  useEffect(() => {
+    loadAssessments()
+  }, [])
 
   const handleToggleArchetype = (archetypeId: string) => {
     if (expandedArchetype === archetypeId) {
@@ -311,6 +328,9 @@ export default function AdminPage() {
       // Save to database using the integration service
       const assessmentId = await assessmentIntegrationService.createMainAssessment(assessmentData as Record<string, unknown>)
       console.log('Assessment saved with ID:', assessmentId)
+
+      // Refresh the assessments list to show the new assessment
+      await loadAssessments()
 
       alert('Assessment saved successfully! This will now be available on the homepage.')
     } catch (error) {
@@ -370,8 +390,19 @@ export default function AdminPage() {
               </div>
 
               {/* All Assessments Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {assessmentCategories.map((category) => (
+              {loadingAssessments ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                  <span className="ml-3 text-gray-600">Loading assessments...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {assessmentCategories.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <p className="text-gray-500">No assessments found. Create your first assessment using the Builder tab.</p>
+                    </div>
+                  ) : (
+                    assessmentCategories.map((category) => (
                   <Card
                     key={category.id}
                     className={`cursor-pointer hover:shadow-md transition-shadow ${
@@ -417,10 +448,12 @@ export default function AdminPage() {
                           Edit Assessment
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </CardContent>
+                    </Card>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </TabsContent>
 
