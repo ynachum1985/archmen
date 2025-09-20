@@ -237,7 +237,7 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
   return (
     <div className="space-y-6">
 
-      <Tabs defaultValue="upload" className="space-y-4">
+      <Tabs defaultValue="metrics" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="metrics" className="flex items-center gap-2">
             <TestTube className="h-4 w-4" />

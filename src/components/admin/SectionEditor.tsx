@@ -8,20 +8,22 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  Save, 
-  X, 
-  Plus, 
-  Trash2, 
-  Image, 
-  Video, 
-  FileText, 
+import {
+  Save,
+  X,
+  Plus,
+  Trash2,
+  Image,
+  Video,
+  FileText,
   Upload,
   Lightbulb,
   Target,
   Heart,
-  Zap
+  Zap,
+  Wand2
 } from 'lucide-react'
+import { MediaCreationStudio } from './MediaCreationStudio'
 
 interface CourseSection {
   id: string
@@ -46,9 +48,10 @@ interface SectionEditorProps {
   isOpen: boolean
   onSave: (section: CourseSection) => void
   onCancel: () => void
+  archetypeName?: string
 }
 
-export function SectionEditor({ section, isOpen, onSave, onCancel }: SectionEditorProps) {
+export function SectionEditor({ section, isOpen, onSave, onCancel, archetypeName = 'Archetype' }: SectionEditorProps) {
   const [formData, setFormData] = useState<CourseSection>({
     id: '',
     type: 'theory',
@@ -136,8 +139,8 @@ export function SectionEditor({ section, isOpen, onSave, onCancel }: SectionEdit
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white shadow-2xl">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -348,6 +351,43 @@ export function SectionEditor({ section, isOpen, onSave, onCancel }: SectionEdit
                 <p className="text-xs">Click "Add Media" to include images, videos, or documents</p>
               </div>
             )}
+          </div>
+
+          {/* Media Creation Studio */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>AI Media Creation</Label>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Toggle media creation studio visibility
+                  const studio = document.getElementById('media-creation-studio')
+                  if (studio) {
+                    studio.style.display = studio.style.display === 'none' ? 'block' : 'none'
+                  }
+                }}
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Create Media
+              </Button>
+            </div>
+
+            <div id="media-creation-studio" style={{ display: 'none' }}>
+              <MediaCreationStudio
+                onMediaCreated={(asset) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    mediaAssets: [...prev.mediaAssets, asset]
+                  }))
+                  // Hide the studio after creating media
+                  const studio = document.getElementById('media-creation-studio')
+                  if (studio) studio.style.display = 'none'
+                }}
+                archetypeName={archetypeName}
+                sectionType={formData.type}
+              />
+            </div>
           </div>
 
           {/* Action Buttons */}

@@ -427,6 +427,7 @@ export function CourseContentBuilder({ archetypeId, archetypeName }: CourseConte
           setEditingSection(null)
           setShowSectionForm(false)
         }}
+        archetypeName={archetypeName}
       />
     </div>
   )
