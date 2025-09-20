@@ -21,8 +21,9 @@ interface ArchetypeKnowledgeBaseProps {
 }
 
 export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: ArchetypeKnowledgeBaseProps) {
-  const [textContent, setTextContent] = useState('')
-  const [sourceUrl, setSourceUrl] = useState('')
+  // Content state - multiple text contents and URLs
+  const [textContents, setTextContents] = useState<string[]>([''])
+  const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingStatus, setProcessingStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
   const [statusMessage, setStatusMessage] = useState('')
@@ -47,7 +48,7 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
 
   const handleProcessContent = async () => {
     // Check if we have either text content or uploaded files
-    const hasTextContent = textContent.trim()
+    const hasTextContent = textContents.some(content => content.trim())
     const hasFiles = uploadedFiles.some(fileGroup => fileGroup.length > 0)
 
     if (!hasTextContent && !hasFiles) {
@@ -61,7 +62,8 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
       setProcessingStatus('processing')
       setStatusMessage('Processing content and generating embeddings...')
 
-      let combinedContent = textContent
+      // Combine all text contents
+      let combinedContent = textContents.filter(content => content.trim()).join('\n\n---\n\n')
 
       // Process uploaded files
       if (hasFiles) {
@@ -98,7 +100,7 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
         body: JSON.stringify({
           archetypeId,
           textContent: combinedContent,
-          sourceUrl: sourceUrl || undefined,
+          sourceUrl: referenceUrls.filter(url => url.trim()).join(', ') || undefined,
           contentType: 'text',
           settings: {
             chunkSize: 1000,
@@ -116,8 +118,8 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
 
       setProcessingStatus('success')
       setStatusMessage(data.message || 'Content processed successfully!')
-      setTextContent('')
-      setSourceUrl('')
+      setTextContents([''])
+      setReferenceUrls([''])
       setUploadedFiles([[]])
 
       // Refresh the content display
@@ -331,23 +333,60 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
                 </Button>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="sourceUrl">Source URL (optional)</Label>
-                <Input
-                  id="sourceUrl"
-                  value={sourceUrl}
-                  onChange={(e) => setSourceUrl(e.target.value)}
-                  placeholder="https://example.com/archetype-resource"
-                />
+              {/* Reference URLs */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Reference URLs</Label>
+                {referenceUrls.map((url, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={url}
+                      onChange={(e) => {
+                        const updatedUrls = [...referenceUrls]
+                        updatedUrls[index] = e.target.value
+                        setReferenceUrls(updatedUrls)
+                      }}
+                      placeholder={url ? "" : "https://example.com/archetype-resource"}
+                      className="flex-1"
+                    />
+                    {referenceUrls.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                        onClick={() => {
+                          const updatedUrls = referenceUrls.filter((_, i) => i !== index)
+                          setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
+                        }}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setReferenceUrls([...referenceUrls, ''])}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Reference URL
+                </Button>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="textContent">Content</Label>
-                <Textarea
-                  id="textContent"
-                  value={textContent}
-                  onChange={(e) => setTextContent(e.target.value)}
-                  placeholder={`Enter comprehensive content about ${archetypeName}...
+              {/* Text Content Sections */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Text Content</Label>
+                {textContents.map((content, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <Textarea
+                      value={content}
+                      onChange={(e) => {
+                        const updatedContents = [...textContents]
+                        updatedContents[index] = e.target.value
+                        setTextContents(updatedContents)
+                      }}
+                      placeholder={content ? "" : `Enter comprehensive content about ${archetypeName}...
 
 This could include:
 - Theoretical understanding and psychological insights
@@ -355,9 +394,33 @@ This could include:
 - Integration techniques and shadow work
 - Real-world examples and case studies
 - Resources and references`}
-                  rows={8}
-                  className="resize-vertical"
-                />
+                      rows={8}
+                      className="flex-1 resize-vertical"
+                    />
+                    {textContents.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800 mt-1"
+                        onClick={() => {
+                          const updatedContents = textContents.filter((_, i) => i !== index)
+                          setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
+                        }}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setTextContents([...textContents, ''])}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Text Content
+                </Button>
               </div>
 
               {processingStatus !== 'idle' && (
@@ -369,7 +432,7 @@ This could include:
 
               <Button
                 onClick={handleProcessContent}
-                disabled={isProcessing || (!textContent.trim() && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
+                disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
                 className="w-full"
               >
                 {isProcessing ? (
