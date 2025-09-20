@@ -31,6 +31,11 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
   const [testResults, setTestResults] = useState<any[]>([])
   const [isTesting, setIsTesting] = useState(false)
 
+  // Embedding settings state
+  const [chunkSize, setChunkSize] = useState(1000)
+  const [chunkOverlap, setChunkOverlap] = useState(200)
+  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')
+
   // File upload state
   const [uploadedFiles, setUploadedFiles] = useState<File[][]>([[]])
   const [uploadingFiles, setUploadingFiles] = useState(false)
@@ -103,9 +108,9 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
           sourceUrl: referenceUrls.filter(url => url.trim()).join(', ') || undefined,
           contentType: 'text',
           settings: {
-            chunkSize: 1000,
-            chunkOverlap: 200,
-            embeddingModel: 'text-embedding-3-small'
+            chunkSize,
+            chunkOverlap,
+            embeddingModel
           }
         }),
       })
@@ -226,26 +231,6 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
 
   return (
     <div className="space-y-6">
-      {/* Embedding Settings */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Knowledge Base Configuration</h3>
-        <EmbeddingSettingsDialog
-          trigger={
-            <Button variant="outline" size="sm">
-              <span className="text-lg">✨</span>
-              Embedding Settings
-            </Button>
-          }
-          title={`Embedding Settings for ${archetypeName}`}
-          description={`Configure how ${archetypeName} content is processed and embedded for AI reference`}
-          itemId={archetypeId}
-          itemType="archetype"
-          onSave={async (settings) => {
-            console.log('Archetype embedding settings saved:', settings)
-            // Settings are saved automatically in the EmbeddingSettingsDialog
-          }}
-        />
-      </div>
 
       <Tabs defaultValue="upload" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
@@ -421,6 +406,46 @@ This could include:
                   <Plus className="h-4 w-4 mr-1" />
                   Add Text Content
                 </Button>
+              </div>
+
+              {/* Embedding Settings */}
+              <div className="pt-6 mt-6 border-t border-gray-100 space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs text-gray-500">Chunk Size</Label>
+                    <Input
+                      type="number"
+                      value={chunkSize}
+                      onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
+                      className="h-8 text-sm"
+                      min="100"
+                      max="2000"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Overlap</Label>
+                    <Input
+                      type="number"
+                      value={chunkOverlap}
+                      onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
+                      className="h-8 text-sm"
+                      min="0"
+                      max="500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Model</Label>
+                    <select
+                      value={embeddingModel}
+                      onChange={(e) => setEmbeddingModel(e.target.value)}
+                      className="h-8 text-sm border border-gray-300 rounded-md px-2 w-full"
+                    >
+                      <option value="text-embedding-3-small">3-small</option>
+                      <option value="text-embedding-3-large">3-large</option>
+                      <option value="text-embedding-ada-002">ada-002</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               {processingStatus !== 'idle' && (

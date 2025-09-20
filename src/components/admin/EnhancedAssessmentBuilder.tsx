@@ -204,6 +204,11 @@ export function EnhancedAssessmentBuilder({
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
   const [uploadedFiles, setUploadedFiles] = useState<File[][]>([[]])
 
+  // Embedding settings state
+  const [chunkSize, setChunkSize] = useState(1000)
+  const [chunkOverlap, setChunkOverlap] = useState(200)
+  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')
+
   // LLM Testing states
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>('openai')
   const [selectedModel, setSelectedModel] = useState<string>('gpt-4-turbo-preview')
@@ -456,7 +461,12 @@ Keep the response under 150 words and end with a specific question.`)
           textContent: allTextContent,
           referenceUrl: allReferenceUrls[0] || '',
           referenceUrls: allReferenceUrls,
-          category: config.category
+          category: config.category,
+          settings: {
+            chunkSize,
+            chunkOverlap,
+            embeddingModel
+          }
         }),
       })
 
@@ -933,43 +943,6 @@ Keep the response under 150 words and end with a specific question.`)
         {/* Knowledge Base Tab */}
         <TabsContent value="knowledge" className="space-y-6">
           <div className="space-y-6">
-            {/* Embedding Settings */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Knowledge Base Configuration</h3>
-              <EmbeddingSettingsDialog
-                trigger={
-                  <Button variant="outline" size="sm">
-                    <span className="text-lg">✨</span>
-                    Embedding Settings
-                  </Button>
-                }
-                title={`Embedding Settings for ${config.name || 'New Assessment'}`}
-                description={`Configure how ${config.name || 'this assessment'} content is processed and embedded for AI reference`}
-                itemId={config.id || config.name || 'new-assessment'}
-                itemType="assessment"
-                onSave={async (settings) => {
-                  console.log('Assessment embedding settings saved:', settings)
-                  // Save to Supabase
-                  try {
-                    const supabase = await import('@/lib/supabase/client').then(m => m.createClient())
-                    const { error } = await supabase
-                      .from('assessment_embedding_settings')
-                      .upsert({
-                        assessment_id: config.id || config.name,
-                        settings: settings,
-                        updated_at: new Date().toISOString()
-                      })
-                    if (error) {
-                      console.error('Error saving embedding settings:', error)
-                    } else {
-                      console.log('Embedding settings saved to Supabase')
-                    }
-                  } catch (error) {
-                    console.error('Error saving embedding settings:', error)
-                  }
-                }}
-              />
-            </div>
 
             {/* Content Upload Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1105,6 +1078,46 @@ Keep the response under 150 words and end with a specific question.`)
               >
                 + Add Reference Link
               </Button>
+            </div>
+
+            {/* Embedding Settings */}
+            <div className="pt-6 mt-6 border-t border-gray-100 space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-xs text-gray-500">Chunk Size</Label>
+                  <Input
+                    type="number"
+                    value={chunkSize}
+                    onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
+                    className="h-8 text-sm"
+                    min="100"
+                    max="2000"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Overlap</Label>
+                  <Input
+                    type="number"
+                    value={chunkOverlap}
+                    onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
+                    className="h-8 text-sm"
+                    min="0"
+                    max="500"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Model</Label>
+                  <select
+                    value={embeddingModel}
+                    onChange={(e) => setEmbeddingModel(e.target.value)}
+                    className="h-8 text-sm border border-gray-300 rounded-md px-2 w-full"
+                  >
+                    <option value="text-embedding-3-small">3-small</option>
+                    <option value="text-embedding-3-large">3-large</option>
+                    <option value="text-embedding-ada-002">ada-002</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* Process Content Button */}
