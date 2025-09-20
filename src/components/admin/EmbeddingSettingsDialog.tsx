@@ -102,19 +102,15 @@ export function EmbeddingSettingsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="config" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="config" className="flex items-center gap-2">
+        <div className="w-full">
+          <div className="mb-4">
+            <h3 className="text-lg font-medium flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Configuration
-            </TabsTrigger>
-            <TabsTrigger value="testing" className="flex items-center gap-2">
-              <TestTube className="h-4 w-4" />
-              Testing
-            </TabsTrigger>
-          </TabsList>
+            </h3>
+          </div>
 
-          <TabsContent value="config" className="space-y-4">
+          <div className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Chunking Strategy</CardTitle>
@@ -241,31 +237,7 @@ export function EmbeddingSettingsDialog({
             </Card>
           </TabsContent>
 
-
-          <TabsContent value="testing" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Test Embeddings</CardTitle>
-                <CardDescription>Test the quality of generated embeddings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Test Query</Label>
-                  <Input placeholder="Enter a test query to search..." />
-                </div>
-                <Button 
-                  onClick={handleTestEmbeddings}
-                  disabled={isTesting}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <TestTube className="h-4 w-4 mr-2" />
-                  {isTesting ? 'Testing...' : 'Test Search'}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button variant="outline" onClick={() => setOpen(false)}>

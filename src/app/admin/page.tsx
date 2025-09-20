@@ -524,25 +524,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Simple Linguistic Patterns Examples */}
-              <details className="mb-6">
-                <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 mb-2">
-                  📋 Linguistic Pattern Examples
-                </summary>
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-                  <div><strong>Keywords:</strong> leadership, control, authority, responsibility, decision, love, connection, intimacy, passion, wisdom, knowledge, strength, courage</div>
-                  <div><strong>Phrases:</strong> &quot;I need to take charge&quot;, &quot;Let me handle this&quot;, &quot;I feel like&quot;, &quot;My heart tells me&quot;, &quot;I think&quot;, &quot;I understand&quot;, &quot;I can handle it&quot;</div>
-                  <div><strong>Emotional:</strong> frustrated when not in control, confident, protective, passionate, loving, vulnerable, curious, thoughtful, determined, fierce</div>
-                  <div><strong>Behavioral:</strong> takes initiative, makes decisions quickly, seeks deep connection, prioritizes relationships, asks questions, faces challenges head-on</div>
-                  <div><strong>Sentence patterns:</strong> Short commands vs. long explanations, question-heavy vs. statement-heavy</div>
-                  <div><strong>Pronouns:</strong> High &quot;I&quot; usage (self-focused), frequent &quot;you&quot; (other-focused), regular &quot;we&quot; (collective-focused)</div>
-                  <div><strong>Temporal:</strong> Past-focused (&quot;I used to&quot;), present-focused (&quot;right now&quot;), future-focused (&quot;I will&quot;)</div>
-                  <div><strong>Certainty:</strong> &quot;Always/never&quot; vs. &quot;maybe/sometimes&quot;, &quot;definitely&quot; vs. &quot;perhaps&quot;</div>
-                  <div><strong>Responsibility:</strong> &quot;I should&quot; vs. &quot;they should&quot; vs. &quot;it happened&quot;</div>
-                  <div><strong>Intensity:</strong> Mild (&quot;a bit upset&quot;) vs. extreme (&quot;devastated&quot;)</div>
-                  <div><strong>Metaphors:</strong> War/battle, journey/path, nature/growth, building/construction</div>
-                </div>
-              </details>
+
 
               {/* Filters */}
               <div className="flex gap-4 items-center p-4 bg-gray-50 rounded-lg">

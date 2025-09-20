@@ -114,9 +114,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Fetch all assessments from database (admin panel should show all, not just active)
+    // Fetch all assessments from assessment_templates table (the new enhanced assessments)
     const { data: assessments, error } = await supabase
-      .from('enhanced_assessments')
+      .from('assessment_templates')
       .select('*')
       .order('created_at', { ascending: false })
 
