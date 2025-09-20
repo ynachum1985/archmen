@@ -241,6 +241,69 @@ export function ArchetypeKnowledgeBase({
     }
   }
 
+  // File upload management functions
+  const addFileUpload = () => {
+    setUploadedFiles(prev => [...prev, []])
+  }
+
+  const removeFileUpload = (index: number) => {
+    if (uploadedFiles.length > 1) {
+      setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  const removeFile = (groupIndex: number, fileIndex: number) => {
+    setUploadedFiles(prev =>
+      prev.map((fileGroup, i) =>
+        i === groupIndex
+          ? fileGroup.filter((_, j) => j !== fileIndex)
+          : fileGroup
+      )
+    )
+  }
+
+  // Text content management functions
+  const addTextContent = () => {
+    setTextContents(prev => [...prev, ''])
+  }
+
+  const removeTextContent = (index: number) => {
+    if (textContents.length > 1) {
+      setTextContents(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  const updateTextContent = (index: number, value: string) => {
+    setTextContents(prev => prev.map((content, i) => i === index ? value : content))
+  }
+
+  // Reference URL management functions
+  const addReferenceUrl = () => {
+    setReferenceUrls(prev => [...prev, ''])
+  }
+
+  const removeReferenceUrl = (index: number) => {
+    if (referenceUrls.length > 1) {
+      setReferenceUrls(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  const updateReferenceUrl = (index: number, value: string) => {
+    setReferenceUrls(prev => prev.map((url, i) => i === index ? value : url))
+  }
+
+  // File upload handler
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const files = Array.from(event.target.files || [])
+    if (files.length > 0) {
+      setUploadedFiles(prev =>
+        prev.map((fileGroup, i) =>
+          i === index ? files : fileGroup
+        )
+      )
+    }
+  }
+
   // If we're showing only knowledge base content, render just that
   if (showOnlyKnowledgeBase) {
     return (
