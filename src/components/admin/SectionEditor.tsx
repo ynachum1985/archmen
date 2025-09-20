@@ -139,8 +139,19 @@ export function SectionEditor({ section, isOpen, onSave, onCancel, archetypeName
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white shadow-2xl">
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4"
+      onClick={(e) => {
+        // Only close if clicking the backdrop, not the modal content
+        if (e.target === e.currentTarget) {
+          onCancel()
+        }
+      }}
+    >
+      <Card
+        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -166,7 +177,7 @@ export function SectionEditor({ section, isOpen, onSave, onCancel, archetypeName
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10000]">
                   <SelectItem value="theory">
                     <div className="flex items-center gap-2">
                       <Lightbulb className="h-4 w-4" />
@@ -270,7 +281,7 @@ export function SectionEditor({ section, isOpen, onSave, onCancel, archetypeName
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="z-[10000]">
                             <SelectItem value="image">
                               <div className="flex items-center gap-2">
                                 <Image className="h-4 w-4" />

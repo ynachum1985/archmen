@@ -307,183 +307,247 @@ export function ArchetypeKnowledgeBase({
   // If we're showing only knowledge base content, render just that
   if (showOnlyKnowledgeBase) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Add Knowledge Base Content
-            </CardTitle>
-            <CardDescription>
-              Add content that the AI can reference when discussing {archetypeName}.
-              This content will be chunked and embedded for semantic search.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Document Upload Section */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium">Upload Documents</Label>
-              {uploadedFiles.map((files, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  <div className="flex-1">
-                    <Input
-                      type="file"
-                      multiple
-                      accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
-                      onChange={(e) => handleFileUpload(e, index)}
-                      className="cursor-pointer"
-                    />
-                  </div>
-                  {uploadedFiles.length > 1 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeFileUpload(index)}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Knowledge Base</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Add content that the AI can reference when discussing {archetypeName}
+          </p>
+        </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addFileUpload}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Another File Upload
-              </Button>
-
-              {/* Display uploaded files */}
-              {uploadedFiles.some(fileGroup => fileGroup.length > 0) && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Uploaded Files</Label>
-                  <div className="space-y-2">
-                    {uploadedFiles.map((fileGroup, groupIndex) =>
-                      fileGroup.map((file, fileIndex) => (
-                        <div key={`${groupIndex}-${fileIndex}`} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex items-center gap-2">
-                            <File className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm">{file.name}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {(file.size / 1024).toFixed(1)} KB
-                            </Badge>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(groupIndex, fileIndex)}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Text Content Section */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium">Text Content</Label>
-              {textContents.map((content, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs text-gray-500">Content Block {index + 1}</Label>
-                    {textContents.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeTextContent(index)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <Textarea
-                    value={content}
-                    onChange={(e) => updateTextContent(index, e.target.value)}
-                    placeholder={`Enter content about ${archetypeName}...`}
-                    rows={6}
-                    className="resize-none"
-                  />
-                </div>
-              ))}
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addTextContent}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Another Text Block
-              </Button>
-            </div>
-
-            {/* Reference URLs Section */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium">Reference URLs</Label>
-              {referenceUrls.map((url, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    value={url}
-                    onChange={(e) => updateReferenceUrl(index, e.target.value)}
-                    placeholder="https://example.com/article-about-archetype"
-                    className="flex-1"
-                  />
-                  {referenceUrls.length > 1 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeReferenceUrl(index)}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addReferenceUrl}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Another URL
-              </Button>
-            </div>
-
-            {processingStatus !== 'idle' && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                {getStatusIcon()}
-                <span className="text-sm">{statusMessage}</span>
+        {/* Content Input */}
+        <div className="space-y-6">
+          {/* Document Upload Section */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Upload Documents</Label>
+            {uploadedFiles.map((files, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  multiple
+                  accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
+                  onChange={(e) => handleFileUpload(e, index)}
+                  className="cursor-pointer border-gray-200"
+                />
+                {uploadedFiles.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFileUpload(index)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
-            )}
+            ))}
 
             <Button
-              onClick={handleProcessContent}
-              disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
-              className="w-full"
+              variant="ghost"
+              size="sm"
+              onClick={addFileUpload}
+              className="text-gray-600 hover:text-gray-800"
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing Content...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Process & Embed Content
-                </>
-              )}
+              <Plus className="h-4 w-4 mr-2" />
+              Add Another File Upload
             </Button>
-          </CardContent>
-        </Card>
+
+            {/* Display uploaded files */}
+            {uploadedFiles.some(fileGroup => fileGroup.length > 0) && (
+              <div className="space-y-2 mt-3">
+                <Label className="text-xs text-gray-500">Uploaded Files</Label>
+                <div className="space-y-1">
+                  {uploadedFiles.map((fileGroup, groupIndex) =>
+                    fileGroup.map((file, fileIndex) => (
+                      <div key={`${groupIndex}-${fileIndex}`} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                        <div className="flex items-center gap-2">
+                          <File className="h-3 w-3 text-gray-400" />
+                          <span className="text-gray-700">{file.name}</span>
+                          <span className="text-xs text-gray-400">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(groupIndex, fileIndex)}
+                          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Text Content Section */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Text Content</Label>
+            {textContents.map((content, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-gray-500">Content Block {index + 1}</Label>
+                  {textContents.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTextContent(index)}
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                <Textarea
+                  value={content}
+                  onChange={(e) => updateTextContent(index, e.target.value)}
+                  placeholder={`Enter content about ${archetypeName}...`}
+                  rows={4}
+                  className="resize-none border-gray-200 text-sm"
+                />
+              </div>
+            ))}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={addTextContent}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Another Text Block
+            </Button>
+          </div>
+
+          {/* Reference URLs Section */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Reference URLs</Label>
+            {referenceUrls.map((url, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  value={url}
+                  onChange={(e) => updateReferenceUrl(index, e.target.value)}
+                  placeholder="https://example.com/article-about-archetype"
+                  className="flex-1 border-gray-200 text-sm"
+                />
+                {referenceUrls.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeReferenceUrl(index)}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            ))}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={addReferenceUrl}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Another URL
+            </Button>
+          </div>
+
+          {/* Embedding Settings */}
+          <div className="space-y-4 pt-4 border-t border-gray-100">
+            <Label className="text-sm font-medium text-gray-700">Embedding Settings</Label>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-600">Chunk Size</Label>
+                <Input
+                  type="number"
+                  value={chunkSize}
+                  onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
+                  className="border-gray-200 text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-600">Chunk Overlap</Label>
+                <Input
+                  type="number"
+                  value={chunkOverlap}
+                  onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
+                  className="border-gray-200 text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-600">Embedding Model</Label>
+                <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
+                  <SelectTrigger className="border-gray-200 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text-embedding-3-small">text-embedding-3-small</SelectItem>
+                    <SelectItem value="text-embedding-3-large">text-embedding-3-large</SelectItem>
+                    <SelectItem value="text-embedding-ada-002">text-embedding-ada-002</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-600">Top K Results</Label>
+                <Input
+                  type="number"
+                  value={topK}
+                  onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+                  className="border-gray-200 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-600">Similarity Threshold</Label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="1"
+                value={similarityThreshold}
+                onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
+                className="border-gray-200 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Status and Process Button */}
+          {processingStatus !== 'idle' && (
+            <div className="flex items-center gap-2 p-3 rounded bg-gray-50 text-sm">
+              {getStatusIcon()}
+              <span className="text-gray-700">{statusMessage}</span>
+            </div>
+          )}
+
+          <Button
+            onClick={handleProcessContent}
+            disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing Content...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Process & Embed Content
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     )
   }

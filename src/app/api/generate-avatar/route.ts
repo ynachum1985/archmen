@@ -23,11 +23,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    // For now, return a placeholder response since D-ID API integration is coming soon
-    // In the future, this will integrate with D-ID API for actual avatar generation
-    
-    // D-ID API integration would look like this:
-    /*
+    // Check if D-ID API key is available
+    if (!process.env.DID_API_KEY) {
+      return NextResponse.json({
+        success: false,
+        error: 'D-ID API key not configured',
+        message: 'Avatar generation requires D-ID API key to be set in environment variables'
+      }, { status: 501 })
+    }
+
+    // D-ID API integration
+    const voiceConfig = getVoiceConfig(voice)
+    const styleConfig = getStyleConfig(style)
+
     const didResponse = await fetch('https://api.d-id.com/talks', {
       method: 'POST',
       headers: {
@@ -39,23 +47,32 @@ export async function POST(request: NextRequest) {
           type: 'text',
           input: text,
           provider: {
-            type: 'microsoft',
-            voice_id: voice,
+            type: voiceConfig.provider,
+            voice_id: voiceConfig.voice_id,
             voice_config: {
-              style: style
+              style: styleConfig
             }
           }
         },
-        source_url: 'https://example.com/avatar-image.jpg', // Default avatar image
+        source_url: 'https://d-id-public-bucket.s3.amazonaws.com/alice.jpg', // Default D-ID avatar
         config: {
           fluent: true,
-          pad_audio: 0.0
+          pad_audio: 0.0,
+          driver_expressions: {
+            expressions: [
+              {
+                start_frame: 0,
+                expression: 'neutral',
+                intensity: 1.0
+              }
+            ]
+          }
         }
       })
     })
 
     const didData = await didResponse.json()
-    
+
     if (!didResponse.ok) {
       throw new Error(didData.error || 'Failed to generate avatar')
     }
@@ -63,19 +80,19 @@ export async function POST(request: NextRequest) {
     // Poll for completion
     const talkId = didData.id
     let videoUrl = ''
-    
+
     // Wait for video generation to complete
     for (let i = 0; i < 30; i++) { // Max 30 attempts (5 minutes)
       await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
-      
+
       const statusResponse = await fetch(`https://api.d-id.com/talks/${talkId}`, {
         headers: {
           'Authorization': `Basic ${process.env.DID_API_KEY}`,
         }
       })
-      
+
       const statusData = await statusResponse.json()
-      
+
       if (statusData.status === 'done') {
         videoUrl = statusData.result_url
         break
@@ -83,18 +100,22 @@ export async function POST(request: NextRequest) {
         throw new Error('Avatar generation failed')
       }
     }
-    */
 
-    // Placeholder response for now
+    if (!videoUrl) {
+      throw new Error('Avatar generation timed out')
+    }
+
+    // Return successful response
     return NextResponse.json({
       success: true,
-      videoUrl: 'https://example.com/placeholder-avatar-video.mp4',
-      message: 'Avatar generation is coming soon! This feature will be available with D-ID integration.',
+      videoUrl,
+      talkId,
       provider: 'd-id',
       text,
       voice,
       style,
-      archetype
+      archetype,
+      message: 'Avatar generated successfully!'
     })
 
   } catch (error) {

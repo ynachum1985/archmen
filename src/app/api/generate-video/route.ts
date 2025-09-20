@@ -23,28 +23,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    // For now, return a placeholder response since video generation API integration is coming soon
-    // In the future, this will integrate with Runway ML, Pika Labs, or similar APIs
-    
-    // Runway ML API integration would look like this:
-    /*
-    const runwayResponse = await fetch('https://api.runwayml.com/v1/generate', {
+    // Check if Runway ML API key is available
+    if (!process.env.RUNWAY_API_KEY) {
+      return NextResponse.json({
+        success: false,
+        error: 'Runway ML API key not configured',
+        message: 'Video generation requires Runway ML API key to be set in environment variables'
+      }, { status: 501 })
+    }
+
+    // Runway ML API integration
+    const enhancedPrompt = enhancePromptForArchetype(prompt, archetype, style)
+
+    const runwayResponse = await fetch('https://api.runwayml.com/v1/image_to_video', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: enhancePromptForArchetype(prompt, archetype, style),
+        promptText: enhancedPrompt,
+        model: 'gen3a_turbo',
+        aspectRatio: '16:9',
         duration: duration,
-        aspect_ratio: '16:9',
-        motion_strength: getMotionStrength(style),
-        seed: Math.floor(Math.random() * 1000000)
+        watermark: false,
+        enhance_prompt: true
       })
     })
 
     const runwayData = await runwayResponse.json()
-    
+
     if (!runwayResponse.ok) {
       throw new Error(runwayData.error || 'Failed to generate video')
     }
@@ -52,27 +60,30 @@ export async function POST(request: NextRequest) {
     // Poll for completion
     const taskId = runwayData.id
     let videoUrl = ''
-    
+
     // Wait for video generation to complete
     for (let i = 0; i < 60; i++) { // Max 60 attempts (10 minutes)
       await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
-      
+
       const statusResponse = await fetch(`https://api.runwayml.com/v1/tasks/${taskId}`, {
         headers: {
           'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
         }
       })
-      
+
       const statusData = await statusResponse.json()
-      
+
       if (statusData.status === 'SUCCEEDED') {
-        videoUrl = statusData.output[0]
+        videoUrl = statusData.output?.[0] || statusData.artifacts?.[0]?.url
         break
       } else if (statusData.status === 'FAILED') {
         throw new Error('Video generation failed')
       }
     }
-    */
+
+    if (!videoUrl) {
+      throw new Error('Video generation timed out')
+    }
 
     // Alternative: Pika Labs API integration
     /*
@@ -92,16 +103,17 @@ export async function POST(request: NextRequest) {
     })
     */
 
-    // Placeholder response for now
+    // Return successful response
     return NextResponse.json({
       success: true,
-      videoUrl: 'https://example.com/placeholder-generated-video.mp4',
-      message: 'Video generation is coming soon! This feature will be available with Runway ML or Pika Labs integration.',
+      videoUrl,
+      taskId,
       provider: 'runway-ml',
-      prompt,
+      prompt: enhancedPrompt,
       duration,
       style,
-      archetype
+      archetype,
+      message: 'Video generated successfully!'
     })
 
   } catch (error) {
