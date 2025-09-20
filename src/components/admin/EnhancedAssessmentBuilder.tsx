@@ -222,6 +222,11 @@ export function EnhancedAssessmentBuilder({
   const [isApiActivated, setIsApiActivated] = useState(false)
   const [chatSession, setChatSession] = useState<{questionCount: number, responses: string[]}>({questionCount: 0, responses: []})
 
+  // Embedding Testing state
+  const [testQuery, setTestQuery] = useState('')
+  const [isTestingEmbedding, setIsTestingEmbedding] = useState(false)
+  const [testResults, setTestResults] = useState<Array<{content: string, similarity: number}> | null>(null)
+
 
   // Handle assessment prop changes
   useEffect(() => {
@@ -676,6 +681,40 @@ Keep the response under 150 words and end with a specific question.`)
     setShowTestingChat(true)
   }
 
+  // Handle embedding test
+  const handleTestEmbedding = async () => {
+    if (!testQuery.trim()) return
+
+    setIsTestingEmbedding(true)
+    setTestResults(null)
+
+    try {
+      const response = await fetch('/api/test-embedding', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: testQuery,
+          assessmentId: config.id || config.name
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setTestResults(data.results || [])
+      } else {
+        console.error('Error testing embedding:', response.statusText)
+        alert('Error testing embedding. Please check the console for details.')
+      }
+    } catch (error) {
+      console.error('Error testing embedding:', error)
+      alert('Error testing embedding. Please check the console for details.')
+    } finally {
+      setIsTestingEmbedding(false)
+    }
+  }
+
 
 
 
@@ -683,8 +722,9 @@ Keep the response under 150 words and end with a specific question.`)
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="setup">Setup</TabsTrigger>
+          <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
           <TabsTrigger value="reports">Report and Answers</TabsTrigger>
           <TabsTrigger value="testing">Testing</TabsTrigger>
         </TabsList>
@@ -881,202 +921,270 @@ Keep the response under 150 words and end with a specific question.`)
               </Select>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Knowledge Base</h4>
-                  <EmbeddingSettingsDialog
-                    trigger={
-                      <Button variant="outline" size="sm">
-                        <span className="text-lg">✨</span>
-                        Settings
-                      </Button>
+
+
+
+
+
+
+
+        </TabsContent>
+
+        {/* Knowledge Base Tab */}
+        <TabsContent value="knowledge" className="space-y-6">
+          <div className="space-y-6">
+            {/* Embedding Settings */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Knowledge Base Configuration</h3>
+              <EmbeddingSettingsDialog
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <span className="text-lg">✨</span>
+                    Embedding Settings
+                  </Button>
+                }
+                title={`Embedding Settings for ${config.name || 'New Assessment'}`}
+                description={`Configure how ${config.name || 'this assessment'} content is processed and embedded for AI reference`}
+                itemId={config.id || config.name || 'new-assessment'}
+                itemType="assessment"
+                onSave={async (settings) => {
+                  console.log('Assessment embedding settings saved:', settings)
+                  // Save to Supabase
+                  try {
+                    const supabase = await import('@/lib/supabase/client').then(m => m.createClient())
+                    const { error } = await supabase
+                      .from('assessment_embedding_settings')
+                      .upsert({
+                        assessment_id: config.id || config.name,
+                        settings: settings,
+                        updated_at: new Date().toISOString()
+                      })
+                    if (error) {
+                      console.error('Error saving embedding settings:', error)
+                    } else {
+                      console.log('Embedding settings saved to Supabase')
                     }
-                    title={`Embedding Settings for ${config.name || 'New Assessment'}`}
-                    description={`Configure how ${config.name || 'this assessment'} content is processed and embedded for AI reference`}
-                    itemId={config.id || config.name || 'new-assessment'}
-                    itemType="assessment"
-                    onSave={async (settings) => {
-                      console.log('Assessment embedding settings saved:', settings)
-                      // Save to Supabase
-                      try {
-                        const supabase = await import('@/lib/supabase/client').then(m => m.createClient())
-                        const { error } = await supabase
-                          .from('assessment_embedding_settings')
-                          .upsert({
-                            assessment_id: config.id || config.name,
-                            settings: settings,
-                            updated_at: new Date().toISOString()
-                          })
-                        if (error) {
-                          console.error('Error saving embedding settings:', error)
-                        } else {
-                          console.log('Embedding settings saved to Supabase')
-                        }
-                      } catch (error) {
-                        console.error('Error saving embedding settings:', error)
-                      }
-                    }}
-                  />
-                </div>
+                  } catch (error) {
+                    console.error('Error saving embedding settings:', error)
+                  }
+                }}
+              />
+            </div>
 
-                <div className="space-y-3">
-                  {/* Upload Documents */}
-                  <div>
-                    <Label className="text-sm">Upload Documents</Label>
-                    {uploadedFiles.map((files, index) => (
-                      <div key={index} className="mt-1 flex items-start gap-2">
-                        <div className="flex-1">
-                          <Input
-                            type="file"
-                            multiple
-                            accept=".pdf,.txt,.doc,.docx"
-                            onChange={(e) => {
-                              const newFiles = Array.from(e.target.files || [])
-                              if (newFiles.length > 0) {
-                                const updatedFiles = [...uploadedFiles]
-                                updatedFiles[index] = newFiles
-                                setUploadedFiles(updatedFiles)
-                                console.log('Files selected:', newFiles)
-                              }
-                            }}
-                            className="file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
-                          />
-                          {files.length > 0 && (
-                            <div className="text-xs text-gray-600 mt-1">
-                              {files.map(file => file.name).join(', ')}
-                            </div>
-                          )}
+            {/* Content Upload Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Upload Documents */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Upload Documents</Label>
+                {uploadedFiles.map((files, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        multiple
+                        accept=".pdf,.txt,.doc,.docx"
+                        onChange={(e) => {
+                          const newFiles = Array.from(e.target.files || [])
+                          if (newFiles.length > 0) {
+                            const updatedFiles = [...uploadedFiles]
+                            updatedFiles[index] = newFiles
+                            setUploadedFiles(updatedFiles)
+                            console.log('Files selected:', newFiles)
+                          }
+                        }}
+                        className="file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                      />
+                      {files.length > 0 && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          {files.map(file => file.name).join(', ')}
                         </div>
-                        {uploadedFiles.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs text-red-600 hover:text-red-800"
-                            onClick={() => {
-                              const updatedFiles = uploadedFiles.filter((_, i) => i !== index)
-                              setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
-                            }}
-                          >
-                            −
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                    {uploadedFiles.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-red-600 hover:text-red-800"
+                        onClick={() => {
+                          const updatedFiles = uploadedFiles.filter((_, i) => i !== index)
+                          setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
+                        }}
+                      >
+                        −
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setUploadedFiles([...uploadedFiles, []])}
+                >
+                  + Add Document Upload
+                </Button>
+              </div>
+
+              {/* Add Text Content */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Add Text Content</Label>
+                {textContents.map((content, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <Textarea
+                      value={content}
+                      onChange={(e) => {
+                        const updatedContents = [...textContents]
+                        updatedContents[index] = e.target.value
+                        setTextContents(updatedContents)
+                      }}
+                      placeholder={content ? "" : "Paste content here..."}
+                      rows={6}
+                      className="flex-1"
+                    />
+                    {textContents.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-red-600 hover:text-red-800 mt-1"
+                        onClick={() => {
+                          const updatedContents = textContents.filter((_, i) => i !== index)
+                          setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
+                        }}
+                      >
+                        −
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setTextContents([...textContents, ''])}
+                >
+                  + Add Text Content
+                </Button>
+              </div>
+            </div>
+
+            {/* Reference Links */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Reference Links</Label>
+              {referenceUrls.map((url, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={url}
+                    onChange={(e) => {
+                      const updatedUrls = [...referenceUrls]
+                      updatedUrls[index] = e.target.value
+                      setReferenceUrls(updatedUrls)
+                    }}
+                    placeholder={url ? "" : "https://example.com/reference"}
+                    className="flex-1"
+                  />
+                  {referenceUrls.length > 1 && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="mt-1 h-6 px-2 text-xs"
-                      onClick={() => setUploadedFiles([...uploadedFiles, []])}
+                      className="h-6 px-2 text-xs text-red-600 hover:text-red-800"
+                      onClick={() => {
+                        const updatedUrls = referenceUrls.filter((_, i) => i !== index)
+                        setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
+                      }}
                     >
-                      +
+                      −
                     </Button>
-                  </div>
+                  )}
+                </div>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => setReferenceUrls([...referenceUrls, ''])}
+              >
+                + Add Reference Link
+              </Button>
+            </div>
 
-                  {/* Add Text Content */}
+            {/* Process Content Button */}
+            <Button
+              onClick={handleProcessContent}
+              disabled={isProcessingContent || (textContents.every(t => !t.trim()) && referenceUrls.every(u => !u.trim()) && uploadedFiles.every(files => files.length === 0))}
+              className="w-full"
+            >
+              {isProcessingContent ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">🧠</span>
+                  Process & Embed Content
+                </>
+              )}
+            </Button>
+
+            {/* Content Display and Testing */}
+            <div className="space-y-4">
+              <AssessmentContentDisplay
+                assessmentId={config.id || config.name}
+                assessmentName={config.name || 'New Assessment'}
+              />
+
+              {/* Embedding Quality Testing */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <h4 className="text-sm font-medium">Test Embedding Quality</h4>
+                <div className="space-y-3">
                   <div>
-                    <Label className="text-sm">Add Text Content</Label>
-                    {textContents.map((content, index) => (
-                      <div key={index} className="mt-1 flex items-start gap-2">
-                        <Textarea
-                          value={content}
-                          onChange={(e) => {
-                            const updatedContents = [...textContents]
-                            updatedContents[index] = e.target.value
-                            setTextContents(updatedContents)
-                          }}
-                          placeholder={content ? "" : "Paste content here..."}
-                          rows={6}
-                          className="flex-1"
-                        />
-                        {textContents.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs text-red-600 hover:text-red-800 mt-1"
-                            onClick={() => {
-                              const updatedContents = textContents.filter((_, i) => i !== index)
-                              setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
-                            }}
-                          >
-                            −
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-1 h-6 px-2 text-xs"
-                      onClick={() => setTextContents([...textContents, ''])}
-                    >
-                      +
-                    </Button>
+                    <Label className="text-sm">Search Query</Label>
+                    <Input
+                      placeholder="Enter a question or topic to test semantic search..."
+                      value={testQuery}
+                      onChange={(e) => setTestQuery(e.target.value)}
+                    />
                   </div>
-
-                  {/* Reference Links */}
-                  <div>
-                    <Label className="text-sm">Reference Links</Label>
-                    {referenceUrls.map((url, index) => (
-                      <div key={index} className="mt-1 flex items-center gap-2">
-                        <Input
-                          value={url}
-                          onChange={(e) => {
-                            const updatedUrls = [...referenceUrls]
-                            updatedUrls[index] = e.target.value
-                            setReferenceUrls(updatedUrls)
-                          }}
-                          placeholder={url ? "" : "https://example.com/reference"}
-                          className="flex-1"
-                        />
-                        {referenceUrls.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs text-red-600 hover:text-red-800"
-                            onClick={() => {
-                              const updatedUrls = referenceUrls.filter((_, i) => i !== index)
-                              setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
-                            }}
-                          >
-                            −
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-1 h-6 px-2 text-xs"
-                      onClick={() => setReferenceUrls([...referenceUrls, ''])}
-                    >
-                      +
-                    </Button>
-                  </div>
-
                   <Button
-                    onClick={handleProcessContent}
-                    disabled={isProcessingContent || (textContents.every(t => !t.trim()) && referenceUrls.every(u => !u.trim()) && uploadedFiles.every(files => files.length === 0))}
+                    onClick={handleTestEmbedding}
+                    disabled={!testQuery.trim() || isTestingEmbedding}
+                    variant="outline"
                     className="w-full"
                   >
-                    {isProcessingContent ? (
+                    {isTestingEmbedding ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Processing...
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        Testing...
                       </>
                     ) : (
                       <>
-                        <span className="mr-2">🧠</span>
-                        Process & Embed Content
+                        <span className="mr-2">🔍</span>
+                        Test Semantic Search
                       </>
                     )}
                   </Button>
-                </div>
 
-                <AssessmentContentDisplay
-                  assessmentId={config.id || config.name}
-                  assessmentName={config.name || 'New Assessment'}
-                />
+                  {testResults && (
+                    <div className="mt-4 space-y-2">
+                      <Label className="text-sm font-medium">Search Results:</Label>
+                      <div className="max-h-60 overflow-y-auto space-y-2">
+                        {testResults.map((result, index) => (
+                          <div key={index} className="p-3 bg-gray-50 rounded text-sm">
+                            <div className="font-medium text-gray-700 mb-1">
+                              Similarity: {(result.similarity * 100).toFixed(1)}%
+                            </div>
+                            <div className="text-gray-600">
+                              {result.content.substring(0, 200)}...
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Report & Answers Tab */}

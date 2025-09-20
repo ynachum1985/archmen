@@ -265,8 +265,25 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
           </TabsContent>
 
           <TabsContent value="linguistic" className="space-y-4">
-            <div className="text-xs text-gray-600 mb-3 p-2 bg-gray-50 rounded">
-              <strong>Examples:</strong> KEYWORDS: leadership, control, authority | PHRASES: 'I need to take charge', 'Let me handle this' | EMOTIONAL: frustrated when not in control, protective | BEHAVIORAL: takes initiative, makes decisions quickly | COMMUNICATION: Direct, authoritative
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
+              <details className="cursor-pointer">
+                <summary className="text-sm font-medium text-gray-700 mb-2">
+                  Linguistic Pattern Examples
+                </summary>
+                <div className="text-xs text-gray-600 mt-2 space-y-1">
+                  <div><strong>Keywords:</strong> leadership, control, authority, responsibility, decision, love, connection, intimacy, passion, wisdom, knowledge, strength, courage</div>
+                  <div><strong>Phrases:</strong> "I need to take charge", "Let me handle this", "I feel like", "My heart tells me", "I think", "I understand", "I can handle it"</div>
+                  <div><strong>Emotional:</strong> frustrated when not in control, confident, protective, passionate, loving, vulnerable, curious, thoughtful, determined, fierce</div>
+                  <div><strong>Behavioral:</strong> takes initiative, makes decisions quickly, seeks deep connection, prioritizes relationships, asks questions, faces challenges head-on</div>
+                  <div><strong>Sentence patterns:</strong> Short commands vs. long explanations, question-heavy vs. statement-heavy</div>
+                  <div><strong>Pronouns:</strong> High "I" usage (self-focused), frequent "you" (other-focused), regular "we" (collective-focused)</div>
+                  <div><strong>Temporal:</strong> Past-focused ("I used to"), present-focused ("right now"), future-focused ("I will")</div>
+                  <div><strong>Certainty:</strong> "Always/never" vs. "maybe/sometimes", "definitely" vs. "perhaps"</div>
+                  <div><strong>Responsibility:</strong> "I should" vs. "they should" vs. "it happened"</div>
+                  <div><strong>Intensity:</strong> Mild ("a bit upset") vs. extreme ("devastated")</div>
+                  <div><strong>Metaphors:</strong> War/battle, journey/path, nature/growth, building/construction</div>
+                </div>
+              </details>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
