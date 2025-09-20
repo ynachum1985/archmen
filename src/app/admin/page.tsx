@@ -272,18 +272,24 @@ export default function AdminPage() {
       const response = await fetch('/api/sync-assessments')
       const data = await response.json()
 
+      console.log('Assessment API response:', data) // Debug log
+
       if (data.success && data.assessments) {
+        console.log(`Found ${data.assessments.length} assessments from API`) // Debug log
         const formattedAssessments = data.assessments.map((assessment: any) => ({
           id: assessment.id,
           name: assessment.name,
           description: assessment.description || '',
           status: assessment.is_active ? 'Active' : 'Draft',
-          archetypeCount: 0, // TODO: Calculate from archetype_focus
+          archetypeCount: 0,
           questionCount: assessment.min_questions || 8,
-          completionRate: 0, // TODO: Calculate from usage data
-          isMain: assessment.category === 'main'
+          completionRate: 0,
+          isMain: assessment.category === 'Main'
         }))
+        console.log(`Formatted ${formattedAssessments.length} assessments for display`) // Debug log
         setAssessmentCategories(formattedAssessments)
+      } else {
+        console.error('API response missing success or assessments:', data)
       }
     } catch (error) {
       console.error('Error loading assessments:', error)

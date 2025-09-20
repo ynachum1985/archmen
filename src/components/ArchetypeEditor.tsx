@@ -139,9 +139,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  How negatively this affects relationships (1=minimal, 7=severe)
-                </p>
+
               </div>
 
               {/* Growth Potential */}
@@ -165,9 +163,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  Potential for positive transformation (1=low, 7=high)
-                </p>
+
               </div>
 
               {/* Awareness Difficulty */}
@@ -191,9 +187,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  How hard to recognize this pattern (1=obvious, 7=hidden)
-                </p>
+
               </div>
 
               {/* Trigger Intensity */}
@@ -217,9 +211,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  How easily activated under stress (1=stable, 7=reactive)
-                </p>
+
               </div>
 
               {/* Integration Complexity */}
@@ -243,9 +235,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  How challenging to integrate healthily (1=easy, 7=complex)
-                </p>
+
               </div>
 
               {/* Shadow Depth */}
@@ -269,17 +259,18 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  How deep/unconscious the shadow aspects (1=surface, 7=deep)
-                </p>
+
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="linguistic" className="space-y-4">
+            <div className="text-xs text-gray-600 mb-3 p-2 bg-gray-50 rounded">
+              <strong>Examples:</strong> KEYWORDS: leadership, control, authority | PHRASES: 'I need to take charge', 'Let me handle this' | EMOTIONAL: frustrated when not in control, protective | BEHAVIORAL: takes initiative, makes decisions quickly | COMMUNICATION: Direct, authoritative
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Linguistic Patterns (Behavioral, Emotional, Communication)
+                Linguistic Patterns
               </label>
               <Textarea
                 value={linguisticPatterns}
@@ -288,9 +279,6 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                 rows={12}
                 className="resize-vertical"
               />
-              <p className="text-xs text-gray-500 mt-2">
-                Behavioral, emotional, and communication patterns for AI language analysis and pattern matching.
-              </p>
             </div>
           </TabsContent>
 
@@ -302,13 +290,10 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
               <Textarea
                 value={theoreticalUnderstanding}
                 onChange={(e) => setTheoreticalUnderstanding(e.target.value)}
-                placeholder="Core psychological concepts, theoretical framework, foundational understanding of this archetype...&#10;&#10;Include relevant psychological theories, research findings, and conceptual foundations."
+                placeholder="Core psychological concepts, theoretical framework, foundational understanding..."
                 rows={12}
                 className="resize-vertical"
               />
-              <p className="text-xs text-gray-500 mt-2">
-                Core psychological concepts and theoretical framework for this archetype.
-              </p>
             </div>
           </TabsContent>
 
@@ -321,13 +306,10 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                 <Textarea
                   value={shadowWork}
                   onChange={(e) => setShadowWork(e.target.value)}
-                  placeholder="Potential pitfalls, unconscious patterns, areas for growth...&#10;&#10;Include shadow aspects, blind spots, and areas that need awareness."
+                  placeholder="Potential pitfalls, unconscious patterns, areas for growth..."
                   rows={8}
                   className="resize-vertical"
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  Potential pitfalls and unconscious patterns to be aware of.
-                </p>
               </div>
 
               <div>
@@ -337,13 +319,10 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
                 <Textarea
                   value={integrationPractices}
                   onChange={(e) => setIntegrationPractices(e.target.value)}
-                  placeholder="Exercises, techniques, and practices for healthy expression...&#10;&#10;Include specific practices, exercises, and integration techniques."
+                  placeholder="Exercises, techniques, and practices for healthy expression..."
                   rows={8}
                   className="resize-vertical"
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  Exercises and techniques for healthy expression and integration.
-                </p>
               </div>
             </div>
           </TabsContent>
