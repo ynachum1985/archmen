@@ -40,13 +40,18 @@ export function ArchetypeContentDisplay({ archetypeId, archetypeName }: Archetyp
       setError(null)
 
       const response = await fetch(`/api/archetype-content/${archetypeId}`)
-      const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch content')
+      if (response.ok) {
+        const data = await response.json()
+        setChunks(data.chunks || [])
+      } else if (response.status === 404) {
+        // Archetype not found or no content yet - this is normal for new archetypes
+        setChunks([])
+        setError(null)
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        setError(errorData.error || `Failed to load content chunks (${response.status})`)
       }
-
-      setChunks(data.chunks || [])
     } catch (err) {
       console.error('Error fetching content chunks:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch content')
