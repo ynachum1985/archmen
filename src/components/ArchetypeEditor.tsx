@@ -82,7 +82,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
 
         {/* Tabbed Content */}
         <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="metrics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Metrics
@@ -90,6 +90,10 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             <TabsTrigger value="knowledge" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Knowledge Base
+            </TabsTrigger>
+            <TabsTrigger value="course" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Course Content
             </TabsTrigger>
           </TabsList>
 
@@ -245,6 +249,15 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             <ArchetypeKnowledgeBase
               archetypeId={editedArchetype.id}
               archetypeName={editedArchetype.name}
+              showOnlyKnowledgeBase={true}
+            />
+          </TabsContent>
+
+          <TabsContent value="course" className="space-y-4">
+            <ArchetypeKnowledgeBase
+              archetypeId={editedArchetype.id}
+              archetypeName={editedArchetype.name}
+              showOnlyCourseContent={true}
             />
           </TabsContent>
 

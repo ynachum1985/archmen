@@ -19,9 +19,16 @@ import { LLM_PROVIDERS, type LLMProvider, multiLLMService } from '@/lib/services
 interface ArchetypeKnowledgeBaseProps {
   archetypeId: string
   archetypeName: string
+  showOnlyKnowledgeBase?: boolean
+  showOnlyCourseContent?: boolean
 }
 
-export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: ArchetypeKnowledgeBaseProps) {
+export function ArchetypeKnowledgeBase({
+  archetypeId,
+  archetypeName,
+  showOnlyKnowledgeBase = false,
+  showOnlyCourseContent = false
+}: ArchetypeKnowledgeBaseProps) {
   // Content state - multiple text contents and URLs
   const [textContents, setTextContents] = useState<string[]>([''])
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
@@ -232,6 +239,202 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
       default:
         return null
     }
+  }
+
+  // If we're showing only knowledge base content, render just that
+  if (showOnlyKnowledgeBase) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Add Knowledge Base Content
+            </CardTitle>
+            <CardDescription>
+              Add content that the AI can reference when discussing {archetypeName}.
+              This content will be chunked and embedded for semantic search.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Document Upload Section */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium">Upload Documents</Label>
+              {uploadedFiles.map((files, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      multiple
+                      accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
+                      onChange={(e) => handleFileUpload(e, index)}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  {uploadedFiles.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeFileUpload(index)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addFileUpload}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another File Upload
+              </Button>
+
+              {/* Display uploaded files */}
+              {uploadedFiles.some(fileGroup => fileGroup.length > 0) && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Uploaded Files</Label>
+                  <div className="space-y-2">
+                    {uploadedFiles.map((fileGroup, groupIndex) =>
+                      fileGroup.map((file, fileIndex) => (
+                        <div key={`${groupIndex}-${fileIndex}`} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-2">
+                            <File className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">{file.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(groupIndex, fileIndex)}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Text Content Section */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium">Text Content</Label>
+              {textContents.map((content, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-gray-500">Content Block {index + 1}</Label>
+                    {textContents.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTextContent(index)}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <Textarea
+                    value={content}
+                    onChange={(e) => updateTextContent(index, e.target.value)}
+                    placeholder={`Enter content about ${archetypeName}...`}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addTextContent}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another Text Block
+              </Button>
+            </div>
+
+            {/* Reference URLs Section */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium">Reference URLs</Label>
+              {referenceUrls.map((url, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={url}
+                    onChange={(e) => updateReferenceUrl(index, e.target.value)}
+                    placeholder="https://example.com/article-about-archetype"
+                    className="flex-1"
+                  />
+                  {referenceUrls.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeReferenceUrl(index)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addReferenceUrl}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another URL
+              </Button>
+            </div>
+
+            {processingStatus !== 'idle' && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
+                {getStatusIcon()}
+                <span className="text-sm">{statusMessage}</span>
+              </div>
+            )}
+
+            <Button
+              onClick={handleProcessContent}
+              disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
+              className="w-full"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing Content...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Process & Embed Content
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // If we're showing only course content, render just that
+  if (showOnlyCourseContent) {
+    return (
+      <div className="space-y-6">
+        <CourseContentBuilder
+          archetypeId={archetypeId}
+          archetypeName={archetypeName}
+        />
+      </div>
+    )
   }
 
   return (

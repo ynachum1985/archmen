@@ -9,18 +9,20 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Image, 
-  Video, 
-  User, 
-  Wand2, 
-  Loader2, 
-  Download, 
-  Copy, 
+import {
+  Image,
+  Video,
+  User,
+  Wand2,
+  Loader2,
+  Download,
+  Copy,
   Check,
   Palette,
   Play,
-  Camera
+  Camera,
+  Plus,
+  X
 } from 'lucide-react'
 
 interface MediaAsset {
@@ -57,6 +59,12 @@ export function MediaCreationStudio({ onMediaCreated, archetypeName, sectionType
   const [videoPrompt, setVideoPrompt] = useState('')
   const [videoDuration, setVideoDuration] = useState('5')
   const [videoStyle, setVideoStyle] = useState('cinematic')
+
+  // Video Editing State
+  const [videoClips, setVideoClips] = useState<string[]>([''])
+  const [editingStyle, setEditingStyle] = useState('smooth')
+  const [transitionType, setTransitionType] = useState('fade')
+  const [outputFormat, setOutputFormat] = useState('mp4')
 
   useEffect(() => {
     // Set default prompts based on archetype and section type
@@ -211,6 +219,63 @@ export function MediaCreationStudio({ onMediaCreated, archetypeName, sectionType
     }
   }
 
+  const editVideo = async () => {
+    const validClips = videoClips.filter(clip => clip.trim())
+    if (validClips.length < 2) {
+      alert('Please provide at least 2 video clips to edit together.')
+      return
+    }
+
+    setIsGenerating(true)
+    try {
+      // Using video editing API (e.g., Shotstack, Bannerbear, or similar)
+      const response = await fetch('/api/edit-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clips: validClips,
+          style: editingStyle,
+          transition: transitionType,
+          format: outputFormat,
+          archetype: archetypeName,
+          sectionType: sectionType
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error)
+
+      const newAsset: MediaAsset = {
+        id: `edited-video-${Date.now()}`,
+        type: 'video',
+        url: data.videoUrl,
+        title: `${archetypeName} ${sectionType} Edited Video`,
+        description: `Edited video with ${validClips.length} clips`
+      }
+
+      setGeneratedAssets(prev => [...prev, newAsset])
+    } catch (error) {
+      console.error('Error editing video:', error)
+      alert('Video editing coming soon! This feature is being implemented.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const addVideoClip = () => {
+    setVideoClips(prev => [...prev, ''])
+  }
+
+  const removeVideoClip = (index: number) => {
+    if (videoClips.length > 1) {
+      setVideoClips(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  const updateVideoClip = (index: number, value: string) => {
+    setVideoClips(prev => prev.map((clip, i) => i === index ? value : clip))
+  }
+
   const copyToClipboard = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url)
@@ -235,7 +300,7 @@ export function MediaCreationStudio({ onMediaCreated, archetypeName, sectionType
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="image" className="flex items-center gap-2">
             <Image className="h-4 w-4" />
             Images
@@ -246,7 +311,11 @@ export function MediaCreationStudio({ onMediaCreated, archetypeName, sectionType
           </TabsTrigger>
           <TabsTrigger value="video" className="flex items-center gap-2">
             <Video className="h-4 w-4" />
-            Videos
+            AI Videos
+          </TabsTrigger>
+          <TabsTrigger value="edit" className="flex items-center gap-2">
+            <Camera className="h-4 w-4" />
+            Video Editor
           </TabsTrigger>
         </TabsList>
 
@@ -472,6 +541,125 @@ export function MediaCreationStudio({ onMediaCreated, archetypeName, sectionType
 
               <div className="text-xs text-gray-500 p-3 bg-purple-50 rounded">
                 <strong>Coming Soon:</strong> AI video generation with Runway ML and Pika Labs integration for creating custom video content.
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Video Editing */}
+        <TabsContent value="edit" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                Video Editor & Stitching
+              </CardTitle>
+              <CardDescription>
+                Combine and edit existing video clips into a cohesive video
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <Label>Video Clips (URLs or file paths)</Label>
+                {videoClips.map((clip, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={clip}
+                      onChange={(e) => updateVideoClip(index, e.target.value)}
+                      placeholder={`Video clip ${index + 1} URL or path...`}
+                      className="flex-1"
+                    />
+                    {videoClips.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeVideoClip(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addVideoClip}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Another Clip
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Editing Style</Label>
+                  <Select value={editingStyle} onValueChange={setEditingStyle}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="smooth">Smooth Flow</SelectItem>
+                      <SelectItem value="dynamic">Dynamic Cuts</SelectItem>
+                      <SelectItem value="minimal">Minimal Editing</SelectItem>
+                      <SelectItem value="cinematic">Cinematic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Transition Type</Label>
+                  <Select value={transitionType} onValueChange={setTransitionType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fade">Fade</SelectItem>
+                      <SelectItem value="cut">Hard Cut</SelectItem>
+                      <SelectItem value="dissolve">Dissolve</SelectItem>
+                      <SelectItem value="slide">Slide</SelectItem>
+                      <SelectItem value="zoom">Zoom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Output Format</Label>
+                <Select value={outputFormat} onValueChange={setOutputFormat}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mp4">MP4 (Standard)</SelectItem>
+                    <SelectItem value="webm">WebM (Web Optimized)</SelectItem>
+                    <SelectItem value="mov">MOV (High Quality)</SelectItem>
+                    <SelectItem value="avi">AVI (Compatibility)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                onClick={editVideo}
+                disabled={isGenerating || videoClips.filter(clip => clip.trim()).length < 2}
+                className="w-full"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Editing Video...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4 mr-2" />
+                    Edit & Stitch Videos
+                  </>
+                )}
+              </Button>
+
+              <div className="text-xs text-gray-500 p-3 bg-green-50 rounded">
+                <strong>Coming Soon:</strong> Video editing with Shotstack, Bannerbear, or similar APIs for stitching clips, adding transitions, and creating professional video content.
               </div>
             </CardContent>
           </Card>
