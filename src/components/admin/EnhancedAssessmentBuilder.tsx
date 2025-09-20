@@ -225,7 +225,7 @@ export function EnhancedAssessmentBuilder({
   // Embedding Testing state
   const [testQuery, setTestQuery] = useState('')
   const [isTestingEmbedding, setIsTestingEmbedding] = useState(false)
-  const [testResults, setTestResults] = useState<Array<{content: string, similarity: number}> | null>(null)
+  const [embeddingTestResults, setEmbeddingTestResults] = useState<Array<{content: string, similarity: number}> | null>(null)
 
 
   // Handle assessment prop changes
@@ -686,7 +686,7 @@ Keep the response under 150 words and end with a specific question.`)
     if (!testQuery.trim()) return
 
     setIsTestingEmbedding(true)
-    setTestResults(null)
+    setEmbeddingTestResults(null)
 
     try {
       const response = await fetch('/api/test-embedding', {
@@ -702,7 +702,7 @@ Keep the response under 150 words and end with a specific question.`)
 
       if (response.ok) {
         const data = await response.json()
-        setTestResults(data.results || [])
+        setEmbeddingTestResults(data.results || [])
       } else {
         console.error('Error testing embedding:', response.statusText)
         alert('Error testing embedding. Please check the console for details.')
@@ -1164,11 +1164,11 @@ Keep the response under 150 words and end with a specific question.`)
                     )}
                   </Button>
 
-                  {testResults && (
+                  {embeddingTestResults && (
                     <div className="mt-4 space-y-2">
                       <Label className="text-sm font-medium">Search Results:</Label>
                       <div className="max-h-60 overflow-y-auto space-y-2">
-                        {testResults.map((result, index) => (
+                        {embeddingTestResults.map((result, index) => (
                           <div key={index} className="p-3 bg-gray-50 rounded text-sm">
                             <div className="font-medium text-gray-700 mb-1">
                               Similarity: {(result.similarity * 100).toFixed(1)}%
