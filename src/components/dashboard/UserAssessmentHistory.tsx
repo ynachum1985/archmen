@@ -5,27 +5,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Brain, Calendar, Clock, TrendingUp, Eye, Download } from 'lucide-react'
+import { Brain, Calendar, Clock, TrendingUp, Eye, Download, Play, CheckCircle, Circle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
-interface AssessmentSession {
+interface AssessmentEnrollment {
   id: string
-  template_id: string
-  status: string
-  progress_percentage: number | null
-  completed_at: string | null
-  created_at: string | null
-  current_question_index: number | null
-  session_data: unknown
-  updated_at: string | null
-  user_id: string
-  discovered_archetypes: unknown
-  assessment_templates: {
-    name: string | null
-    description: string | null
-    category: string | null
-  } | null
+  assessment_id: string
+  status: 'available' | 'in_progress' | 'completed'
+  enrolled_at: string
+  started_at?: string
+  completed_at?: string
+  progress: any
+  results: any
+  enhanced_assessments: {
+    id: string
+    name: string
+    description: string
+    category: string
+    expected_duration: number
+  }
 }
 
 interface UserAssessmentHistoryProps {
@@ -33,44 +32,47 @@ interface UserAssessmentHistoryProps {
 }
 
 export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
-  const [assessments, setAssessments] = useState<AssessmentSession[]>([])
+  const [enrollments, setEnrollments] = useState<AssessmentEnrollment[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchAssessments = async () => {
+    const fetchEnrollments = async () => {
       try {
         const supabase = createClient()
-        
+
         const { data, error } = await supabase
-          .from('assessment_sessions')
+          .from('assessment_enrollments')
           .select(`
             *,
-            assessment_templates (
+            enhanced_assessments (
+              id,
               name,
               description,
-              category
+              category,
+              expected_duration
             )
           `)
           .eq('user_id', userId)
-          .order('created_at', { ascending: false })
+          .order('enrolled_at', { ascending: false })
 
         if (error) throw error
 
-        setAssessments(data || [])
+        setEnrollments(data || [])
       } catch (err) {
-        console.error('Error fetching assessments:', err)
+        console.error('Error fetching enrollments:', err)
         setError('Failed to load assessment history')
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchAssessments()
+    fetchEnrollments()
   }, [userId])
 
-  const completedAssessments = assessments.filter(a => a.status === 'completed')
-  const inProgressAssessments = assessments.filter(a => a.status === 'in_progress')
+  const availableAssessments = enrollments.filter(e => e.status === 'available')
+  const completedAssessments = enrollments.filter(e => e.status === 'completed')
+  const inProgressAssessments = enrollments.filter(e => e.status === 'in_progress')
 
   if (isLoading) {
     return (
@@ -152,14 +154,17 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
       {/* Assessment History */}
       <Card>
         <CardHeader>
-          <CardTitle>Assessment History</CardTitle>
+          <CardTitle>Your Assessments</CardTitle>
           <CardDescription>
-            View and manage your archetypal assessment journey
+            Explore your archetypal patterns through specialized assessments
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="completed" className="space-y-4">
+          <Tabs defaultValue="available" className="space-y-4">
             <TabsList>
+              <TabsTrigger value="available">
+                Available ({availableAssessments.length})
+              </TabsTrigger>
               <TabsTrigger value="completed">
                 Completed ({completedAssessments.length})
               </TabsTrigger>
@@ -168,24 +173,41 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
               </TabsTrigger>
             </TabsList>
 
+            <TabsContent value="available" className="space-y-4">
+              {availableAssessments.length === 0 ? (
+                <div className="text-center py-8">
+                  <Circle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                    No available assessments
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    All assessments have been completed or are in progress
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {availableAssessments.map((enrollment) => (
+                    <AssessmentEnrollmentCard key={enrollment.id} enrollment={enrollment} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="completed" className="space-y-4">
               {completedAssessments.length === 0 ? (
                 <div className="text-center py-8">
-                  <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-muted-foreground mb-2">
                     No completed assessments yet
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     Take your first assessment to discover your archetypal patterns
                   </p>
-                  <Button asChild>
-                    <Link href="/assessments">Start Assessment</Link>
-                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {completedAssessments.map((assessment) => (
-                    <AssessmentCard key={assessment.id} assessment={assessment} />
+                  {completedAssessments.map((enrollment) => (
+                    <AssessmentEnrollmentCard key={enrollment.id} enrollment={enrollment} />
                   ))}
                 </div>
               )}
@@ -204,8 +226,8 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {inProgressAssessments.map((assessment) => (
-                    <AssessmentCard key={assessment.id} assessment={assessment} />
+                  {inProgressAssessments.map((enrollment) => (
+                    <AssessmentEnrollmentCard key={enrollment.id} enrollment={enrollment} />
                   ))}
                 </div>
               )}
@@ -292,6 +314,123 @@ function AssessmentCard({ assessment }: AssessmentCardProps) {
                 </Link>
               </Button>
             )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function AssessmentEnrollmentCard({ enrollment }: { enrollment: AssessmentEnrollment }) {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge variant="default" className="bg-green-100 text-green-800">Completed</Badge>
+      case 'in_progress':
+        return <Badge variant="secondary">In Progress</Badge>
+      case 'available':
+        return <Badge variant="outline">Available</Badge>
+      default:
+        return <Badge variant="outline">Unknown</Badge>
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'in_progress':
+        return <Clock className="h-4 w-4 text-blue-600" />
+      case 'available':
+        return <Play className="h-4 w-4 text-gray-600" />
+      default:
+        return <Brain className="h-4 w-4 text-gray-600" />
+    }
+  }
+
+  const getActionButton = () => {
+    switch (enrollment.status) {
+      case 'available':
+        return (
+          <Button variant="default" size="sm" asChild>
+            <Link href={`/dashboard/assessments/${enrollment.assessment_id}`}>
+              <Play className="h-4 w-4 mr-2" />
+              Start Assessment
+            </Link>
+          </Button>
+        )
+      case 'in_progress':
+        return (
+          <Button variant="default" size="sm" asChild>
+            <Link href={`/dashboard/assessments/${enrollment.assessment_id}`}>
+              <Clock className="h-4 w-4 mr-2" />
+              Continue
+            </Link>
+          </Button>
+        )
+      case 'completed':
+        return (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/dashboard/assessments/${enrollment.assessment_id}`}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Results
+            </Link>
+          </Button>
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              {getStatusIcon(enrollment.status)}
+              <h3 className="font-semibold text-lg">
+                {enrollment.enhanced_assessments?.name || 'Unnamed Assessment'}
+              </h3>
+              {getStatusBadge(enrollment.status)}
+            </div>
+
+            <p className="text-muted-foreground mb-4">
+              {enrollment.enhanced_assessments?.description || 'No description available'}
+            </p>
+
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Enrolled {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{enrollment.enhanced_assessments?.expected_duration || 15} minutes</span>
+              </div>
+
+              {enrollment.enhanced_assessments?.category && (
+                <Badge variant="outline" className="text-xs">
+                  {enrollment.enhanced_assessments.category}
+                </Badge>
+              )}
+
+              {enrollment.completed_at && (
+                <div className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>
+                    Completed {new Date(enrollment.completed_at).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            {getActionButton()}
           </div>
         </div>
       </CardContent>
