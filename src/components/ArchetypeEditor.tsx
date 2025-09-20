@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Save, X, BarChart3, Brain, Moon, BookOpen } from 'lucide-react'
+import { Save, X, BarChart3, BookOpen } from 'lucide-react'
+import { ArchetypeKnowledgeBase } from './admin/ArchetypeKnowledgeBase'
 
 interface Archetype {
   id: string
@@ -46,26 +47,10 @@ interface ArchetypeEditorProps {
 
 export default function ArchetypeEditor({ archetype, onSave, onCancel }: ArchetypeEditorProps) {
   const [editedArchetype, setEditedArchetype] = useState<Archetype>(archetype)
-  const [linguisticPatterns, setLinguisticPatterns] = useState(
-    archetype.linguistic_patterns || ''
-  )
-  const [theoreticalUnderstanding, setTheoreticalUnderstanding] = useState(
-    archetype.theoretical_understanding || ''
-  )
-  const [shadowWork, setShadowWork] = useState(
-    archetype.shadow_work || ''
-  )
-  const [integrationPractices, setIntegrationPractices] = useState(
-    archetype.integration_practices || ''
-  )
 
   const handleSave = () => {
     const updated = {
-      ...editedArchetype,
-      linguistic_patterns: linguisticPatterns,
-      theoretical_understanding: theoreticalUnderstanding,
-      shadow_work: shadowWork,
-      integration_practices: integrationPractices
+      ...editedArchetype
     }
     onSave(updated)
   }
@@ -97,22 +82,14 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
 
         {/* Tabbed Content */}
         <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="metrics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Metrics
             </TabsTrigger>
-            <TabsTrigger value="linguistic" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              Linguistic Patterns
-            </TabsTrigger>
-            <TabsTrigger value="understanding" className="flex items-center gap-2">
+            <TabsTrigger value="knowledge" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              Understanding
-            </TabsTrigger>
-            <TabsTrigger value="shadow" className="flex items-center gap-2">
-              <Moon className="h-4 w-4" />
-              Shadow & Integration
+              Knowledge Base
             </TabsTrigger>
           </TabsList>
 
@@ -264,65 +241,11 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             </div>
           </TabsContent>
 
-          <TabsContent value="linguistic" className="space-y-4">
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Linguistic Patterns
-              </label>
-              <Textarea
-                value={linguisticPatterns}
-                onChange={(e) => setLinguisticPatterns(e.target.value)}
-                placeholder="KEYWORDS: leadership, control, authority, responsibility, order&#10;&#10;PHRASES: 'I need to take charge', 'Let me handle this', 'Someone has to lead'&#10;&#10;EMOTIONAL PATTERNS: frustrated when not in control, protective of others, burden of responsibility&#10;&#10;BEHAVIORAL PATTERNS: takes initiative, makes decisions quickly, creates structure&#10;&#10;COMMUNICATION STYLE: Direct, authoritative, solution-focused"
-                rows={12}
-                className="resize-vertical"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="understanding" className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Theoretical Understanding
-              </label>
-              <Textarea
-                value={theoreticalUnderstanding}
-                onChange={(e) => setTheoreticalUnderstanding(e.target.value)}
-                placeholder="Core psychological concepts, theoretical framework, foundational understanding..."
-                rows={12}
-                className="resize-vertical"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="shadow" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Shadow Work
-                </label>
-                <Textarea
-                  value={shadowWork}
-                  onChange={(e) => setShadowWork(e.target.value)}
-                  placeholder="Potential pitfalls, unconscious patterns, areas for growth..."
-                  rows={8}
-                  className="resize-vertical"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Integration Practices
-                </label>
-                <Textarea
-                  value={integrationPractices}
-                  onChange={(e) => setIntegrationPractices(e.target.value)}
-                  placeholder="Exercises, techniques, and practices for healthy expression..."
-                  rows={8}
-                  className="resize-vertical"
-                />
-              </div>
-            </div>
+          <TabsContent value="knowledge" className="space-y-4">
+            <ArchetypeKnowledgeBase
+              archetypeId={editedArchetype.id}
+              archetypeName={editedArchetype.name}
+            />
           </TabsContent>
 
 
