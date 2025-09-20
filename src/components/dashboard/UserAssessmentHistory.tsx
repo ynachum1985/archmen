@@ -49,26 +49,27 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
             name,
             description,
             category,
-            expected_duration,
-            assessment_enrollments!left (
-              id,
-              status,
-              enrolled_at,
-              started_at,
-              completed_at,
-              progress,
-              results
-            )
+            expected_duration
           `)
           .eq('is_active', true)
-          .eq('assessment_enrollments.user_id', userId)
           .order('created_at', { ascending: false })
 
         if (error) throw error
 
+        // Get user enrollments separately
+        const { data: enrollmentData, error: enrollmentError } = await supabase
+          .from('assessment_enrollments')
+          .select('*')
+          .eq('user_id', userId)
+
+        if (enrollmentError) {
+          console.error('Error fetching enrollments:', enrollmentError)
+          // Continue without enrollments - show all as not enrolled
+        }
+
         // Transform data to match enrollment structure
         const transformedData = (data || []).map(assessment => {
-          const enrollment = assessment.assessment_enrollments?.[0]
+          const enrollment = (enrollmentData || []).find(e => e.assessment_id === assessment.id)
           return {
             id: enrollment?.id || `temp-${assessment.id}`,
             assessment_id: assessment.id,
