@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AuthService } from '@/lib/services/auth.service'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -39,6 +40,7 @@ const authService = new AuthService()
 
 export default function DashboardPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [assessmentCount, setAssessmentCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
@@ -51,6 +53,16 @@ export default function DashboardPage() {
           return
         }
         setUserProfile(profile)
+
+        // Load assessment count
+        const supabase = createClient()
+        const { count } = await supabase
+          .from('assessment_sessions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profile.user.id)
+          .eq('status', 'completed')
+
+        setAssessmentCount(count || 0)
       } catch (error) {
         console.error('Failed to load user profile:', error)
         router.push('/login')
@@ -141,10 +153,10 @@ export default function DashboardPage() {
                   <Brain className="h-4 w-4 ml-auto text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{assessmentCount}</div>
                   <p className="text-xs text-muted-foreground">Completed assessments</p>
-                  <Link href="/chat" className="text-xs text-primary hover:underline mt-1 block">
-                    Start your first assessment →
+                  <Link href="/" className="text-xs text-primary hover:underline mt-1 block">
+                    {assessmentCount === 0 ? 'Start your first assessment →' : 'Take another assessment →'}
                   </Link>
                 </CardContent>
               </Card>
@@ -167,7 +179,7 @@ export default function DashboardPage() {
             {/* Quick Actions */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link href="/chat">
+            <Link href="/">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Brain className="h-5 w-5 text-primary" />
@@ -231,7 +243,7 @@ export default function DashboardPage() {
               Explore courses designed for your specific archetypal profile
             </div>
             <div className="pt-4">
-              <Link href="/chat">
+              <Link href="/">
                 <Button className="w-full sm:w-auto">
                   Start Your Journey
                 </Button>

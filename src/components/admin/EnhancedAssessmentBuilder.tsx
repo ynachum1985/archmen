@@ -208,6 +208,8 @@ export function EnhancedAssessmentBuilder({
   const [chunkSize, setChunkSize] = useState(1000)
   const [chunkOverlap, setChunkOverlap] = useState(200)
   const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')
+  const [topK, setTopK] = useState(10)
+  const [similarityThreshold, setSimilarityThreshold] = useState(0.7)
 
   // LLM Testing states
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>('openai')
@@ -465,7 +467,9 @@ Keep the response under 150 words and end with a specific question.`)
           settings: {
             chunkSize,
             chunkOverlap,
-            embeddingModel
+            embeddingModel,
+            topK,
+            similarityThreshold
           }
         }),
       })
@@ -1082,7 +1086,7 @@ Keep the response under 150 words and end with a specific question.`)
 
             {/* Embedding Settings */}
             <div className="pt-6 mt-6 border-t border-gray-100 space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-5 gap-3">
                 <div>
                   <Label className="text-xs text-gray-500">Chunk Size</Label>
                   <Input
@@ -1116,6 +1120,29 @@ Keep the response under 150 words and end with a specific question.`)
                     <option value="text-embedding-3-large">3-large</option>
                     <option value="text-embedding-ada-002">ada-002</option>
                   </select>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Top-K</Label>
+                  <Input
+                    type="number"
+                    value={topK}
+                    onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+                    className="h-8 text-sm"
+                    min="1"
+                    max="50"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Threshold</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={similarityThreshold}
+                    onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
+                    className="h-8 text-sm"
+                    min="0.1"
+                    max="1.0"
+                  />
                 </div>
               </div>
             </div>

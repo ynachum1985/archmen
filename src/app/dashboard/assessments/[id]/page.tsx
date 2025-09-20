@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AuthService } from '@/lib/services/auth.service'
-import { LiveReportTemplate } from '@/components/report/LiveReportTemplate'
+import { AssessmentResultsWithCourse } from '@/components/dashboard/AssessmentResultsWithCourse'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Download, Share2 } from 'lucide-react'
@@ -252,8 +252,13 @@ export default function AssessmentReportPage({ params }: AssessmentReportPagePro
           </div>
         </div>
 
-        {/* Report Content */}
-        <LiveReportTemplate assessmentResults={reportData} />
+        {/* Enhanced Results with Course */}
+        <AssessmentResultsWithCourse
+          assessmentId={assessment.id}
+          assessmentName={assessment.assessment_templates?.name || 'Assessment'}
+          discoveredArchetypes={reportData.discoveredArchetypes}
+          userId={assessment.user_id}
+        />
       </div>
     </div>
   )

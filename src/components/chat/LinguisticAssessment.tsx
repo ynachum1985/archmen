@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,6 +42,7 @@ interface LinguisticAssessmentProps {
 }
 
 export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentComplete }: LinguisticAssessmentProps) {
+  const router = useRouter()
   const [themes, setThemes] = useState<AssessmentTheme[]>([])
   const [selectedTheme, setSelectedTheme] = useState<AssessmentTheme | null>(null)
   const [assessmentStarted, setAssessmentStarted] = useState(false)
@@ -165,12 +167,53 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
         setFinalReport(report)
         setIsComplete(true)
 
+        // Save chat history
+        await saveChatHistory(sessionId, updatedConversation)
+
+        // Initialize course progress for free weeks
+        try {
+          const supabase = createClient()
+          const { data: { user } } = await supabase.auth.getUser()
+
+          if (user && sessionId) {
+            // Create initial course progress for weeks 1-2 (free)
+            await fetch('/api/course-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.id,
+                assessmentId: sessionId,
+                weekNumber: 1,
+                action: 'unlock'
+              })
+            })
+
+            await fetch('/api/course-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.id,
+                assessmentId: sessionId,
+                weekNumber: 2,
+                action: 'unlock'
+              })
+            })
+          }
+        } catch (error) {
+          console.error('Error initializing course progress:', error)
+        }
+
         onAssessmentComplete({
           theme: selectedTheme.name,
           conversation: updatedConversation,
           finalScores: result.archetypeScores,
           report
         })
+
+        // Redirect to dashboard assessment results after a short delay
+        setTimeout(() => {
+          router.push(`/dashboard/assessments/${sessionId}`)
+        }, 2000)
       } else {
         // Continue with next question
         setCurrentQuestion(result.nextQuestion)
@@ -180,6 +223,48 @@ export function LinguisticAssessment({ onDiscoveredArchetypes, onAssessmentCompl
       console.error('Error analyzing response:', error)
     } finally {
       setIsAnalyzing(false)
+    }
+  }
+
+  const saveChatHistory = async (sessionId: string, conversation: ConversationTurn[]) => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user || !sessionId) return
+
+      // Save each conversation turn as chat history
+      for (let i = 0; i < conversation.length; i++) {
+        const turn = conversation[i]
+
+        // Save question
+        await fetch('/api/chat-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            assessmentSessionId: sessionId,
+            userId: user.id,
+            messageType: 'question',
+            content: turn.question,
+            messageIndex: i * 2
+          })
+        })
+
+        // Save answer
+        await fetch('/api/chat-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            assessmentSessionId: sessionId,
+            userId: user.id,
+            messageType: 'answer',
+            content: turn.response,
+            messageIndex: i * 2 + 1
+          })
+        })
+      }
+    } catch (error) {
+      console.error('Error saving chat history:', error)
     }
   }
 
