@@ -59,6 +59,20 @@ export default function AssessmentPage({ params }: AssessmentPageProps) {
 
         const supabase = createClient()
 
+        // First check if assessment exists
+        const { data: assessmentData, error: assessmentError } = await supabase
+          .from('enhanced_assessments')
+          .select('*')
+          .eq('id', resolvedParams.id)
+          .eq('is_active', true)
+          .single()
+
+        if (assessmentError || !assessmentData) {
+          console.error('Error fetching assessment:', assessmentError)
+          setError('Assessment not found')
+          return
+        }
+
         // Get enrollment data
         const { data: enrollmentData, error: enrollmentError } = await supabase
           .from('assessment_enrollments')
@@ -76,13 +90,37 @@ export default function AssessmentPage({ params }: AssessmentPageProps) {
           .eq('user_id', profile.user.id)
           .single()
 
-        if (enrollmentError) {
-          console.error('Error fetching enrollment:', enrollmentError)
-          setError('Assessment not found or access denied')
-          return
-        }
+        if (enrollmentData) {
+          setEnrollment(enrollmentData)
+        } else {
+          // Auto-enroll user if not already enrolled
+          const { data: newEnrollment, error: enrollError } = await supabase
+            .from('assessment_enrollments')
+            .insert({
+              user_id: profile.user.id,
+              assessment_id: resolvedParams.id,
+              status: 'available'
+            })
+            .select(`
+              *,
+              enhanced_assessments (
+                id,
+                name,
+                description,
+                category,
+                expected_duration
+              )
+            `)
+            .single()
 
-        setEnrollment(enrollmentData)
+          if (enrollError) {
+            console.error('Error creating enrollment:', enrollError)
+            setError('Failed to enroll in assessment')
+            return
+          }
+
+          setEnrollment(newEnrollment)
+        }
       } catch (err) {
         console.error('Error loading assessment:', err)
         setError('Failed to load assessment')

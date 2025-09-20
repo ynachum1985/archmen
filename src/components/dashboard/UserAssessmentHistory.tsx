@@ -12,7 +12,7 @@ import Link from 'next/link'
 interface AssessmentEnrollment {
   id: string
   assessment_id: string
-  status: 'available' | 'in_progress' | 'completed'
+  status: 'available' | 'in_progress' | 'completed' | 'not_enrolled'
   enrolled_at: string
   started_at?: string
   completed_at?: string
@@ -37,40 +37,70 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchEnrollments = async () => {
+    const fetchAssessments = async () => {
       try {
         const supabase = createClient()
 
+        // Get all active assessments with enrollment status
         const { data, error } = await supabase
-          .from('assessment_enrollments')
+          .from('enhanced_assessments')
           .select(`
-            *,
-            enhanced_assessments (
+            id,
+            name,
+            description,
+            category,
+            expected_duration,
+            assessment_enrollments!left (
               id,
-              name,
-              description,
-              category,
-              expected_duration
+              status,
+              enrolled_at,
+              started_at,
+              completed_at,
+              progress,
+              results
             )
           `)
-          .eq('user_id', userId)
-          .order('enrolled_at', { ascending: false })
+          .eq('is_active', true)
+          .eq('assessment_enrollments.user_id', userId)
+          .order('created_at', { ascending: false })
 
         if (error) throw error
 
-        setEnrollments(data || [])
+        // Transform data to match enrollment structure
+        const transformedData = (data || []).map(assessment => {
+          const enrollment = assessment.assessment_enrollments?.[0]
+          return {
+            id: enrollment?.id || `temp-${assessment.id}`,
+            assessment_id: assessment.id,
+            status: enrollment?.status || 'not_enrolled',
+            enrolled_at: enrollment?.enrolled_at || new Date().toISOString(),
+            started_at: enrollment?.started_at,
+            completed_at: enrollment?.completed_at,
+            progress: enrollment?.progress || {},
+            results: enrollment?.results || {},
+            enhanced_assessments: {
+              id: assessment.id,
+              name: assessment.name,
+              description: assessment.description,
+              category: assessment.category,
+              expected_duration: assessment.expected_duration || 15
+            }
+          }
+        })
+
+        setEnrollments(transformedData)
       } catch (err) {
-        console.error('Error fetching enrollments:', err)
-        setError('Failed to load assessment history')
+        console.error('Error fetching assessments:', err)
+        setError('Failed to load assessments')
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchEnrollments()
+    fetchAssessments()
   }, [userId])
 
-  const availableAssessments = enrollments.filter(e => e.status === 'available')
+  const availableAssessments = enrollments.filter(e => e.status === 'available' || e.status === 'not_enrolled')
   const completedAssessments = enrollments.filter(e => e.status === 'completed')
   const inProgressAssessments = enrollments.filter(e => e.status === 'in_progress')
 
@@ -330,6 +360,8 @@ function AssessmentEnrollmentCard({ enrollment }: { enrollment: AssessmentEnroll
         return <Badge variant="secondary">In Progress</Badge>
       case 'available':
         return <Badge variant="outline">Available</Badge>
+      case 'not_enrolled':
+        return <Badge variant="outline">Available</Badge>
       default:
         return <Badge variant="outline">Unknown</Badge>
     }
@@ -343,6 +375,8 @@ function AssessmentEnrollmentCard({ enrollment }: { enrollment: AssessmentEnroll
         return <Clock className="h-4 w-4 text-blue-600" />
       case 'available':
         return <Play className="h-4 w-4 text-gray-600" />
+      case 'not_enrolled':
+        return <Play className="h-4 w-4 text-gray-600" />
       default:
         return <Brain className="h-4 w-4 text-gray-600" />
     }
@@ -351,6 +385,7 @@ function AssessmentEnrollmentCard({ enrollment }: { enrollment: AssessmentEnroll
   const getActionButton = () => {
     switch (enrollment.status) {
       case 'available':
+      case 'not_enrolled':
         return (
           <Button variant="default" size="sm" asChild>
             <Link href={`/dashboard/assessments/${enrollment.assessment_id}`}>

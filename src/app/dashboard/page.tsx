@@ -123,10 +123,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Main Dashboard Content */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue="assessments" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="assessments">Your Assessments</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="assessments">Assessment History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
