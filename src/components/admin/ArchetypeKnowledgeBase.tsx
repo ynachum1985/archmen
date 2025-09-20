@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Upload, FileText, Link, TestTube, Loader2, CheckCircle, AlertCircle, Plus, Minus, File, Image, Palette, Wand2 } from 'lucide-react'
+import { Upload, FileText, Link, TestTube, Loader2, CheckCircle, AlertCircle, Plus, Minus, File, Image, Palette, Wand2, BookOpen } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { ArchetypeContentDisplay } from './ArchetypeContentDisplay'
@@ -237,7 +237,7 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
     <div className="space-y-6">
 
       <Tabs defaultValue="upload" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
             Upload Content
@@ -249,6 +249,10 @@ export function ArchetypeKnowledgeBase({ archetypeId, archetypeName }: Archetype
           <TabsTrigger value="test" className="flex items-center gap-2">
             <TestTube className="h-4 w-4" />
             Test Search
+          </TabsTrigger>
+          <TabsTrigger value="course" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            Course Content
           </TabsTrigger>
           <TabsTrigger value="images" className="flex items-center gap-2">
             <File className="h-4 w-4" />
@@ -569,6 +573,37 @@ This could include:
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Course Content Tab */}
+        <TabsContent value="course" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Course Content Management
+              </CardTitle>
+              <CardDescription>
+                Create and manage 6-week course content for {archetypeName}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="text-center py-8 text-gray-500">
+                <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium mb-2">Course Content Coming Soon</h3>
+                <p className="text-sm">
+                  This section will allow you to create and manage weekly course content including:
+                </p>
+                <div className="mt-4 space-y-2 text-sm">
+                  <div>• Theory sections for each week</div>
+                  <div>• Practice exercises and activities</div>
+                  <div>• Reflection prompts and journaling</div>
+                  <div>• Integration homework and real-world applications</div>
+                  <div>• Media assets (images, audio, video)</div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

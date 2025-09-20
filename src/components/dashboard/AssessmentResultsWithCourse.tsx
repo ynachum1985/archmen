@@ -6,17 +6,17 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
-import { 
-  MessageCircle, 
-  BookOpen, 
-  Lock, 
-  CheckCircle, 
+import {
+  BookOpen,
+  Lock,
+  CheckCircle,
   Clock,
-  Star,
   ArrowRight,
   Play
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { FloatingChatbot } from './FloatingChatbot'
+import { FlippableArchetypeCards } from './FlippableArchetypeCards'
 
 interface ArchetypeResult {
   id: string
@@ -225,161 +225,91 @@ export function AssessmentResultsWithCourse({
   const progressPercentage = (completedWeeks / courseWeeks.length) * 100
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Floating Chatbot */}
+      <FloatingChatbot
+        assessmentId={assessmentId}
+        assessmentName={assessmentName}
+        userId={userId}
+        initialMessages={chatMessages}
+      />
+
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">{assessmentName} Results</h1>
+      <div className="text-center">
+        <h1 className="text-3xl font-bold mb-2">{assessmentName} Results</h1>
         <p className="text-gray-600">Your personalized archetypal journey</p>
       </div>
 
-      {/* Primary Archetype */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <Star className="h-8 w-8 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold">{primaryArchetype?.name}</h2>
-              <p className="text-gray-600">{primaryArchetype?.description}</p>
-              <Badge className="mt-2">Primary Archetype</Badge>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{Math.round(primaryArchetype?.confidenceScore || 0)}%</div>
-              <div className="text-sm text-gray-500">Confidence</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Flippable Archetype Cards */}
+      <FlippableArchetypeCards archetypes={discoveredArchetypes} />
 
-      {/* Secondary Archetypes */}
-      {secondaryArchetypes.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {secondaryArchetypes.map((archetype) => (
-            <Card key={archetype.id}>
-              <CardContent className="p-4">
+      {/* Mini-Course Section */}
+      <div className="space-y-6">
+        {/* Course Progress */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-semibold">Your Integration Journey</h3>
+                <p className="text-gray-600">6-week personalized course based on your archetypes</p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold">{completedWeeks}/6</div>
+                <div className="text-sm text-gray-500">Weeks Complete</div>
+              </div>
+            </div>
+            <Progress value={progressPercentage} className="h-2" />
+          </CardContent>
+        </Card>
+
+        {/* Course Weeks */}
+        <div className="space-y-4">
+          {courseWeeks.map((week) => (
+            <Card key={week.week} className={`${!week.isUnlocked ? 'opacity-60' : ''}`}>
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">{archetype.name}</h3>
-                    <p className="text-sm text-gray-600">{archetype.description.substring(0, 80)}...</p>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      week.isCompleted ? 'bg-green-500 text-white' :
+                      week.isUnlocked ? 'bg-blue-500 text-white' : 'bg-gray-300'
+                    }`}>
+                      {week.isCompleted ? <CheckCircle className="h-5 w-5" /> :
+                       week.isUnlocked ? <Play className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">Week {week.week}: {week.title}</h3>
+                        {week.isFree && <Badge variant="secondary">Free</Badge>}
+                        {!week.isFree && <Badge>Premium</Badge>}
+                      </div>
+                      <p className="text-sm text-gray-600">{week.description}</p>
+                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {week.estimatedTime}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold">{Math.round(archetype.confidenceScore)}%</div>
+                  <div>
+                    {week.isUnlocked ? (
+                      <Button size="sm">
+                        {week.isCompleted ? 'Review' : 'Start'}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" disabled>
+                        <Lock className="h-4 w-4 mr-2" />
+                        Locked
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      )}
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="results">Chat & Insights</TabsTrigger>
-          <TabsTrigger value="course">Integration Course</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="results" className="space-y-6">
-          {/* Chat History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Assessment Conversation
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingChat ? (
-                <div className="text-center py-4">Loading conversation...</div>
-              ) : chatMessages.length > 0 ? (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {chatMessages.map((message) => (
-                    <div key={message.id} className={`flex ${message.message_type === 'answer' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] p-3 rounded-lg ${
-                        message.message_type === 'answer' 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-100'
-                      }`}>
-                        <p className="text-sm">{message.content}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">No conversation history available</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="course" className="space-y-6">
-          {/* Course Progress */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold">Integration Journey</h3>
-                  <p className="text-sm text-gray-600">6-week personalized course</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{completedWeeks}/6</div>
-                  <div className="text-sm text-gray-500">Weeks Complete</div>
-                </div>
-              </div>
-              <Progress value={progressPercentage} className="h-2" />
-            </CardContent>
-          </Card>
-
-          {/* Course Weeks */}
-          <div className="space-y-4">
-            {courseWeeks.map((week) => (
-              <Card key={week.week} className={`${!week.isUnlocked ? 'opacity-60' : ''}`}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        week.isCompleted ? 'bg-green-500 text-white' :
-                        week.isUnlocked ? 'bg-blue-500 text-white' : 'bg-gray-300'
-                      }`}>
-                        {week.isCompleted ? <CheckCircle className="h-5 w-5" /> :
-                         week.isUnlocked ? <Play className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">Week {week.week}: {week.title}</h3>
-                          {week.isFree && <Badge variant="secondary">Free</Badge>}
-                          {!week.isFree && <Badge>Premium</Badge>}
-                        </div>
-                        <p className="text-sm text-gray-600">{week.description}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {week.estimatedTime}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      {week.isUnlocked ? (
-                        <Button size="sm">
-                          {week.isCompleted ? 'Review' : 'Start'}
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline" disabled>
-                          <Lock className="h-4 w-4 mr-2" />
-                          Locked
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   )
 }
