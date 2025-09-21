@@ -169,14 +169,14 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {assessments.length > 0 && assessments[0].created_at ? (
-                new Date(assessments[0].created_at).toLocaleDateString()
+              {enrollments.length > 0 && enrollments[0].enrolled_at ? (
+                new Date(enrollments[0].enrolled_at).toLocaleDateString()
               ) : (
                 'None'
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {assessments.length > 0 ? assessments[0].assessment_templates?.name : 'Take your first assessment'}
+              {enrollments.length > 0 ? enrollments[0].enhanced_assessments?.name : 'Take your first assessment'}
             </p>
           </CardContent>
         </Card>
