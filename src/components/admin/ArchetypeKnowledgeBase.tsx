@@ -553,6 +553,57 @@ export function ArchetypeKnowledgeBase({
             archetypeId={archetypeId}
             archetypeName={archetypeName}
           />
+
+          {/* Test Embed Quality */}
+          <div className="space-y-2 pt-4 border-t">
+            <Label className="text-sm font-medium">Test Embed Quality</Label>
+            <div className="flex gap-2">
+              <Input
+                value={testQuery}
+                onChange={(e) => setTestQuery(e.target.value)}
+                placeholder={`Ask something about ${archetypeName}...`}
+                className="flex-1 text-sm"
+              />
+              <Button
+                onClick={handleTestEmbedding}
+                disabled={isTesting || !testQuery.trim()}
+                size="sm"
+                variant="outline"
+              >
+                {isTesting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <TestTube className="h-4 w-4 mr-1" />
+                    Test
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {testResults.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500">Search Results:</Label>
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {testResults.map((result, index) => (
+                    <div key={index} className="border rounded p-2 text-sm">
+                      <div className="flex items-center justify-between mb-1">
+                        <Badge variant="outline" className="text-xs">
+                          {(result.similarity * 100).toFixed(1)}% match
+                        </Badge>
+                      </div>
+                      <p className="text-gray-700 text-xs line-clamp-2">
+                        {result.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )
