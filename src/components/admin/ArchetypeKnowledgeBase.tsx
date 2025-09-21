@@ -524,29 +524,35 @@ export function ArchetypeKnowledgeBase({
 
           {/* Status and Process Button */}
           {processingStatus !== 'idle' && (
-            <div className="flex items-center gap-2 p-3 rounded bg-gray-50 text-sm">
+            <div className="flex items-center gap-2 p-2 rounded bg-gray-50 text-sm">
               {getStatusIcon()}
-              <span className="text-gray-700">{statusMessage}</span>
+              <span>{statusMessage}</span>
             </div>
           )}
 
           <Button
             onClick={handleProcessContent}
             disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            size="sm"
           >
             {isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing Content...
+                Processing...
               </>
             ) : (
               <>
                 <Upload className="h-4 w-4 mr-2" />
-                Process & Embed Content
+                Embed Content
               </>
             )}
           </Button>
+
+          {/* Embedded Content Display */}
+          <ArchetypeContentDisplay
+            archetypeId={archetypeId}
+            archetypeName={archetypeName}
+          />
         </div>
       </div>
     )
