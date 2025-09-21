@@ -152,35 +152,56 @@ export default function AssessmentPage({ params }: AssessmentPageProps) {
         return
       }
 
-      // For now, simulate completion with mock data
+      // For now, simulate completion with mock data using real archetypes
       // Later this will redirect to the actual assessment flow
       setTimeout(async () => {
+        // Fetch real archetypes from database
+        const { data: archetypes, error } = await supabase
+          .from('enhanced_archetypes')
+          .select('*')
+          .eq('is_active', true)
+          .order('name')
+
+        if (error) {
+          console.error('Error fetching archetypes:', error)
+          return
+        }
+
+        // Select 2 random archetypes from the database for mock results
+        const shuffled = archetypes?.sort(() => 0.5 - Math.random()) || []
+        const selectedArchetypes = shuffled.slice(0, 2)
+
+        if (selectedArchetypes.length < 2) {
+          console.error('Not enough archetypes in database')
+          return
+        }
+
         const mockResults = {
           archetypes: [
             {
-              id: '1',
-              name: 'The Lover',
-              description: 'Driven by passion, connection, and emotional intimacy',
+              id: selectedArchetypes[0].id,
+              name: selectedArchetypes[0].name,
+              description: selectedArchetypes[0].description,
               confidenceScore: 85,
               isPrimary: true,
               insights: {
-                currentInfluence: 'You seek deep emotional connections and value intimacy above all else.',
-                growthOpportunity: 'Learning to balance emotional intensity with practical considerations.',
-                integrationTip: 'Practice expressing love through both words and actions.',
-                whyThisArchetype: 'Your responses show a strong pattern of prioritizing emotional connection and romantic fulfillment.'
+                currentInfluence: `You embody the ${selectedArchetypes[0].name} archetype in your relationships.`,
+                growthOpportunity: `Learning to integrate the positive aspects of ${selectedArchetypes[0].name} while managing its shadow elements.`,
+                integrationTip: `Channel your ${selectedArchetypes[0].name} energy into creating meaningful connections.`,
+                whyThisArchetype: `Your language patterns and responses align strongly with ${selectedArchetypes[0].name} characteristics.`
               }
             },
             {
-              id: '2', 
-              name: 'The Explorer',
-              description: 'Seeks freedom, adventure, and new experiences',
+              id: selectedArchetypes[1].id,
+              name: selectedArchetypes[1].name,
+              description: selectedArchetypes[1].description,
               confidenceScore: 72,
               isPrimary: false,
               insights: {
-                currentInfluence: 'You value independence and the freedom to explore new possibilities.',
-                growthOpportunity: 'Finding ways to maintain autonomy while building committed relationships.',
-                integrationTip: 'Share your adventures with your partner to deepen your bond.',
-                whyThisArchetype: 'Your desire for variety and new experiences shows strong Explorer tendencies.'
+                currentInfluence: `You also show strong ${selectedArchetypes[1].name} tendencies in your approach to relationships.`,
+                growthOpportunity: `Finding ways to balance ${selectedArchetypes[1].name} qualities with your primary archetype.`,
+                integrationTip: `Use your ${selectedArchetypes[1].name} strengths to complement your primary archetype.`,
+                whyThisArchetype: `Your responses indicate secondary ${selectedArchetypes[1].name} patterns.`
               }
             }
           ]

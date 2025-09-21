@@ -15,7 +15,7 @@ import {
   Play
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { FloatingChatbot } from './FloatingChatbot'
+import { EnhancedArchetypeChat } from '../chat/EnhancedArchetypeChat'
 import { FlippableArchetypeCards } from './FlippableArchetypeCards'
 
 interface ArchetypeResult {
@@ -225,23 +225,24 @@ export function AssessmentResultsWithCourse({
   const progressPercentage = (completedWeeks / courseWeeks.length) * 100
 
   return (
-    <div className="space-y-8">
-      {/* Floating Chatbot */}
-      <FloatingChatbot
-        assessmentId={assessmentId}
-        assessmentName={assessmentName}
-        userId={userId}
-        initialMessages={chatMessages}
-      />
-
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">{assessmentName} Results</h1>
-        <p className="text-gray-600">Your personalized archetypal journey</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+      {/* Full Chatbot Interface at Top */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto">
+          <EnhancedArchetypeChat />
+        </div>
       </div>
 
-      {/* Flippable Archetype Cards */}
-      <FlippableArchetypeCards archetypes={discoveredArchetypes} />
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-2">{assessmentName} Results</h1>
+          <p className="text-gray-600">Your personalized archetypal journey</p>
+        </div>
+
+        {/* Flippable Archetype Cards */}
+        <FlippableArchetypeCards archetypes={discoveredArchetypes} />
 
       {/* Mini-Course Section */}
       <div className="space-y-6">
@@ -309,6 +310,7 @@ export function AssessmentResultsWithCourse({
             </Card>
           ))}
         </div>
+      </div>
       </div>
     </div>
   )

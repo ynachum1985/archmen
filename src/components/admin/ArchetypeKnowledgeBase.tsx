@@ -332,18 +332,16 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                   multiple
                   accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
                   onChange={(e) => handleFileUpload(e, index)}
-                  className="cursor-pointer border-gray-200"
+                  className="cursor-pointer border-gray-200 flex-1"
                 />
-                {uploadedFiles.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFileUpload(index)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFileUpload(index)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
               </div>
             ))}
 
@@ -368,16 +366,14 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                   placeholder="https://example.com/resource"
                   className="text-sm border-gray-200 flex-1"
                 />
-                {referenceUrls.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeReferenceUrl(index)}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeReferenceUrl(index)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
               </div>
             ))}
             <Button
@@ -402,16 +398,14 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                   rows={4}
                   className="resize-none border-gray-200 text-sm flex-1"
                 />
-                {textContents.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeTextContent(index)}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 mt-1"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeTextContent(index)}
+                  className="text-gray-400 hover:text-gray-600 mt-1"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
               </div>
             ))}
 
@@ -676,19 +670,17 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                     }}
                     className="flex-1 text-sm"
                   />
-                  {uploadedFiles.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => {
-                        const updatedFiles = uploadedFiles.filter((_, i) => i !== index)
-                        setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
-                      }}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => {
+                      const updatedFiles = uploadedFiles.filter((_, i) => i !== index)
+                      setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
+                    }}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
               <Button
@@ -715,19 +707,17 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                     placeholder="https://example.com/resource"
                     className="flex-1 text-sm"
                   />
-                  {referenceUrls.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => {
-                        const updatedUrls = referenceUrls.filter((_, i) => i !== index)
-                        setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
-                      }}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => {
+                      const updatedUrls = referenceUrls.filter((_, i) => i !== index)
+                      setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
+                    }}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
               <Button
@@ -755,19 +745,17 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                     rows={4}
                     className="flex-1 text-sm"
                   />
-                  {textContents.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 mt-1"
-                      onClick={() => {
-                        const updatedContents = textContents.filter((_, i) => i !== index)
-                        setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
-                      }}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 mt-1"
+                    onClick={() => {
+                      const updatedContents = textContents.filter((_, i) => i !== index)
+                      setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
+                    }}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
               <Button
