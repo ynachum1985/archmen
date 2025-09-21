@@ -736,10 +736,9 @@ Keep the response under 150 words and end with a specific question.`)
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
-          <TabsTrigger value="reports">Report and Answers</TabsTrigger>
           <TabsTrigger value="testing">Testing</TabsTrigger>
         </TabsList>
 
@@ -1227,32 +1226,7 @@ Keep the response under 150 words and end with a specific question.`)
           </div>
         </TabsContent>
 
-        {/* Report & Answers Tab */}
-        <TabsContent value="reports" className="space-y-8">
-          {/* Archetype Content Builder */}
-          <ArchetypeContentBuilder
-            onContentChange={(archetypeId, content) => {
-              console.log('Content updated for archetype:', archetypeId, content)
-              // Here you can save the content to your database
-            }}
-          />
 
-          {/* Report Generation */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Report Generation Instructions</h3>
-            <Textarea
-              value={config.reportGeneration}
-              onChange={(e) => setConfig(prev => ({ ...prev, reportGeneration: e.target.value }))}
-              className="font-mono text-sm"
-              rows={8}
-              placeholder="Define how the AI should generate assessment reports..."
-            />
-          </div>
-
-
-
-
-        </TabsContent>
 
         {/* Testing Tab - Available for all assessments */}
         <TabsContent value="testing" className="space-y-6">

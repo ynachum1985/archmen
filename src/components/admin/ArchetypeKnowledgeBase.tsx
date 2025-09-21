@@ -615,249 +615,216 @@ export function ArchetypeKnowledgeBase({
 
         {/* Knowledge Base Tab */}
         <TabsContent value="knowledge" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Add Knowledge Base Content
-              </CardTitle>
-              <CardDescription>
-                Add content that the AI can reference when discussing {archetypeName}. 
-                This content will be chunked and embedded for semantic search.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Document Upload Section */}
-              <div className="space-y-4">
-                <Label className="text-sm font-medium">Upload Documents</Label>
-                {uploadedFiles.map((files, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <Input
-                        type="file"
-                        multiple
-                        accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
-                        onChange={(e) => {
-                          const newFiles = Array.from(e.target.files || [])
-                          if (newFiles.length > 0) {
-                            const updatedFiles = [...uploadedFiles]
-                            updatedFiles[index] = newFiles
-                            setUploadedFiles(updatedFiles)
-                          }
-                        }}
-                        className="file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
-                      />
-                      {files.length > 0 && (
-                        <div className="text-xs text-gray-600 mt-1">
-                          {files.map(file => file.name).join(', ')}
-                        </div>
-                      )}
-                    </div>
-                    {uploadedFiles.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
-                        onClick={() => {
-                          const updatedFiles = uploadedFiles.filter((_, i) => i !== index)
-                          setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
-                        }}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => setUploadedFiles([...uploadedFiles, []])}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Document Upload
-                </Button>
-              </div>
-
-              {/* Reference URLs */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Reference URLs</Label>
-                {referenceUrls.map((url, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      value={url}
-                      onChange={(e) => {
-                        const updatedUrls = [...referenceUrls]
-                        updatedUrls[index] = e.target.value
-                        setReferenceUrls(updatedUrls)
+          <div className="space-y-4">
+            {/* Document Upload */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Documents</Label>
+              {uploadedFiles.map((files, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    multiple
+                    accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
+                    onChange={(e) => {
+                      const newFiles = Array.from(e.target.files || [])
+                      if (newFiles.length > 0) {
+                        const updatedFiles = [...uploadedFiles]
+                        updatedFiles[index] = newFiles
+                        setUploadedFiles(updatedFiles)
+                      }
+                    }}
+                    className="flex-1 text-sm"
+                  />
+                  {uploadedFiles.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        const updatedFiles = uploadedFiles.filter((_, i) => i !== index)
+                        setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
                       }}
-                      placeholder={url ? "" : "https://example.com/archetype-resource"}
-                      className="flex-1"
-                    />
-                    {referenceUrls.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
-                        onClick={() => {
-                          const updatedUrls = referenceUrls.filter((_, i) => i !== index)
-                          setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
-                        }}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => setReferenceUrls([...referenceUrls, ''])}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Reference URL
-                </Button>
-              </div>
-
-              {/* Text Content Sections */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Text Content</Label>
-                {textContents.map((content, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <Textarea
-                      value={content}
-                      onChange={(e) => {
-                        const updatedContents = [...textContents]
-                        updatedContents[index] = e.target.value
-                        setTextContents(updatedContents)
-                      }}
-                      placeholder={content ? "" : `Enter comprehensive content about ${archetypeName}...
-
-This could include:
-- Theoretical understanding and psychological insights
-- Embodiment practices and exercises
-- Integration techniques and shadow work
-- Real-world examples and case studies
-- Resources and references`}
-                      rows={8}
-                      className="flex-1 resize-vertical"
-                    />
-                    {textContents.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800 mt-1"
-                        onClick={() => {
-                          const updatedContents = textContents.filter((_, i) => i !== index)
-                          setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
-                        }}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => setTextContents([...textContents, ''])}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Text Content
-                </Button>
-              </div>
-
-              {/* Embedding Settings */}
-              <div className="pt-6 mt-6 border-t border-gray-100 space-y-4">
-                <div className="grid grid-cols-5 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Chunk Size</Label>
-                    <Input
-                      type="number"
-                      value={chunkSize}
-                      onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
-                      className="h-8 text-sm"
-                      min="100"
-                      max="2000"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Overlap</Label>
-                    <Input
-                      type="number"
-                      value={chunkOverlap}
-                      onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
-                      className="h-8 text-sm"
-                      min="0"
-                      max="500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Model</Label>
-                    <select
-                      value={embeddingModel}
-                      onChange={(e) => setEmbeddingModel(e.target.value)}
-                      className="h-8 text-sm border border-gray-300 rounded-md px-2 w-full"
                     >
-                      <option value="text-embedding-3-small">3-small</option>
-                      <option value="text-embedding-3-large">3-large</option>
-                      <option value="text-embedding-ada-002">ada-002</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Top-K</Label>
-                    <Input
-                      type="number"
-                      value={topK}
-                      onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
-                      className="h-8 text-sm"
-                      min="1"
-                      max="50"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Threshold</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={similarityThreshold}
-                      onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
-                      className="h-8 text-sm"
-                      min="0.1"
-                      max="1.0"
-                    />
-                  </div>
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-              </div>
-
-              {processingStatus !== 'idle' && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                  {getStatusIcon()}
-                  <span className="text-sm">{statusMessage}</span>
-                </div>
-              )}
-
+              ))}
               <Button
-                onClick={handleProcessContent}
-                disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
-                className="w-full"
+                variant="ghost"
+                size="sm"
+                onClick={() => setUploadedFiles([...uploadedFiles, []])}
               >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing Content...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Process & Embed Content
-                  </>
-                )}
+                <Plus className="h-4 w-4 mr-1" />
+                Add Upload
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Reference URLs */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">URLs</Label>
+              {referenceUrls.map((url, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={url}
+                    onChange={(e) => {
+                      const updatedUrls = [...referenceUrls]
+                      updatedUrls[index] = e.target.value
+                      setReferenceUrls(updatedUrls)
+                    }}
+                    placeholder="https://example.com/resource"
+                    className="flex-1 text-sm"
+                  />
+                  {referenceUrls.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        const updatedUrls = referenceUrls.filter((_, i) => i !== index)
+                        setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
+                      }}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReferenceUrls([...referenceUrls, ''])}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add URL
+              </Button>
+            </div>
+
+            {/* Text Content */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Text Content</Label>
+              {textContents.map((content, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <Textarea
+                    value={content}
+                    onChange={(e) => {
+                      const updatedContents = [...textContents]
+                      updatedContents[index] = e.target.value
+                      setTextContents(updatedContents)
+                    }}
+                    placeholder={`Enter content about ${archetypeName}...`}
+                    rows={4}
+                    className="flex-1 text-sm"
+                  />
+                  {textContents.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 mt-1"
+                      onClick={() => {
+                        const updatedContents = textContents.filter((_, i) => i !== index)
+                        setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
+                      }}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTextContents([...textContents, ''])}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Text
+              </Button>
+            </div>
+
+            {/* Embedding Settings - Compact */}
+            <div className="grid grid-cols-5 gap-2 pt-4 border-t">
+              <div>
+                <Label className="text-xs">Chunk Size</Label>
+                <Input
+                  type="number"
+                  value={chunkSize}
+                  onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Overlap</Label>
+                <Input
+                  type="number"
+                  value={chunkOverlap}
+                  onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Model</Label>
+                <select
+                  value={embeddingModel}
+                  onChange={(e) => setEmbeddingModel(e.target.value)}
+                  className="h-8 text-xs border rounded px-1 w-full"
+                >
+                  <option value="text-embedding-3-small">3-small</option>
+                  <option value="text-embedding-3-large">3-large</option>
+                  <option value="text-embedding-ada-002">ada-002</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs">Top-K</Label>
+                <Input
+                  type="number"
+                  value={topK}
+                  onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Threshold</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={similarityThreshold}
+                  onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            {processingStatus !== 'idle' && (
+              <div className="flex items-center gap-2 p-2 rounded bg-gray-50 text-sm">
+                {getStatusIcon()}
+                <span>{statusMessage}</span>
+              </div>
+            )}
+
+            <Button
+              onClick={handleProcessContent}
+              disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
+              size="sm"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Embed Content
+                </>
+              )}
+            </Button>
+
+            {/* Embedded Content Display */}
+            <ArchetypeContentDisplay
+              archetypeId={archetypeId}
+              archetypeName={archetypeName}
+            />
+          </div>
         </TabsContent>
 
         {/* View Content Tab */}
