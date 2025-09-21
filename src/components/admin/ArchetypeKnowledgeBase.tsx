@@ -325,7 +325,6 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
         <div className="space-y-6">
           {/* Document Upload Section */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">Upload Documents</Label>
             {uploadedFiles.map((files, index) => (
               <div key={index} className="flex items-center gap-2">
                 <Input
@@ -355,65 +354,64 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
               className="text-gray-600 hover:text-gray-800"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Another File Upload
+              Add Upload
             </Button>
+          </div>
 
-            {/* Display uploaded files */}
-            {uploadedFiles.some(fileGroup => fileGroup.length > 0) && (
-              <div className="space-y-2 mt-3">
-                <Label className="text-xs text-gray-500">Uploaded Files</Label>
-                <div className="space-y-1">
-                  {uploadedFiles.map((fileGroup, groupIndex) =>
-                    fileGroup.map((file, fileIndex) => (
-                      <div key={`${groupIndex}-${fileIndex}`} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                        <div className="flex items-center gap-2">
-                          <File className="h-3 w-3 text-gray-400" />
-                          <span className="text-gray-700">{file.name}</span>
-                          <span className="text-xs text-gray-400">
-                            {(file.size / 1024).toFixed(1)} KB
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(groupIndex, fileIndex)}
-                          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
+          {/* Reference URLs Section */}
+          <div className="space-y-3">
+            {referenceUrls.map((url, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  value={url}
+                  onChange={(e) => updateReferenceUrl(index, e.target.value)}
+                  placeholder="https://example.com/resource"
+                  className="text-sm border-gray-200 flex-1"
+                />
+                {referenceUrls.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeReferenceUrl(index)}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
-            )}
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={addReferenceUrl}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add URL
+            </Button>
           </div>
 
           {/* Text Content Section */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">Text Content</Label>
             {textContents.map((content, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-gray-500">Content Block {index + 1}</Label>
-                  {textContents.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeTextContent(index)}
-                      className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
+              <div key={index} className="flex items-start gap-2">
                 <Textarea
                   value={content}
                   onChange={(e) => updateTextContent(index, e.target.value)}
                   placeholder={`Enter content about ${archetypeName}...`}
                   rows={4}
-                  className="resize-none border-gray-200 text-sm"
+                  className="resize-none border-gray-200 text-sm flex-1"
                 />
+                {textContents.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeTextContent(index)}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 mt-1"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             ))}
 
@@ -424,7 +422,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
               className="text-gray-600 hover:text-gray-800"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Another Text Block
+              Add Text
             </Button>
           </div>
 
@@ -662,7 +660,6 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
           <div className="space-y-4">
             {/* Document Upload */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Documents</Label>
               {uploadedFiles.map((files, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input
@@ -706,7 +703,6 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
             {/* Reference URLs */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">URLs</Label>
               {referenceUrls.map((url, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input
@@ -746,7 +742,6 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
             {/* Text Content */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Text Content</Label>
               {textContents.map((content, index) => (
                 <div key={index} className="flex items-start gap-2">
                   <Textarea

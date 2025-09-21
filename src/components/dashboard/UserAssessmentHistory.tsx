@@ -137,7 +137,7 @@ export function UserAssessmentHistory({ userId }: UserAssessmentHistoryProps) {
             <Brain className="h-4 w-4 ml-auto text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{assessments.length}</div>
+            <div className="text-2xl font-bold">{enrollments.length}</div>
             <p className="text-xs text-muted-foreground">
               {completedAssessments.length} completed
             </p>
