@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Save, X, BarChart3, BookOpen } from 'lucide-react'
+import { Save, X, BarChart3, BookOpen, Upload } from 'lucide-react'
 import { ArchetypeKnowledgeBase } from './admin/ArchetypeKnowledgeBase'
 
 interface Archetype {
@@ -47,12 +47,19 @@ interface ArchetypeEditorProps {
 
 export default function ArchetypeEditor({ archetype, onSave, onCancel }: ArchetypeEditorProps) {
   const [editedArchetype, setEditedArchetype] = useState<Archetype>(archetype)
+  const knowledgeBaseRef = useRef<any>(null)
 
-  const handleSave = () => {
+  const handleEmbedContent = async () => {
+    // First save the archetype changes
     const updated = {
       ...editedArchetype
     }
     onSave(updated)
+
+    // Then trigger the embed content process
+    if (knowledgeBaseRef.current && knowledgeBaseRef.current.handleProcessContent) {
+      await knowledgeBaseRef.current.handleProcessContent()
+    }
   }
 
   return (
@@ -247,6 +254,7 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
 
           <TabsContent value="knowledge" className="space-y-4">
             <ArchetypeKnowledgeBase
+              ref={knowledgeBaseRef}
               archetypeId={editedArchetype.id}
               archetypeName={editedArchetype.name}
               showOnlyKnowledgeBase={true}
@@ -270,9 +278,9 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>
-          <Button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600">
-            <Save className="w-4 w-4 mr-2" />
-            Save Changes
+          <Button onClick={handleEmbedContent} className="bg-emerald-500 hover:bg-emerald-600">
+            <Upload className="w-4 w-4 mr-2" />
+            Embed Content
           </Button>
         </div>
       </div>

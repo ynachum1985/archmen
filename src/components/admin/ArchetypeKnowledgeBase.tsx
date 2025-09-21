@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,12 +23,12 @@ interface ArchetypeKnowledgeBaseProps {
   showOnlyCourseContent?: boolean
 }
 
-export function ArchetypeKnowledgeBase({
+export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProps>(({
   archetypeId,
   archetypeName,
   showOnlyKnowledgeBase = false,
   showOnlyCourseContent = false
-}: ArchetypeKnowledgeBaseProps) {
+}, ref) => {
   // Content state - multiple text contents and URLs
   const [textContents, setTextContents] = useState<string[]>([''])
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
@@ -60,6 +60,11 @@ export function ArchetypeKnowledgeBase({
   const [availableProviders, setAvailableProviders] = useState<LLMProvider[]>([])
 
   const fileUploadService = new ArchetypeFileUploadService()
+
+  // Expose handleProcessContent to parent component
+  useImperativeHandle(ref, () => ({
+    handleProcessContent
+  }))
 
   const handleProcessContent = async () => {
     // Check if we have either text content or uploaded files
@@ -522,31 +527,13 @@ export function ArchetypeKnowledgeBase({
             </div>
           </div>
 
-          {/* Status and Process Button */}
+          {/* Status Display */}
           {processingStatus !== 'idle' && (
             <div className="flex items-center gap-2 p-2 rounded bg-gray-50 text-sm">
               {getStatusIcon()}
               <span>{statusMessage}</span>
             </div>
           )}
-
-          <Button
-            onClick={handleProcessContent}
-            disabled={isProcessing || (!textContents.some(content => content.trim()) && !uploadedFiles.some(fileGroup => fileGroup.length > 0))}
-            size="sm"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                Embed Content
-              </>
-            )}
-          </Button>
 
           {/* Embedded Content Display */}
           <ArchetypeContentDisplay
@@ -1085,4 +1072,4 @@ Examples:
       </Tabs>
     </div>
   )
-}
+})
