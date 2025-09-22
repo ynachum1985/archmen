@@ -26,7 +26,19 @@ interface RelevantContext {
   }>
 }
 
-export function EnhancedArchetypeChat() {
+interface EnhancedArchetypeChatProps {
+  userId?: string
+  assessmentId?: string
+  discoveredArchetypes?: any[]
+  onHomeworkAssigned?: () => void
+}
+
+export function EnhancedArchetypeChat({
+  userId,
+  assessmentId,
+  discoveredArchetypes,
+  onHomeworkAssigned
+}: EnhancedArchetypeChatProps = {}) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -34,18 +46,26 @@ export function EnhancedArchetypeChat() {
   const [selectedPersonalityId, setSelectedPersonalityId] = useState<string>('')
   const [showContext, setShowContext] = useState(false)
   const [lastContext, setLastContext] = useState<RelevantContext | null>(null)
+  const [canAssignHomework, setCanAssignHomework] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadPersonalities()
-    // Add welcome message
+    // Add welcome message with homework context if available
+    const welcomeMessage = discoveredArchetypes && discoveredArchetypes.length > 0
+      ? `Hello! I can see you've completed your assessment and discovered your archetypal patterns. I'm here to help you integrate these insights through personalized practices and ongoing support. I can assign homework, track your progress, and provide guidance on your journey. What would you like to explore or work on today?`
+      : `Hello! I'm here to help you explore your archetypal patterns through conversation. I use advanced AI with access to a comprehensive database of archetypes and linguistic patterns to provide personalized insights. What would you like to explore today?`
+
     setMessages([{
       id: '1',
       role: 'assistant',
-      content: 'Hello! I\'m here to help you explore your archetypal patterns through conversation. I use advanced AI with access to a comprehensive database of archetypes and linguistic patterns to provide personalized insights. What would you like to explore today?',
+      content: welcomeMessage,
       timestamp: new Date()
     }])
-  }, [])
+
+    // Enable homework assignment if we have user context
+    setCanAssignHomework(Boolean(userId && discoveredArchetypes && discoveredArchetypes.length > 0))
+  }, [userId, discoveredArchetypes])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -105,6 +125,11 @@ export function EnhancedArchetypeChat() {
 
       setMessages(prev => [...prev, assistantMessage])
       setLastContext(data.context)
+
+      // Check if AI suggests homework assignment
+      if (canAssignHomework && shouldAssignHomework(data.content, input)) {
+        await assignHomework(data.content)
+      }
     } catch (error) {
       console.error('Chat error:', error)
       const errorMessage: Message = {
@@ -116,6 +141,61 @@ export function EnhancedArchetypeChat() {
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const shouldAssignHomework = (aiResponse: string, userInput: string): boolean => {
+    // Check if the conversation suggests homework assignment
+    const homeworkTriggers = [
+      'practice', 'homework', 'integration', 'daily', 'weekly', 'exercise',
+      'what should i do', 'how can i', 'help me', 'assign', 'task',
+      'routine', 'habit', 'work on', 'improve', 'develop'
+    ]
+
+    const combinedText = (aiResponse + ' ' + userInput).toLowerCase()
+    return homeworkTriggers.some(trigger => combinedText.includes(trigger))
+  }
+
+  const assignHomework = async (conversationContext: string) => {
+    if (!userId || !discoveredArchetypes) return
+
+    try {
+      const response = await fetch('/api/ai-homework-assignment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          assessmentId,
+          discoveredArchetypes,
+          conversationContext,
+          userProgress: null // Could be enhanced to include actual progress
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to assign homework')
+
+      const data = await response.json()
+
+      if (data.success && data.assignedTasks.length > 0) {
+        // Add AI response about assigned homework
+        const homeworkMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          role: 'assistant',
+          content: data.aiResponse,
+          timestamp: new Date()
+        }
+
+        setMessages(prev => [...prev, homeworkMessage])
+
+        // Notify parent component if callback provided
+        if (onHomeworkAssigned) {
+          onHomeworkAssigned()
+        }
+      }
+    } catch (error) {
+      console.error('Error assigning homework:', error)
     }
   }
 

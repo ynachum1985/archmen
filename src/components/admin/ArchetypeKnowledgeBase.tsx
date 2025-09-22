@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Upload, FileText, Link, TestTube, Loader2, CheckCircle, AlertCircle, Plus, Minus, File, Image, Palette, Wand2, BookOpen } from 'lucide-react'
-import { CourseContentBuilder } from './CourseContentBuilder'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { ArchetypeContentDisplay } from './ArchetypeContentDisplay'
@@ -588,14 +587,20 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
     )
   }
 
-  // If we're showing only course content, render just that
+  // If we're showing only course content, render message that it's been replaced
   if (showOnlyCourseContent) {
     return (
       <div className="space-y-6">
-        <CourseContentBuilder
-          archetypeId={archetypeId}
-          archetypeName={archetypeName}
-        />
+        <Card>
+          <CardContent className="p-6 text-center">
+            <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium mb-2">Course Content Replaced</h3>
+            <p className="text-gray-600">
+              The mini-course system has been replaced with an integrated AI homework calendar.
+              Users now receive personalized homework assignments directly from the AI chatbot.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -604,7 +609,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
     <div className="space-y-6">
 
       <Tabs defaultValue="metrics" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="metrics" className="flex items-center gap-2">
             <TestTube className="h-4 w-4" />
             Metrics
@@ -612,10 +617,6 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
           <TabsTrigger value="knowledge" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Knowledge Base
-          </TabsTrigger>
-          <TabsTrigger value="course" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            Course Content
           </TabsTrigger>
         </TabsList>
 
@@ -924,13 +925,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
           </Card>
         </TabsContent>
 
-        {/* Course Content Tab */}
-        <TabsContent value="course" className="space-y-4">
-          <CourseContentBuilder
-            archetypeId={archetypeId}
-            archetypeName={archetypeName}
-          />
-        </TabsContent>
+
 
         {/* Images & Graphics Tab */}
         <TabsContent value="images" className="space-y-4">
