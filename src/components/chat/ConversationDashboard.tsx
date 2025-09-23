@@ -101,13 +101,24 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       if (error) throw error
 
-      const formattedConversations: Conversation[] = (data || []).map(conv => ({
-        id: conv.id,
-        title: conv.metadata?.title || 'New Assessment',
-        lastMessage: conv.messages?.[conv.messages.length - 1]?.content?.substring(0, 50) + '...' || '',
-        timestamp: new Date(conv.updated_at),
-        isActive: conv.metadata?.status === 'active'
-      }))
+      const formattedConversations: Conversation[] = (data || []).map(conv => {
+        // Create a better default title based on assessment name or timestamp
+        let defaultTitle = 'Conversation'
+        if (conv.metadata?.assessmentName) {
+          defaultTitle = conv.metadata.assessmentName
+        } else {
+          const date = new Date(conv.created_at)
+          defaultTitle = `Chat ${date.toLocaleDateString()}`
+        }
+
+        return {
+          id: conv.id,
+          title: conv.metadata?.title || defaultTitle,
+          lastMessage: conv.messages?.[conv.messages.length - 1]?.content?.substring(0, 50) + '...' || '',
+          timestamp: new Date(conv.updated_at),
+          isActive: conv.metadata?.status === 'active'
+        }
+      })
 
       setConversations(formattedConversations)
 
