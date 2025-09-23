@@ -407,37 +407,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                 </div>
               </div>
 
-              {/* Recent Conversations */}
-              {conversations.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 px-2">
-                    Recent Conversations
-                  </h3>
-                  <div className="space-y-1">
-                    {conversations.map((conversation) => (
-                      <button
-                        key={conversation.id}
-                        onClick={() => setActiveConversationId(conversation.id)}
-                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                          activeConversationId === conversation.id
-                            ? 'bg-gray-100/80 border border-gray-200/60'
-                            : 'hover:bg-gray-50/60'
-                        }`}
-                      >
-                        <div className="font-medium text-sm text-gray-900 mb-1 truncate">
-                          {conversation.title}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {conversation.lastMessage}
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {conversation.timestamp.toLocaleDateString()}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+
             </div>
           )}
         </ScrollArea>

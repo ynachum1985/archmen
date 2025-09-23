@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Save, X, BarChart3, BookOpen, Upload } from 'lucide-react'
 import { ArchetypeKnowledgeBase } from './admin/ArchetypeKnowledgeBase'
-import { MediaCreationStudio } from './admin/MediaCreationStudio'
+import { ArchetypeMediaUpload } from './admin/ArchetypeMediaUpload'
 
 interface Archetype {
   id: string
@@ -263,13 +263,9 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
           </TabsContent>
 
           <TabsContent value="content" className="space-y-4">
-            <MediaCreationStudio
+            <ArchetypeMediaUpload
               archetypeName={editedArchetype.name}
-              sectionType="theory"
-              onMediaCreated={(asset) => {
-                console.log('Media created:', asset)
-                // Handle media asset creation
-              }}
+              archetypeId={editedArchetype.id}
             />
           </TabsContent>
 
