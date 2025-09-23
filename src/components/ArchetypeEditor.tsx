@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Save, X, BarChart3, BookOpen, Upload } from 'lucide-react'
 import { ArchetypeKnowledgeBase } from './admin/ArchetypeKnowledgeBase'
+import { SingleArchetypeContentBuilder } from './admin/SingleArchetypeContentBuilder'
 
 interface Archetype {
   id: string
@@ -98,9 +99,9 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
               <BookOpen className="h-4 w-4" />
               Knowledge Base
             </TabsTrigger>
-            <TabsTrigger value="course" className="flex items-center gap-2">
+            <TabsTrigger value="content" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              Course Content
+              Content
             </TabsTrigger>
           </TabsList>
 
@@ -261,11 +262,10 @@ export default function ArchetypeEditor({ archetype, onSave, onCancel }: Archety
             />
           </TabsContent>
 
-          <TabsContent value="course" className="space-y-4">
-            <ArchetypeKnowledgeBase
+          <TabsContent value="content" className="space-y-4">
+            <SingleArchetypeContentBuilder
               archetypeId={editedArchetype.id}
               archetypeName={editedArchetype.name}
-              showOnlyCourseContent={true}
             />
           </TabsContent>
 

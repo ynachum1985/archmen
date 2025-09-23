@@ -67,11 +67,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [showSettings, setShowSettings] = useState(false)
   const [showHomework, setShowHomework] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mainAssessmentCompleted, setMainAssessmentCompleted] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadConversations()
     loadAssessments()
+    checkMainAssessmentCompleted().then(setMainAssessmentCompleted)
   }, [userId])
 
   useEffect(() => {
@@ -132,6 +134,31 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       setAssessments(data || [])
     } catch (error) {
       console.error('Error loading assessments:', error)
+    }
+  }
+
+  const checkMainAssessmentCompleted = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('metadata')
+        .eq('user_id', userId)
+        .not('metadata->>assessmentId', 'is', null)
+
+      if (error) throw error
+
+      // Check if user has completed the main assessment
+      const mainAssessmentId = '550e8400-e29b-41d4-a716-446655440001' // Main Assessment ID
+      const hasCompletedMain = data?.some(conv =>
+        conv.metadata?.assessmentId === mainAssessmentId &&
+        conv.metadata?.status === 'completed'
+      )
+
+      return hasCompletedMain || false
+    } catch (error) {
+      console.error('Error checking main assessment:', error)
+      return false
     }
   }
 
@@ -319,26 +346,53 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                   Available Assessments
                 </h3>
                 <div className="space-y-1">
-                  {assessments.map((assessment) => (
-                    <button
-                      key={assessment.id}
-                      onClick={() => createNewConversation(assessment)}
-                      className="w-full text-left p-3 rounded-lg transition-all duration-200 hover:bg-gray-50/60 border border-transparent hover:border-gray-200/40"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Brain className="h-3 w-3 text-blue-500" />
-                        <div className="font-medium text-sm text-gray-900 truncate">
-                          {assessment.name}
+                  {assessments.map((assessment) => {
+                    const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
+                    const isAccessible = isMainAssessment || mainAssessmentCompleted
+
+                    return (
+                      <button
+                        key={assessment.id}
+                        onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                        disabled={!isAccessible}
+                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
+                          isAccessible
+                            ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
+                            : 'opacity-50 cursor-not-allowed bg-gray-100/30'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <Brain className={`h-3 w-3 ${isAccessible ? 'text-blue-500' : 'text-gray-400'}`} />
+                          <div className={`font-medium text-sm truncate ${
+                            isAccessible ? 'text-gray-900' : 'text-gray-500'
+                          }`}>
+                            {assessment.name}
+                            {isMainAssessment && (
+                              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                Start Here
+                              </span>
+                            )}
+                            {!isAccessible && (
+                              <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                                Locked
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {assessment.description}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {assessment.expected_duration} min • {assessment.category}
-                      </div>
-                    </button>
-                  ))}
+                        <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {assessment.description}
+                        </div>
+                        <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
+                          {assessment.expected_duration} min • {assessment.category}
+                        </div>
+                        {!isAccessible && (
+                          <div className="text-xs text-gray-400 mt-1 italic">
+                            Complete Main Assessment to unlock
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
