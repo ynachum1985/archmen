@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { APP_CONFIG } from "@/config/app.config";
+import { Footer } from "@/components/layout/Footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -58,37 +59,20 @@ export default function RootLayout({
                     ArchMen
                   </span>
                 </Link>
-                <nav className="hidden md:flex items-center gap-6">
-                  <Link href="/chat" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
-                    Assessment
-                  </Link>
-                  <Link href="/courses" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
-                    Courses
-                  </Link>
-                  <Link href="/about" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
-                    About
-                  </Link>
-                  <Link href="/admin" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
-                    Admin
-                  </Link>
-                </nav>
+
               </div>
               <div className="flex items-center gap-4">
-                <Link href="/login" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
+                <Link href="/auth/login" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
                   Login
                 </Link>
-                <Link href="/register" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft hover:bg-primary/90 transition-all hover:shadow-soft-lg">
-                  Get Started
+                <Link href="/auth/signup" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft hover:bg-primary/90 transition-all hover:shadow-soft-lg">
+                  Sign Up
                 </Link>
               </div>
             </div>
           </header>
           <main className="flex-1">{children}</main>
-          <footer className="border-t">
-            <div className="container py-8 text-center text-sm text-muted-foreground">
-              © {new Date().getFullYear()} {APP_CONFIG.name}. All rights reserved.
-            </div>
-          </footer>
+          <Footer />
         </div>
       </body>
     </html>

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Upload, FileText, Link, TestTube, Loader2, CheckCircle, AlertCircle, Plus, Minus, File, Image, Palette, Wand2, BookOpen } from 'lucide-react'
+import { EnhancedMediaCreationStudio } from './EnhancedMediaCreationStudio'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { ArchetypeContentDisplay } from './ArchetypeContentDisplay'
@@ -42,6 +43,9 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
   const [chunkSize, setChunkSize] = useState(1000)
   const [chunkOverlap, setChunkOverlap] = useState(200)
   const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')
+
+  // Media studio state
+  const [showMediaStudio, setShowMediaStudio] = useState(false)
   const [topK, setTopK] = useState(10)
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7)
 
@@ -609,7 +613,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
     <div className="space-y-6">
 
       <Tabs defaultValue="metrics" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="metrics" className="flex items-center gap-2">
             <TestTube className="h-4 w-4" />
             Metrics
@@ -617,6 +621,10 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
           <TabsTrigger value="knowledge" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Knowledge Base
+          </TabsTrigger>
+          <TabsTrigger value="content" className="flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Content
           </TabsTrigger>
         </TabsList>
 
@@ -1044,6 +1052,84 @@ Examples:
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Content Tab */}
+        <TabsContent value="content" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Image className="h-5 w-5" />
+                Archetype Content & Media
+              </CardTitle>
+              <CardDescription>
+                Create and manage images, videos, and animations for {archetypeName}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Content Creation Studio */}
+                {!showMediaStudio ? (
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-medium mb-4">Create New Content</h3>
+                    <div className="text-center py-8 text-gray-500">
+                      <Image className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <h4 className="text-lg font-medium mb-2">Media Creation Studio</h4>
+                      <p className="text-sm mb-4">
+                        Create images, animations, and videos for {archetypeName} using AI models including:
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center mb-4 text-xs">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">OpenAI DALL-E</span>
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">Stable Video</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded">Luma AI</span>
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded">Runway ML</span>
+                      </div>
+                      <Button
+                        onClick={() => setShowMediaStudio(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Wand2 className="h-4 w-4 mr-2" />
+                        Open Media Studio
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">Media Creation Studio</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowMediaStudio(false)}
+                      >
+                        Close Studio
+                      </Button>
+                    </div>
+                    <EnhancedMediaCreationStudio
+                      archetypeId={archetypeId}
+                      archetypeName={archetypeName}
+                      onMediaCreated={(asset) => {
+                        console.log('New media created:', asset)
+                        // Could add to gallery state here
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Existing Content Gallery */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-medium mb-4">Content Gallery</h3>
+                  <div className="text-center py-8 text-gray-500">
+                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <h4 className="text-lg font-medium mb-2">No Content Yet</h4>
+                    <p className="text-sm">
+                      Created images, videos, and animations will appear here
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
