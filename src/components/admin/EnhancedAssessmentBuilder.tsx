@@ -50,6 +50,13 @@ interface EnhancedAssessmentConfig {
   has_custom_gateways: boolean
   general_gateways_enabled: boolean
 
+  // Quiz Configuration
+  quiz_set_questions_prompt?: string
+  quiz_experience_analysis_prompt?: string
+  quiz_enabled?: boolean
+  quiz_passing_score?: number
+  quiz_max_attempts?: number
+
   // AI Configuration
   systemPrompt: string
 
@@ -116,6 +123,11 @@ const defaultConfig: EnhancedAssessmentConfig = {
   gateway_configuration: {},
   has_custom_gateways: false,
   general_gateways_enabled: true,
+
+  // Quiz Configuration
+  quiz_enabled: true,
+  quiz_passing_score: 70,
+  quiz_max_attempts: 3,
 
   systemPrompt: `You are an expert archetypal analyst with deep knowledge of human psychology and behavioral patterns. Your role is to identify archetypal patterns through natural conversation.
 
@@ -1291,6 +1303,7 @@ Keep the response under 150 words and end with a specific question.`)
               <AssessmentGatewayBuilder
                 assessmentId={config.id?.toString() || 'new'}
                 assessmentLevel={config.assessment_level}
+                assessmentName={config.name || 'New Assessment'}
                 onGatewaysChange={(gateways) => {
                   // Update config with gateway information
                   setConfig(prev => ({
@@ -1301,6 +1314,14 @@ Keep the response under 150 words and end with a specific question.`)
                       enabled_gateways: gateways.filter(g => g.is_enabled).length,
                       gateway_types: gateways.map(g => g.gateway_template.gateway_type)
                     }
+                  }))
+                }}
+                onQuizPromptsChange={(prompts) => {
+                  // Update config with quiz prompts
+                  setConfig(prev => ({
+                    ...prev,
+                    quiz_set_questions_prompt: prompts.setQuestions,
+                    quiz_experience_analysis_prompt: prompts.experienceAnalysis
                   }))
                 }}
               />

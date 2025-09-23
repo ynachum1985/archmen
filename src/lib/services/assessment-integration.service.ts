@@ -223,6 +223,11 @@ export class AssessmentIntegrationService {
             gateway_configuration: assessmentConfig.gateway_configuration as Record<string, unknown> || {},
             has_custom_gateways: assessmentConfig.has_custom_gateways as boolean || false,
             general_gateways_enabled: assessmentConfig.general_gateways_enabled as boolean ?? true,
+            quiz_set_questions_prompt: assessmentConfig.quiz_set_questions_prompt as string,
+            quiz_experience_analysis_prompt: assessmentConfig.quiz_experience_analysis_prompt as string,
+            quiz_enabled: assessmentConfig.quiz_enabled as boolean ?? true,
+            quiz_passing_score: assessmentConfig.quiz_passing_score as number || 70,
+            quiz_max_attempts: assessmentConfig.quiz_max_attempts as number || 3,
             is_active: true
           })
           .select()

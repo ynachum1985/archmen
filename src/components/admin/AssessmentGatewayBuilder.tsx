@@ -9,12 +9,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  Shield, 
-  Plus, 
-  Trash2, 
-  Settings, 
-  CheckCircle, 
+import {
+  Shield,
+  Plus,
+  Trash2,
+  Settings,
+  CheckCircle,
   XCircle,
   AlertTriangle,
   Brain,
@@ -23,7 +23,9 @@ import {
   Lock,
   Unlock,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Save,
+  BarChart3
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -54,13 +56,17 @@ interface GatewayAssignment {
 interface AssessmentGatewayBuilderProps {
   assessmentId: string
   assessmentLevel: number
+  assessmentName: string
   onGatewaysChange?: (gateways: GatewayAssignment[]) => void
+  onQuizPromptsChange?: (prompts: { setQuestions: string; experienceAnalysis: string }) => void
 }
 
-export function AssessmentGatewayBuilder({ 
-  assessmentId, 
-  assessmentLevel, 
-  onGatewaysChange 
+export function AssessmentGatewayBuilder({
+  assessmentId,
+  assessmentLevel,
+  assessmentName,
+  onGatewaysChange,
+  onQuizPromptsChange
 }: AssessmentGatewayBuilderProps) {
   const [gateways, setGateways] = useState<GatewayAssignment[]>([])
   const [availableTemplates, setAvailableTemplates] = useState<GatewayTemplate[]>([])
@@ -68,11 +74,16 @@ export function AssessmentGatewayBuilder({
   const [showAddGateway, setShowAddGateway] = useState(false)
   const [editingGateway, setEditingGateway] = useState<GatewayAssignment | null>(null)
 
+  // Quiz prompts state
+  const [setQuestionsPrompt, setSetQuestionsPrompt] = useState('')
+  const [experienceAnalysisPrompt, setExperienceAnalysisPrompt] = useState('')
+
   const supabase = createClient()
 
   useEffect(() => {
     loadGateways()
     loadAvailableTemplates()
+    loadQuizPrompts()
   }, [assessmentId])
 
   const loadGateways = async () => {
@@ -110,6 +121,142 @@ export function AssessmentGatewayBuilder({
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const loadQuizPrompts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('enhanced_assessments')
+        .select('quiz_set_questions_prompt, quiz_experience_analysis_prompt')
+        .eq('id', assessmentId)
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        setSetQuestionsPrompt(data.quiz_set_questions_prompt || getDefaultSetQuestionsPrompt())
+        setExperienceAnalysisPrompt(data.quiz_experience_analysis_prompt || getDefaultExperienceAnalysisPrompt())
+      }
+    } catch (error) {
+      console.error('Error loading quiz prompts:', error)
+      // Set defaults if loading fails
+      setSetQuestionsPrompt(getDefaultSetQuestionsPrompt())
+      setExperienceAnalysisPrompt(getDefaultExperienceAnalysisPrompt())
+    }
+  }
+
+  const saveQuizPrompts = async () => {
+    try {
+      const { error } = await supabase
+        .from('enhanced_assessments')
+        .update({
+          quiz_set_questions_prompt: setQuestionsPrompt,
+          quiz_experience_analysis_prompt: experienceAnalysisPrompt
+        })
+        .eq('id', assessmentId)
+
+      if (error) throw error
+
+      onQuizPromptsChange?.({
+        setQuestions: setQuestionsPrompt,
+        experienceAnalysis: experienceAnalysisPrompt
+      })
+
+      alert('Quiz prompts saved successfully!')
+    } catch (error) {
+      console.error('Error saving quiz prompts:', error)
+      alert('Failed to save quiz prompts')
+    }
+  }
+
+  const getDefaultSetQuestionsPrompt = () => {
+    return `You are conducting a readiness assessment for the "${assessmentName}" assessment (Level ${assessmentLevel}).
+
+ASSESSMENT CONTEXT:
+- Assessment Name: ${assessmentName}
+- Level: ${assessmentLevel} ${assessmentLevel === 1 ? '(Foundation)' : assessmentLevel === 2 ? '(Integration)' : '(Mastery)'}
+- Purpose: Determine if the user is ready for this specific assessment
+
+SET QUESTIONS TO ASK:
+Ask 3-5 specific questions that test readiness for this assessment. Questions should be:
+- Directly relevant to the assessment topic
+- Appropriate for Level ${assessmentLevel} complexity
+- Designed to reveal emotional maturity and understanding
+- Focused on practical application and self-awareness
+
+QUESTION EXAMPLES FOR LEVEL ${assessmentLevel}:
+${assessmentLevel === 1 ? `
+- "Describe a recent relationship challenge and how you handled it."
+- "What patterns do you notice in your relationships?"
+- "How do you typically respond when someone disagrees with you?"
+` : assessmentLevel === 2 ? `
+- "Can you give an example of a time you recognized a shadow aspect of yourself?"
+- "How do you handle difficult emotions when they arise?"
+- "Describe a situation where you had to face an uncomfortable truth about yourself."
+` : `
+- "How do you handle jealousy or possessiveness in relationships?"
+- "Describe your understanding of healthy power dynamics."
+- "How do you navigate conflicts about deeply held beliefs or values?"
+`}
+
+EVALUATION CRITERIA:
+- Emotional maturity appropriate for Level ${assessmentLevel}
+- Self-awareness and reflection capability
+- Practical understanding of relevant concepts
+- Readiness for the specific assessment content
+
+Ask questions one at a time, wait for responses, and evaluate their readiness based on depth of insight and emotional maturity.`
+  }
+
+  const getDefaultExperienceAnalysisPrompt = () => {
+    return `You are analyzing the user's previous assessment history and experience to determine readiness for the "${assessmentName}" assessment (Level ${assessmentLevel}).
+
+ANALYSIS CONTEXT:
+- Target Assessment: ${assessmentName} (Level ${assessmentLevel})
+- Required Analysis: Review user's journey and growth to assess readiness
+
+PREVIOUS EXPERIENCE TO ANALYZE:
+1. **Completed Assessments**: Review which assessments they've completed and their results
+2. **Archetype Integration**: Analyze how well they've integrated their discovered archetypes
+3. **Growth Patterns**: Look for evidence of emotional growth and self-awareness development
+4. **Content Engagement**: Review their engagement with previous assessment content and insights
+5. **Reflection Quality**: Assess the depth and maturity of their previous reflections
+
+LEVEL ${assessmentLevel} READINESS CRITERIA:
+${assessmentLevel === 1 ? `
+- Basic emotional awareness and self-reflection
+- Willingness to explore relationship patterns
+- Open to feedback and new perspectives
+- Basic communication skills
+` : assessmentLevel === 2 ? `
+- Completion of Level 1 assessments with integration
+- Demonstrated emotional regulation skills
+- Evidence of shadow work readiness
+- Ability to face difficult truths about themselves
+- Emotional maturity score of 6+ from previous assessments
+` : `
+- Completion of Level 2 assessments with deep integration
+- Advanced emotional maturity (8+ score)
+- Evidence of complex relationship understanding
+- Ability to handle challenging concepts without emotional overwhelm
+- Demonstrated growth through previous shadow work
+`}
+
+ANALYSIS APPROACH:
+1. Review their assessment history and archetype discoveries
+2. Analyze the quality and depth of their previous responses
+3. Look for patterns of growth and integration
+4. Assess emotional maturity progression
+5. Generate 2-3 targeted questions based on gaps or areas needing verification
+
+CUSTOM QUESTIONS:
+Based on your analysis, create 2-3 personalized questions that:
+- Address any concerns about their readiness
+- Test integration of previous learning
+- Verify emotional maturity for Level ${assessmentLevel} content
+- Explore specific areas where more growth might be needed
+
+Provide a thorough but compassionate assessment of their readiness.`
   }
 
   const addGateway = async (templateId: string) => {
@@ -425,6 +572,119 @@ export function AssessmentGatewayBuilder({
           </CardContent>
         </Card>
       )}
+
+      {/* Quiz Prompts Configuration */}
+      <div className="space-y-6 mt-8 pt-8 border-t">
+        <div>
+          <h3 className="text-lg font-medium mb-2">Conversational Gateway Quiz</h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Configure the AI prompts for the conversational quiz that users must pass before accessing this assessment.
+            The quiz will be conducted in the chat interface as a natural conversation.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Set Questions Prompt */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-blue-600" />
+                Set Questions Prompt
+              </CardTitle>
+              <CardDescription>
+                Defines the standard questions the AI should ask to assess readiness for this specific assessment.
+                These are consistent questions that test core competencies for Level {assessmentLevel}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="setQuestionsPrompt">AI Prompt for Set Questions</Label>
+                  <Textarea
+                    id="setQuestionsPrompt"
+                    value={setQuestionsPrompt}
+                    onChange={(e) => setSetQuestionsPrompt(e.target.value)}
+                    rows={12}
+                    className="font-mono text-sm"
+                    placeholder="Enter the prompt that guides the AI to ask standard readiness questions..."
+                  />
+                </div>
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="text-xs text-blue-700 font-medium mb-1">Purpose:</p>
+                  <p className="text-xs text-blue-600">
+                    This prompt tells the AI what specific questions to ask to test if the user is ready for
+                    the "{assessmentName}" assessment. Questions should be relevant to Level {assessmentLevel} complexity.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Experience Analysis Prompt */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-purple-600" />
+                Experience Analysis Prompt
+              </CardTitle>
+              <CardDescription>
+                Guides the AI to analyze the user's previous assessment history and generate personalized
+                questions based on their journey and growth patterns.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="experienceAnalysisPrompt">AI Prompt for Experience Analysis</Label>
+                  <Textarea
+                    id="experienceAnalysisPrompt"
+                    value={experienceAnalysisPrompt}
+                    onChange={(e) => setExperienceAnalysisPrompt(e.target.value)}
+                    rows={12}
+                    className="font-mono text-sm"
+                    placeholder="Enter the prompt that guides the AI to analyze user history and create personalized questions..."
+                  />
+                </div>
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <p className="text-xs text-purple-700 font-medium mb-1">Purpose:</p>
+                  <p className="text-xs text-purple-600">
+                    This prompt tells the AI to review the user's previous assessments, archetype discoveries,
+                    and growth patterns to create personalized readiness questions for "{assessmentName}".
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button
+            onClick={saveQuizPrompts}
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save Quiz Prompts
+          </Button>
+        </div>
+
+        {/* Preview Section */}
+        <Card className="bg-gray-50">
+          <CardHeader>
+            <CardTitle className="text-sm">How the Conversational Gateway Works</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-gray-600">
+            <div className="space-y-2">
+              <p><strong>1. User attempts to access assessment:</strong> They click on "{assessmentName}" in their dashboard</p>
+              <p><strong>2. Gateway quiz initiated:</strong> AI starts a conversation using both prompts above</p>
+              <p><strong>3. Set questions asked:</strong> AI asks standard readiness questions for Level {assessmentLevel}</p>
+              <p><strong>4. Experience analysis:</strong> AI reviews their history and asks personalized follow-up questions</p>
+              <p><strong>5. Readiness evaluation:</strong> AI determines if they're ready and either grants access or provides guidance</p>
+              <p><strong>6. Assessment access:</strong> If ready, they can proceed to the full "{assessmentName}" assessment</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
