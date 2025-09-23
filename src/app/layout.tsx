@@ -62,7 +62,7 @@ export default function RootLayout({
 
               </div>
               <div className="flex items-center gap-4">
-                <Link href="/auth/login" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
+                <Link href="/dashboard" className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
                   Login
                 </Link>
                 <Link href="/auth/signup" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft hover:bg-primary/90 transition-all hover:shadow-soft-lg">

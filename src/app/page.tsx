@@ -31,7 +31,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/auth/login">
+                  <Link href="/dashboard">
                     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft-lg font-medium">
                       Take Assessment
                       <ArrowRight className="ml-2 h-4 w-4" />
