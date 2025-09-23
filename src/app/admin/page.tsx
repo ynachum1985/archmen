@@ -17,7 +17,8 @@ import {
   Search,
   FileText,
   Brain,
-  Sparkles
+  Sparkles,
+  TrendingUp
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
@@ -25,6 +26,7 @@ import { Input } from "@/components/ui/input"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
+import { ProgressionManager } from "@/components/admin/ProgressionManager"
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
@@ -402,7 +404,7 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
             <TabsTrigger value="assessments" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Assessments
@@ -414,6 +416,10 @@ export default function AdminPage() {
             <TabsTrigger value="archetypes" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Archetypes
+            </TabsTrigger>
+            <TabsTrigger value="progression" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Progression
             </TabsTrigger>
             <TabsTrigger value="ai-personality" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
@@ -607,6 +613,11 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          {/* Progression Tab */}
+          <TabsContent value="progression" className="mt-6">
+            <ProgressionManager />
           </TabsContent>
 
           {/* AI Personality Tab */}
