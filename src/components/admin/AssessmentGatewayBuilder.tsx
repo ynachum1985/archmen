@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -88,6 +88,13 @@ export function AssessmentGatewayBuilder({
 
   const loadGateways = async () => {
     try {
+      // Skip loading if assessmentId is 'new' (assessment not saved yet)
+      if (assessmentId === 'new') {
+        setGateways([])
+        onGatewaysChange?.([])
+        return
+      }
+
       const { data, error } = await supabase
         .from('assessment_gateway_assignments')
         .select(`
@@ -97,11 +104,19 @@ export function AssessmentGatewayBuilder({
         .eq('assessment_id', assessmentId)
         .order('order_index')
 
-      if (error) throw error
+      if (error) {
+        console.warn('Gateway assignments table may not exist yet:', error)
+        setGateways([])
+        onGatewaysChange?.([])
+        return
+      }
+
       setGateways(data || [])
       onGatewaysChange?.(data || [])
     } catch (error) {
       console.error('Error loading gateways:', error)
+      setGateways([])
+      onGatewaysChange?.([])
     }
   }
 
@@ -114,10 +129,16 @@ export function AssessmentGatewayBuilder({
         .or(`level_restriction.is.null,level_restriction.eq.${assessmentLevel}`)
         .order('name')
 
-      if (error) throw error
+      if (error) {
+        console.warn('Gateway templates table may not exist yet:', error)
+        setAvailableTemplates([])
+        return
+      }
+
       setAvailableTemplates(data || [])
     } catch (error) {
       console.error('Error loading templates:', error)
+      setAvailableTemplates([])
     } finally {
       setIsLoading(false)
     }
@@ -125,13 +146,25 @@ export function AssessmentGatewayBuilder({
 
   const loadQuizPrompts = async () => {
     try {
+      // Skip loading if assessmentId is 'new' (assessment not saved yet)
+      if (assessmentId === 'new') {
+        setSetQuestionsPrompt(getDefaultSetQuestionsPrompt())
+        setExperienceAnalysisPrompt(getDefaultExperienceAnalysisPrompt())
+        return
+      }
+
       const { data, error } = await supabase
         .from('enhanced_assessments')
         .select('quiz_set_questions_prompt, quiz_experience_analysis_prompt')
         .eq('id', assessmentId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.warn('Could not load quiz prompts, using defaults:', error)
+        setSetQuestionsPrompt(getDefaultSetQuestionsPrompt())
+        setExperienceAnalysisPrompt(getDefaultExperienceAnalysisPrompt())
+        return
+      }
 
       if (data) {
         setSetQuestionsPrompt(data.quiz_set_questions_prompt || getDefaultSetQuestionsPrompt())
@@ -147,6 +180,12 @@ export function AssessmentGatewayBuilder({
 
   const saveQuizPrompts = async () => {
     try {
+      // Can't save if assessment not created yet
+      if (assessmentId === 'new') {
+        alert('Please save the assessment first before configuring quiz prompts')
+        return
+      }
+
       const { error } = await supabase
         .from('enhanced_assessments')
         .update({
@@ -165,7 +204,7 @@ export function AssessmentGatewayBuilder({
       alert('Quiz prompts saved successfully!')
     } catch (error) {
       console.error('Error saving quiz prompts:', error)
-      alert('Failed to save quiz prompts')
+      alert('Failed to save quiz prompts. The assessment may need to be saved first.')
     }
   }
 
@@ -395,6 +434,151 @@ Provide a thorough but compassionate assessment of their readiness.`
         <div className="text-center">
           <Shield className="h-8 w-8 animate-pulse mx-auto mb-2" />
           <p>Loading assessment gateways...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show notice if database tables don't exist yet
+  if (availableTemplates.length === 0 && gateways.length === 0 && assessmentId === 'new') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium">Assessment Gateways</h3>
+            <p className="text-sm text-gray-600">
+              Configure requirements users must meet before accessing this assessment
+            </p>
+          </div>
+        </div>
+
+        <Card className="border-dashed border-2 border-gray-300">
+          <CardContent className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h4 className="text-lg font-medium text-gray-900 mb-2">Gateway System Ready</h4>
+              <p className="text-gray-600 mb-4">
+                Save this assessment first to configure conversational gateway quiz prompts.
+              </p>
+              <p className="text-sm text-gray-500">
+                The gateway system will be available after the assessment is created and the database migrations are run.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quiz Prompts Configuration - Always show for new assessments */}
+        <div className="space-y-6 mt-8 pt-8 border-t">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Conversational Gateway Quiz</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Configure the AI prompts for the conversational quiz that users must pass before accessing this assessment.
+              The quiz will be conducted in the chat interface as a natural conversation.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Set Questions Prompt */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-blue-600" />
+                  Set Questions Prompt
+                </CardTitle>
+                <CardDescription>
+                  Defines the standard questions the AI should ask to assess readiness for this specific assessment.
+                  These are consistent questions that test core competencies for Level {assessmentLevel}.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="setQuestionsPrompt">AI Prompt for Set Questions</Label>
+                    <Textarea
+                      id="setQuestionsPrompt"
+                      value={setQuestionsPrompt}
+                      onChange={(e) => setSetQuestionsPrompt(e.target.value)}
+                      rows={12}
+                      className="font-mono text-sm"
+                      placeholder="Enter the prompt that guides the AI to ask standard readiness questions..."
+                    />
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p className="text-xs text-blue-700 font-medium mb-1">Purpose:</p>
+                    <p className="text-xs text-blue-600">
+                      This prompt tells the AI what specific questions to ask to test if the user is ready for
+                      the "{assessmentName}" assessment. Questions should be relevant to Level {assessmentLevel} complexity.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Experience Analysis Prompt */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                  Experience Analysis Prompt
+                </CardTitle>
+                <CardDescription>
+                  Guides the AI to analyze the user's previous assessment history and generate personalized
+                  questions based on their journey and growth patterns.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="experienceAnalysisPrompt">AI Prompt for Experience Analysis</Label>
+                    <Textarea
+                      id="experienceAnalysisPrompt"
+                      value={experienceAnalysisPrompt}
+                      onChange={(e) => setExperienceAnalysisPrompt(e.target.value)}
+                      rows={12}
+                      className="font-mono text-sm"
+                      placeholder="Enter the prompt that guides the AI to analyze user history and create personalized questions..."
+                    />
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <p className="text-xs text-purple-700 font-medium mb-1">Purpose:</p>
+                    <p className="text-xs text-purple-600">
+                      This prompt tells the AI to review the user's previous assessments, archetype discoveries,
+                      and growth patterns to create personalized readiness questions for "{assessmentName}".
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={saveQuizPrompts}
+              className="flex items-center gap-2"
+              disabled={assessmentId === 'new'}
+            >
+              <Save className="h-4 w-4" />
+              {assessmentId === 'new' ? 'Save Assessment First' : 'Save Quiz Prompts'}
+            </Button>
+          </div>
+
+          {/* Preview Section */}
+          <Card className="bg-gray-50">
+            <CardHeader>
+              <CardTitle className="text-sm">How the Conversational Gateway Works</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-gray-600">
+              <div className="space-y-2">
+                <p><strong>1. User attempts to access assessment:</strong> They click on "{assessmentName}" in their dashboard</p>
+                <p><strong>2. Gateway quiz initiated:</strong> AI starts a conversation using both prompts above</p>
+                <p><strong>3. Set questions asked:</strong> AI asks standard readiness questions for Level {assessmentLevel}</p>
+                <p><strong>4. Experience analysis:</strong> AI reviews their history and asks personalized follow-up questions</p>
+                <p><strong>5. Readiness evaluation:</strong> AI determines if they're ready and either grants access or provides guidance</p>
+                <p><strong>6. Assessment access:</strong> If ready, they can proceed to the full "{assessmentName}" assessment</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )

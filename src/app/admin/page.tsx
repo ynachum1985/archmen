@@ -18,7 +18,8 @@ import {
   FileText,
   Brain,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Database
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
@@ -31,6 +32,7 @@ import { ProgressionManager } from "@/components/admin/ProgressionManager"
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
 import { EmbeddingSettingsDialog } from "@/components/admin/EmbeddingSettingsDialog"
+import Link from 'next/link'
 
 // Commented out unused interfaces for simplified version
 /*
@@ -430,6 +432,68 @@ export default function AdminPage() {
           {/* Assessments Tab - Overview of existing assessments */}
           <TabsContent value="assessments" className="mt-6">
             <div className="space-y-6">
+              {/* Quick Access Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Link href="/admin/migrations">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer border-orange-200 hover:border-orange-300">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-orange-700">
+                        <Database className="h-5 w-5" />
+                        Database Setup
+                      </CardTitle>
+                      <CardDescription>
+                        Run migrations for gateway quiz system
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-orange-600">
+                        Set up conversational gateway tables
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-blue-700">
+                      <FileText className="h-5 w-5" />
+                      Assessments
+                    </CardTitle>
+                    <CardDescription>
+                      Manage psychological assessments
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                      {assessments.length}
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Available assessments
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-purple-700">
+                      <BarChart3 className="h-5 w-5" />
+                      Analytics
+                    </CardTitle>
+                    <CardDescription>
+                      System usage metrics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-purple-600 mb-1">
+                      Soon
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      User engagement data
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
               <div className="flex items-center justify-end">
                 <Button className="bg-emerald-500 hover:bg-emerald-600">
                   <Plus className="w-4 h-4 mr-2" />
