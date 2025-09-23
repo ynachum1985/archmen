@@ -465,7 +465,7 @@ export default function AdminPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-blue-600 mb-1">
-                      {assessments.length}
+                      {assessmentCategories.length}
                     </div>
                     <p className="text-sm text-gray-600">
                       Available assessments
