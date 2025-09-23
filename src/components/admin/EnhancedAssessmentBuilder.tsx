@@ -32,6 +32,7 @@ import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import { AssessmentTestingChat } from './AssessmentTestingChat'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { AssessmentContentDisplay } from './AssessmentContentDisplay'
+import { AssessmentGatewayBuilder } from './AssessmentGatewayBuilder'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -42,6 +43,12 @@ interface EnhancedAssessmentConfig {
   purpose: string
   assessmentPrompt: string // Dedicated prompt field for LLM instructions
   expectedDuration: number
+
+  // Level and Gateway Configuration
+  assessment_level: number // 1, 2, or 3
+  gateway_configuration: Record<string, any>
+  has_custom_gateways: boolean
+  general_gateways_enabled: boolean
 
   // AI Configuration
   systemPrompt: string
@@ -103,6 +110,13 @@ const defaultConfig: EnhancedAssessmentConfig = {
   purpose: '',
   assessmentPrompt: '',
   expectedDuration: 15,
+
+  // Level and Gateway Configuration
+  assessment_level: 1,
+  gateway_configuration: {},
+  has_custom_gateways: false,
+  general_gateways_enabled: true,
+
   systemPrompt: `You are an expert archetypal analyst with deep knowledge of human psychology and behavioral patterns. Your role is to identify archetypal patterns through natural conversation.
 
 ANALYSIS APPROACH:
@@ -736,9 +750,10 @@ Keep the response under 150 words and end with a specific question.`)
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
+          <TabsTrigger value="gateways">Assessment Gateways</TabsTrigger>
           <TabsTrigger value="testing">Testing</TabsTrigger>
         </TabsList>
 
@@ -755,7 +770,7 @@ Keep the response under 150 words and end with a specific question.`)
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="description">Assessment Description</Label>
                 <Textarea
@@ -773,6 +788,42 @@ Keep the response under 150 words and end with a specific question.`)
                   onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
                   rows={3}
                 />
+              </div>
+              <div>
+                <Label htmlFor="assessmentLevel">Assessment Level</Label>
+                <Select
+                  value={config.assessment_level.toString()}
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, assessment_level: parseInt(value) }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-800">Level 1</Badge>
+                        <span>Foundation</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="2">
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-purple-100 text-purple-800">Level 2</Badge>
+                        <span>Integration</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="3">
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-red-100 text-red-800">Level 3</Badge>
+                        <span>Mastery</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {config.assessment_level === 1 && "Basic relationship patterns and archetypal discovery"}
+                  {config.assessment_level === 2 && "Shadow work and emotional integration (requires maturity 6+)"}
+                  {config.assessment_level === 3 && "Advanced concepts like polyamory and patriarchy (requires maturity 8+)"}
+                </p>
               </div>
               <div>
                 <Label htmlFor="assessmentPrompt">Assessment Prompt</Label>
@@ -1226,7 +1277,36 @@ Keep the response under 150 words and end with a specific question.`)
           </div>
         </TabsContent>
 
-
+        {/* Assessment Gateways Tab */}
+        <TabsContent value="gateways" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Assessment Gateways</CardTitle>
+              <CardDescription>
+                Configure requirements users must meet before accessing this assessment.
+                Level {config.assessment_level} assessments have specific gateway requirements.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AssessmentGatewayBuilder
+                assessmentId={config.id?.toString() || 'new'}
+                assessmentLevel={config.assessment_level}
+                onGatewaysChange={(gateways) => {
+                  // Update config with gateway information
+                  setConfig(prev => ({
+                    ...prev,
+                    has_custom_gateways: gateways.length > 0,
+                    gateway_configuration: {
+                      total_gateways: gateways.length,
+                      enabled_gateways: gateways.filter(g => g.is_enabled).length,
+                      gateway_types: gateways.map(g => g.gateway_template.gateway_type)
+                    }
+                  }))
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Testing Tab - Available for all assessments */}
         <TabsContent value="testing" className="space-y-6">

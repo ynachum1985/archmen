@@ -219,6 +219,10 @@ export class AssessmentIntegrationService {
             question_examples: assessmentConfig.questionExamples as Record<string, unknown>,
             response_requirements: assessmentConfig.responseRequirements as Record<string, unknown>,
             report_generation: assessmentConfig.reportGeneration as string,
+            assessment_level: assessmentConfig.assessment_level as number || 1,
+            gateway_configuration: assessmentConfig.gateway_configuration as Record<string, unknown> || {},
+            has_custom_gateways: assessmentConfig.has_custom_gateways as boolean || false,
+            general_gateways_enabled: assessmentConfig.general_gateways_enabled as boolean ?? true,
             is_active: true
           })
           .select()
