@@ -5,17 +5,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { 
-  Send, 
-  Settings, 
+import {
+  Send,
+  Settings,
   Calendar,
   Plus,
   MoreHorizontal,
   User,
   Bot,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  Brain
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 interface Message {
   id: string
@@ -40,22 +45,33 @@ interface Conversation {
   isActive: boolean
 }
 
+interface Assessment {
+  id: string
+  name: string
+  description: string
+  category: string
+  expected_duration: number
+}
+
 interface ConversationDashboardProps {
   userId: string
 }
 
 export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [assessments, setAssessments] = useState<Assessment[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showHomework, setShowHomework] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadConversations()
+    loadAssessments()
   }, [userId])
 
   useEffect(() => {
@@ -92,15 +108,30 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       }))
 
       setConversations(formattedConversations)
-      
-      // Auto-select first conversation or create new one
+
+      // Auto-select first conversation if available
       if (formattedConversations.length > 0) {
         setActiveConversationId(formattedConversations[0].id)
-      } else {
-        await createNewConversation()
       }
     } catch (error) {
       console.error('Error loading conversations:', error)
+    }
+  }
+
+  const loadAssessments = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('enhanced_assessments')
+        .select('id, name, description, category, expected_duration')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+
+      if (error) throw error
+
+      setAssessments(data || [])
+    } catch (error) {
+      console.error('Error loading assessments:', error)
     }
   }
 
@@ -130,22 +161,29 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     }
   }
 
-  const createNewConversation = async () => {
+  const createNewConversation = async (assessment?: Assessment) => {
     try {
       const supabase = createClient()
+
+      const welcomeMessage = assessment
+        ? `Hello! I'm here to guide you through the "${assessment.name}" assessment. This will take approximately ${assessment.expected_duration} minutes. ${assessment.description} Let's begin - what brings you to explore this topic today?`
+        : "Hello! I'm here to help you discover your archetypal patterns through conversation. Let's begin this journey of self-discovery together. What brings you here today?"
+
       const { data, error } = await supabase
         .from('conversations')
         .insert({
           user_id: userId,
           messages: [{
             role: 'assistant',
-            content: "Hello! I'm here to help you discover your archetypal patterns through conversation. Let's begin this journey of self-discovery together. What brings you here today?",
+            content: welcomeMessage,
             timestamp: new Date().toISOString()
           }],
           metadata: {
-            title: 'New Assessment',
+            title: assessment ? assessment.name : 'General Conversation',
             status: 'active',
-            phase: 'assessment'
+            phase: 'assessment',
+            assessmentId: assessment?.id,
+            category: assessment?.category
           }
         })
         .select()
@@ -155,8 +193,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       const newConversation: Conversation = {
         id: data.id,
-        title: 'New Assessment',
-        lastMessage: "Hello! I'm here to help you discover...",
+        title: assessment ? assessment.name : 'General Conversation',
+        lastMessage: welcomeMessage.substring(0, 50) + '...',
         timestamp: new Date(),
         isActive: true
       }
@@ -255,43 +293,88 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   return (
     <div className="flex h-screen bg-gray-50/30">
       {/* Sidebar */}
-      <div className="w-80 bg-white/60 backdrop-blur-sm border-r border-gray-200/50 flex flex-col">
+      <div className={`${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white/60 backdrop-blur-sm border-r border-gray-200/50 flex flex-col transition-all duration-300`}>
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200/50">
-          <Button 
-            onClick={createNewConversation}
-            className="w-full bg-gray-900/90 hover:bg-gray-900 text-white border-0 rounded-lg h-10"
+        <div className="p-4 border-b border-gray-200/50 flex items-center justify-between">
+          {!sidebarCollapsed && (
+            <h2 className="font-medium text-gray-900">Assessments</h2>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            New Assessment
+            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
 
-        {/* Conversations List */}
+        {/* Content */}
         <ScrollArea className="flex-1 p-2">
-          <div className="space-y-1">
-            {conversations.map((conversation) => (
-              <button
-                key={conversation.id}
-                onClick={() => setActiveConversationId(conversation.id)}
-                className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                  activeConversationId === conversation.id
-                    ? 'bg-gray-100/80 border border-gray-200/60'
-                    : 'hover:bg-gray-50/60'
-                }`}
-              >
-                <div className="font-medium text-sm text-gray-900 mb-1 truncate">
-                  {conversation.title}
+          {!sidebarCollapsed && (
+            <div className="space-y-4">
+              {/* Available Assessments */}
+              <div>
+                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 px-2">
+                  Available Assessments
+                </h3>
+                <div className="space-y-1">
+                  {assessments.map((assessment) => (
+                    <button
+                      key={assessment.id}
+                      onClick={() => createNewConversation(assessment)}
+                      className="w-full text-left p-3 rounded-lg transition-all duration-200 hover:bg-gray-50/60 border border-transparent hover:border-gray-200/40"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Brain className="h-3 w-3 text-blue-500" />
+                        <div className="font-medium text-sm text-gray-900 truncate">
+                          {assessment.name}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {assessment.description}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {assessment.expected_duration} min • {assessment.category}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <div className="text-xs text-gray-500 truncate">
-                  {conversation.lastMessage}
+              </div>
+
+              {/* Recent Conversations */}
+              {conversations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 px-2">
+                    Recent Conversations
+                  </h3>
+                  <div className="space-y-1">
+                    {conversations.map((conversation) => (
+                      <button
+                        key={conversation.id}
+                        onClick={() => setActiveConversationId(conversation.id)}
+                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
+                          activeConversationId === conversation.id
+                            ? 'bg-gray-100/80 border border-gray-200/60'
+                            : 'hover:bg-gray-50/60'
+                        }`}
+                      >
+                        <div className="font-medium text-sm text-gray-900 mb-1 truncate">
+                          {conversation.title}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {conversation.lastMessage}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {conversation.timestamp.toLocaleDateString()}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {conversation.timestamp.toLocaleDateString()}
-                </div>
-              </button>
-            ))}
-          </div>
+              )}
+            </div>
+          )}
         </ScrollArea>
       </div>
 
@@ -300,16 +383,27 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         {/* Header */}
         <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200/50 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-gray-700" />
-            </div>
-            <div>
-              <h1 className="font-medium text-gray-900">Archetype Discovery</h1>
-              <p className="text-xs text-gray-500">AI-powered conversation</p>
-            </div>
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-gray-700" />
+              </div>
+              <div>
+                <h1 className="font-medium text-gray-900">ArchMen</h1>
+                <p className="text-xs text-gray-500">AI-powered conversation</p>
+              </div>
+            </Link>
           </div>
-          
+
           <div className="flex items-center gap-2">
+            <Link href="/">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
+              >
+                <Home className="h-4 w-4" />
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="sm"
