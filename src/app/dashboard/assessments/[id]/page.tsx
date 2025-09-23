@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AuthService } from '@/lib/services/auth.service'
-import { AssessmentResultsWithCourse } from '@/components/dashboard/AssessmentResultsWithCourse'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Play, Clock, CheckCircle, Brain } from 'lucide-react'
+import { ArrowLeft, Play, Clock, CheckCircle, Brain, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface AssessmentEnrollment {
@@ -263,29 +262,32 @@ export default function AssessmentPage({ params }: AssessmentPageProps) {
     )
   }
 
-  // If assessment is completed, show results with chatbot and course
-  if (enrollment.status === 'completed' && enrollment.results) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-4 mb-8">
-            <Link href="/dashboard" className="text-muted-foreground hover:text-primary">
-              <ArrowLeft className="h-5 w-5" />
+  // Redirect to conversation dashboard for all assessment interactions
+  useEffect(() => {
+    router.push('/dashboard')
+  }, [router])
+
+  return (
+    <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
+      <div className="max-w-md w-full mx-4">
+        <Card className="bg-white/80 backdrop-blur-sm border border-gray-200/60">
+          <CardContent className="p-8 text-center">
+            <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium mb-2 text-gray-900">Assessment Interface Updated</h3>
+            <p className="text-gray-600 mb-6">
+              All assessments now happen through our new conversation interface.
+              Redirecting you to the main dashboard...
+            </p>
+            <Link href="/dashboard">
+              <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+                Go to Dashboard
+              </Button>
             </Link>
-            <h1 className="text-2xl font-bold">{enrollment.enhanced_assessments.name}</h1>
-          </div>
-          
-          <AssessmentResultsWithCourse
-            assessmentId={enrollment.assessment_id}
-            assessmentName={enrollment.enhanced_assessments.name}
-            userId={userProfile.user.id}
-            discoveredArchetypes={enrollment.results.archetypes || []}
-            chatMessages={[]}
-          />
-        </div>
+          </CardContent>
+        </Card>
       </div>
-    )
-  }
+    </div>
+  )
 
   // Show assessment start page or in-progress state
   return (

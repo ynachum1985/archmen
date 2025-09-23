@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY environment variable is required')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+}
 
 interface ArchetypeConfidence {
   [archetypeName: string]: number
@@ -75,6 +80,7 @@ export async function POST(request: NextRequest) {
     const systemPrompt = createSystemPrompt(conversationPhase, archetypes || [])
 
     // Get AI response
+    const openai = getOpenAIClient()
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
@@ -205,6 +211,7 @@ Look for:
 
 Return only JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
 
+    const openai = getOpenAIClient()
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: analysisPrompt }],

@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { EnhancedAssessmentBuilder } from '@/components/admin/EnhancedAssessmentBuilder'
-import { EnhancedLinguisticAssessment } from '@/components/chat/EnhancedLinguisticAssessment'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Settings, TestTube, BarChart3, Users } from 'lucide-react'
+import { ArrowLeft, Settings, TestTube, BarChart3, Users, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 interface EnhancedAssessmentConfig {
   name: string
@@ -259,21 +258,32 @@ export default function AssessmentDetailPage() {
 
           {/* Test Tab */}
           <TabsContent value="test">
-            {assessmentConfig && (
-              <EnhancedLinguisticAssessment
-                config={{
-                  name: assessmentConfig.name,
-                  description: assessmentConfig.description,
-                  purpose: assessmentConfig.purpose,
-                  targetArchetypes: [], // AI chooses freely from all archetypes
-                  analysisInstructions: assessmentConfig.systemPrompt,
-                  questioningStyle: 'adaptive',
-                  expectedDuration: assessmentConfig.expectedDuration,
-                  completionCriteria: `Use adaptive questioning with moderate depth. Ask 8-15 questions based on response quality.`
-                }}
-                onComplete={handleTestComplete}
-              />
-            )}
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-2xl font-light text-gray-900 flex items-center gap-3">
+                  <MessageCircle className="h-6 w-6 text-blue-500" />
+                  Assessment Testing
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Assessment testing now happens through the conversation interface
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="text-center py-8">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-lg font-medium mb-2 text-gray-900">New Conversation Interface</h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Assessment testing now happens through the main conversation interface.
+                    Users experience assessments as natural conversations with the AI.
+                  </p>
+                  <Link href="/dashboard">
+                    <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+                      Go to Conversation Interface
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Results Tab */}
