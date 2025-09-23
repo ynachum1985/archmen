@@ -330,8 +330,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
   return (
     <div className="flex h-screen bg-gray-50/30">
-      {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white/60 backdrop-blur-sm border-r border-gray-200/50 flex flex-col transition-all duration-300`}>
+      {/* Sidebar - Hidden on mobile */}
+      <div className={`hidden md:flex ${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white/60 backdrop-blur-sm border-r border-gray-200/50 flex-col transition-all duration-300`}>
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-200/50 flex items-center justify-between">
           {!sidebarCollapsed && (
@@ -485,6 +485,33 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
             >
               <Settings className="h-4 w-4" />
             </Button>
+          </div>
+        </div>
+
+        {/* Mobile Assessment Selector */}
+        <div className="md:hidden bg-white/40 border-b border-gray-200/50 p-3">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <span className="text-xs font-medium text-gray-600 whitespace-nowrap">Assessments:</span>
+            {assessments.map((assessment) => {
+              const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
+              const isAccessible = isMainAssessment || mainAssessmentCompleted
+
+              return (
+                <button
+                  key={assessment.id}
+                  onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                  disabled={!isAccessible}
+                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                    isAccessible
+                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  {assessment.name}
+                  {isMainAssessment && <span className="ml-1">⭐</span>}
+                </button>
+              )
+            })}
           </div>
         </div>
 
