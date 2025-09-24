@@ -438,6 +438,7 @@ export function UserManagement() {
   }
 
   const toggleUserDetails = async (user: User) => {
+    console.log('Toggle user details for:', user.id, 'Current expanded:', expandedUser)
     if (expandedUser === user.id) {
       setExpandedUser(null)
       setUserDetailedHistory(null)
@@ -513,10 +514,10 @@ export function UserManagement() {
                 <p className="text-sm text-gray-500">Users will appear here as they sign up and use assessments</p>
               </div>
             ) : (
-              filteredUsers.map((user) => {
+              filteredUsers.map((user, userIndex) => {
                 const progress = userProgress[user.id]
                 return (
-                  <div key={user.id} className="border-b border-gray-100 py-4 hover:bg-gray-50 transition-colors">
+                  <div key={`user-${user.id}-${userIndex}`} className="border-b border-gray-100 py-4 hover:bg-gray-50 transition-colors">
                     <div className="px-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -681,15 +682,15 @@ export function UserManagement() {
                               {/* Progress Overview */}
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                                 <div className="text-center">
-                                  <div className="text-2xl font-bold text-blue-600">{userDetailedHistory.totalAssessments}</div>
+                                  <div className="text-2xl font-bold text-blue-600">{userDetailedHistory.assessments?.length || 0}</div>
                                   <div className="text-sm text-gray-600">Assessments Completed</div>
                                 </div>
                                 <div className="text-center">
-                                  <div className="text-2xl font-bold text-green-600">{userDetailedHistory.totalConversations}</div>
+                                  <div className="text-2xl font-bold text-green-600">{userDetailedHistory.total_conversations || 0}</div>
                                   <div className="text-sm text-gray-600">AI Conversations</div>
                                 </div>
                                 <div className="text-center">
-                                  <div className="text-2xl font-bold text-purple-600">{userDetailedHistory.averageSessionTime}m</div>
+                                  <div className="text-2xl font-bold text-purple-600">{userDetailedHistory.avg_session_duration || 0}m</div>
                                   <div className="text-sm text-gray-600">Avg Session Time</div>
                                 </div>
                               </div>
@@ -698,86 +699,108 @@ export function UserManagement() {
                               <div>
                                 <h4 className="text-lg font-semibold mb-4">Assessment History</h4>
                                 <div className="space-y-4">
-                                  {userDetailedHistory.assessments.map((assessment, index) => (
-                                    <div key={index} className="border border-gray-200 rounded-lg p-4">
-                                      <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                          <h5 className="font-medium">{assessment.name}</h5>
-                                          <p className="text-sm text-gray-600">
-                                            Level {assessment.level} • Completed {new Date(assessment.completedAt).toLocaleDateString()}
-                                          </p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <div className="text-sm text-gray-600">Score: {assessment.score}/10</div>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setExpandedAssessment(expandedAssessment === assessment.id ? null : assessment.id)}
-                                          >
-                                            {expandedAssessment === assessment.id ? (
-                                              <ChevronUp className="h-4 w-4" />
-                                            ) : (
-                                              <ChevronDown className="h-4 w-4" />
-                                            )}
-                                          </Button>
-                                        </div>
-                                      </div>
-
-                                      {expandedAssessment === assessment.id && (
-                                        <div className="space-y-4 pt-4 border-t border-gray-100">
-                                          {/* AI Summary */}
-                                          <div className="bg-blue-50 p-3 rounded">
-                                            <h6 className="font-medium text-blue-800 mb-2">AI Assessment Summary</h6>
-                                            <p className="text-sm text-blue-700">{assessment.aiSummary}</p>
-                                          </div>
-
-                                          {/* Conversation History */}
+                                  {userDetailedHistory.assessments && userDetailedHistory.assessments.length > 0 ? (
+                                    userDetailedHistory.assessments.map((assessment, index) => (
+                                      <div key={assessment.id || index} className="border border-gray-200 rounded-lg p-4">
+                                        <div className="flex items-center justify-between mb-3">
                                           <div>
-                                            <h6 className="font-medium mb-3">Conversation History</h6>
-                                            <div className="space-y-3">
-                                              {assessment.conversations.map((conv, convIndex) => (
-                                                <div key={convIndex} className="bg-gray-50 p-3 rounded">
-                                                  <div className="flex items-center justify-between mb-2">
-                                                    <div className="text-sm font-medium">Question {conv.questionNumber}</div>
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="sm"
-                                                      onClick={() => setExpandedConversation(expandedConversation === `${assessment.id}-${convIndex}` ? null : `${assessment.id}-${convIndex}`)}
-                                                    >
-                                                      {expandedConversation === `${assessment.id}-${convIndex}` ? (
-                                                        <ChevronUp className="h-3 w-3" />
-                                                      ) : (
-                                                        <ChevronDown className="h-3 w-3" />
+                                            <h5 className="font-medium">{assessment.assessment_name}</h5>
+                                            <p className="text-sm text-gray-600">
+                                              Level {assessment.assessment_level} •
+                                              {assessment.completed_at ?
+                                                `Completed ${new Date(assessment.completed_at).toLocaleDateString()}` :
+                                                'In Progress'
+                                              }
+                                            </p>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            {assessment.readiness_score && (
+                                              <div className="text-sm text-gray-600">Score: {assessment.readiness_score}/100</div>
+                                            )}
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => setExpandedAssessment(expandedAssessment === assessment.id ? null : assessment.id)}
+                                            >
+                                              {expandedAssessment === assessment.id ? (
+                                                <ChevronUp className="h-4 w-4" />
+                                              ) : (
+                                                <ChevronDown className="h-4 w-4" />
+                                              )}
+                                            </Button>
+                                          </div>
+                                        </div>
+
+                                        {expandedAssessment === assessment.id && (
+                                          <div className="space-y-4 pt-4 border-t border-gray-100">
+                                            {/* AI Summary */}
+                                            {assessment.specific_feedback && (
+                                              <div className="bg-blue-50 p-3 rounded">
+                                                <h6 className="font-medium text-blue-800 mb-2">AI Assessment Summary</h6>
+                                                <p className="text-sm text-blue-700">{assessment.specific_feedback}</p>
+                                              </div>
+                                            )}
+
+                                            {/* Conversation History */}
+                                            <div>
+                                              <h6 className="font-medium mb-3">Conversation History</h6>
+                                              <div className="space-y-3">
+                                                {assessment.conversation_history && assessment.conversation_history.length > 0 ? (
+                                                  assessment.conversation_history.map((conv, convIndex) => (
+                                                    <div key={conv.id || convIndex} className="bg-gray-50 p-3 rounded">
+                                                      <div className="flex items-center justify-between mb-2">
+                                                        <div className="text-sm font-medium">Question {conv.question_number}</div>
+                                                        <Button
+                                                          variant="ghost"
+                                                          size="sm"
+                                                          onClick={() => setExpandedConversation(expandedConversation === `${assessment.id}-${convIndex}` ? null : `${assessment.id}-${convIndex}`)}
+                                                        >
+                                                          {expandedConversation === `${assessment.id}-${convIndex}` ? (
+                                                            <ChevronUp className="h-3 w-3" />
+                                                          ) : (
+                                                            <ChevronDown className="h-3 w-3" />
+                                                          )}
+                                                        </Button>
+                                                      </div>
+
+                                                      <div className="text-sm mb-2">
+                                                        <strong>Q:</strong> {conv.question_text}
+                                                      </div>
+                                                      {conv.user_response && (
+                                                        <div className="text-sm mb-2">
+                                                          <strong>A:</strong> {conv.user_response}
+                                                        </div>
                                                       )}
-                                                    </Button>
-                                                  </div>
 
-                                                  <div className="text-sm mb-2">
-                                                    <strong>Q:</strong> {conv.question}
-                                                  </div>
-                                                  <div className="text-sm mb-2">
-                                                    <strong>A:</strong> {conv.response}
-                                                  </div>
-
-                                                  {expandedConversation === `${assessment.id}-${convIndex}` && (
-                                                    <div className="mt-3 pt-3 border-t border-gray-200">
-                                                      <div className="bg-yellow-50 p-3 rounded">
-                                                        <h6 className="font-medium text-yellow-800 mb-2">AI Analysis</h6>
-                                                        <p className="text-sm text-yellow-700">{conv.aiReasoning}</p>
-                                                      </div>
-                                                      <div className="mt-2 text-xs text-gray-500">
-                                                        Context: {conv.context}
-                                                      </div>
+                                                      {expandedConversation === `${assessment.id}-${convIndex}` && (
+                                                        <div className="mt-3 pt-3 border-t border-gray-200">
+                                                          {conv.ai_reasoning && (
+                                                            <div className="bg-yellow-50 p-3 rounded">
+                                                              <h6 className="font-medium text-yellow-800 mb-2">AI Analysis</h6>
+                                                              <p className="text-sm text-yellow-700">{conv.ai_reasoning}</p>
+                                                            </div>
+                                                          )}
+                                                          {conv.question_context && (
+                                                            <div className="mt-2 text-xs text-gray-500">
+                                                              Context: {JSON.stringify(conv.question_context)}
+                                                            </div>
+                                                          )}
+                                                        </div>
+                                                      )}
                                                     </div>
-                                                  )}
-                                                </div>
-                                              ))}
+                                                  ))
+                                                ) : (
+                                                  <p className="text-sm text-gray-500">No conversation history available</p>
+                                                )}
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
+                                        )}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-sm text-gray-500">No assessments completed yet</p>
+                                  )}
                                 </div>
                               </div>
                             </div>
