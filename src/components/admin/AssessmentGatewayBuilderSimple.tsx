@@ -76,37 +76,47 @@ Ask 3-4 questions to assess if the user is ready for this assessment content.`
   const getDefaultExperienceAnalysisPrompt = () => {
     switch (assessmentLevel) {
       case 1:
-        return `Analyze the user's basic readiness for foundational archetypal work in "${assessmentName}".
+        return `IMPORTANT: You will receive the user's assessment history above (if any). Use this information to create appropriate questions.
 
-Review any previous interactions and assess:
+Analyze the user's basic readiness for foundational archetypal work in "${assessmentName}".
+
+Review their USER ASSESSMENT HISTORY section (if they have previous assessments) and assess:
 - Openness to self-discovery and personal growth
 - Basic emotional awareness and self-reflection
 - Readiness to explore relationship patterns
 - Willingness to receive feedback
+- Any patterns from previous assessment attempts
 
-Generate 1-2 personalized questions based on any gaps or areas needing verification before they can access this foundational assessment.`
+Generate 1-2 personalized questions based on their history and any gaps or areas needing verification before they can access this foundational assessment. If this is their first assessment, focus on basic readiness indicators.`
 
       case 2:
-        return `Analyze the user's previous assessment history and growth patterns to determine readiness for "${assessmentName}" (Level 2).
+        return `IMPORTANT: You will receive the user's complete assessment history above. Use this information to create personalized questions.
 
-Look for evidence of:
+Analyze the user's previous assessment history and growth patterns to determine readiness for "${assessmentName}" (Level 2).
+
+Review their USER ASSESSMENT HISTORY section and look for evidence of:
 - Emotional maturity development since Level 1
 - Integration of previous insights and archetype discoveries
 - Readiness for shadow work and deeper psychological exploration
 - Ability to handle more challenging personal truths
+- Specific patterns from their previous assessment feedback
 
-Generate 2-3 personalized questions based on their journey and any areas needing verification before accessing this integration-level assessment.`
+Generate 2-3 personalized questions based on their actual journey, referencing specific insights from their previous assessments when relevant. If they have no previous assessments, focus on foundational readiness questions.`
 
       case 3:
-        return `Analyze the user's complete assessment journey and emotional development to determine readiness for "${assessmentName}" (Level 3).
+        return `IMPORTANT: You will receive the user's complete assessment history above. Use this information to create highly personalized questions.
 
-Review their progression through:
+Analyze the user's complete assessment journey and emotional development to determine readiness for "${assessmentName}" (Level 3).
+
+Review their USER ASSESSMENT HISTORY section and examine their progression through:
 - Shadow work integration and emotional maturity development
 - Ability to handle complex relationship dynamics
 - Previous archetype integration and personal growth
 - Readiness for advanced topics like polyamory, patriarchy deconstruction, or complex relationship concepts
+- Specific growth areas identified in previous assessments
+- Emotional maturity progression over time
 
-Generate 2-3 personalized questions that test their readiness for these advanced psychological concepts.`
+Generate 2-3 highly personalized questions that test their readiness for these advanced psychological concepts, directly referencing their previous assessment insights and growth patterns. If they haven't completed sufficient prerequisite assessments, address this gap.`
 
       default:
         return `Analyze the user's previous assessment history and experience to determine readiness for "${assessmentName}".
