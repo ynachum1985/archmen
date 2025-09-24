@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X, Sparkles } from 'lucide-react'
 import { AIPersonality, NewAIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
-import { QuestionsDialog } from './QuestionsDialog'
 
 export function AIPersonalityManager() {
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
@@ -40,8 +39,6 @@ export function AIPersonalityManager() {
     system_prompt_template: '',
     is_active: true
   })
-
-  const [showQuestionsDialog, setShowQuestionsDialog] = useState(false)
   
 
 
@@ -177,7 +174,6 @@ export function AIPersonalityManager() {
               <PersonalityForm
                 personality={newPersonality}
                 onChange={setNewPersonality}
-                onOpenQuestionsDialog={() => setShowQuestionsDialog(true)}
               />
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
@@ -280,7 +276,6 @@ export function AIPersonalityManager() {
           <PersonalityForm
             personality={newPersonality}
             onChange={setNewPersonality}
-            onOpenQuestionsDialog={() => setShowQuestionsDialog(true)}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingPersonality(null)}>
@@ -292,14 +287,6 @@ export function AIPersonalityManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Questions Dialog */}
-      <QuestionsDialog
-        open={showQuestionsDialog}
-        onOpenChange={setShowQuestionsDialog}
-        personality={newPersonality}
-        onChange={setNewPersonality}
-      />
     </div>
   )
 }
@@ -307,10 +294,9 @@ export function AIPersonalityManager() {
 interface PersonalityFormProps {
   personality: NewAIPersonality
   onChange: (personality: NewAIPersonality) => void
-  onOpenQuestionsDialog: () => void
 }
 
-function PersonalityForm({ personality, onChange, onOpenQuestionsDialog }: PersonalityFormProps) {
+function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
   const addArrayItem = (field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>) => {
     onChange({
       ...personality,
@@ -406,50 +392,80 @@ function PersonalityForm({ personality, onChange, onOpenQuestionsDialog }: Perso
       </div>
 
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="systemPrompt">System Prompt Template</Label>
         <Textarea
-          id="description"
-          value={personality.description}
-          onChange={(e) => onChange({ ...personality, description: e.target.value })}
-          placeholder="Describe this AI personality's approach and style..."
-          className="mt-1"
-          rows={3}
+          id="systemPrompt"
+          value={personality.system_prompt_template}
+          onChange={(e) => onChange({ ...personality, system_prompt_template: e.target.value })}
+          placeholder="Define the system prompt template for this personality..."
+          className="mt-1 font-mono text-sm"
+          rows={8}
         />
       </div>
 
       {/* Questions Section */}
       <div className="space-y-3">
-        <Label className="text-base font-medium">Questions</Label>
-        <div className="p-4 border rounded-lg bg-gray-50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">
-              Configure open-ended, clarifying, and specific questions
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onOpenQuestionsDialog}
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Manage Questions
-            </Button>
-          </div>
-          <div className="text-xs text-gray-500">
-            Open-ended: {personality.open_ended_questions?.length || 0} questions •
-            Clarifying: {personality.clarifying_questions?.length || 0} questions •
-            Specific: {personality.specific_questions?.length || 0} questions
-          </div>
-        </div>
+        <Label className="text-base font-medium">All Questions</Label>
+        <Textarea
+          value={[
+            ...(personality.open_ended_questions || []),
+            ...(personality.clarifying_questions || []),
+            ...(personality.specific_questions || [])
+          ].join('\n')}
+          onChange={(e) => {
+            const allQuestions = e.target.value.split('\n').filter(q => q.trim())
+            // For simplicity, put all questions in open_ended_questions
+            onChange({
+              ...personality,
+              open_ended_questions: allQuestions,
+              clarifying_questions: [],
+              specific_questions: []
+            })
+          }}
+          placeholder="Enter all questions here, one per line:&#10;&#10;Tell me about a moment when you felt most authentic...&#10;When you say that, what feelings come up?&#10;Do you tend to initiate plans or follow others?"
+          className="mt-1"
+          rows={8}
+        />
+        <p className="text-xs text-gray-500">
+          Enter all questions (open-ended, clarifying, and specific) in one text box, one question per line.
+        </p>
       </div>
 
       {/* Array Fields */}
       <div className="space-y-6">
         {renderArrayField('goals', 'Goals', 'Enter a goal this personality aims to accomplish...')}
         {renderArrayField('behavior_traits', 'Behavior Traits', 'Enter a behavior trait that describes this personality...')}
-        {renderArrayField('safety_limits', 'Safety Limits', 'Enter a safety guideline or limit...')}
-        {renderArrayField('escalation_triggers', 'Escalation Triggers', 'Enter a situation that should trigger escalation...')}
-        {renderArrayField('preferred_interventions', 'Preferred Interventions', 'Enter a preferred intervention strategy...')}
+
+        {/* Combined Safety Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-medium">Safety, Triggers & Interventions</Label>
+          <Textarea
+            value={[
+              ...(personality.safety_limits || []).map(item => `SAFETY: ${item}`),
+              ...(personality.escalation_triggers || []).map(item => `TRIGGER: ${item}`),
+              ...(personality.preferred_interventions || []).map(item => `INTERVENTION: ${item}`)
+            ].join('\n')}
+            onChange={(e) => {
+              const lines = e.target.value.split('\n').filter(line => line.trim())
+              const safety = lines.filter(line => line.startsWith('SAFETY:')).map(line => line.replace('SAFETY:', '').trim())
+              const triggers = lines.filter(line => line.startsWith('TRIGGER:')).map(line => line.replace('TRIGGER:', '').trim())
+              const interventions = lines.filter(line => line.startsWith('INTERVENTION:')).map(line => line.replace('INTERVENTION:', '').trim())
+
+              onChange({
+                ...personality,
+                safety_limits: safety,
+                escalation_triggers: triggers,
+                preferred_interventions: interventions
+              })
+            }}
+            placeholder="Enter safety limits, escalation triggers, and preferred interventions:&#10;&#10;SAFETY: Avoid giving medical or therapeutic advice&#10;SAFETY: Do not encourage harmful behaviors&#10;&#10;TRIGGER: Mentions of self-harm or suicide&#10;TRIGGER: Expressions of violence toward others&#10;&#10;INTERVENTION: Gentle redirection to professional help&#10;INTERVENTION: Validation of feelings while maintaining boundaries"
+            className="mt-1"
+            rows={10}
+          />
+          <p className="text-xs text-gray-500">
+            Use prefixes: SAFETY: for safety limits, TRIGGER: for escalation triggers, INTERVENTION: for preferred interventions. One item per line.
+          </p>
+        </div>
       </div>
 
       {/* Pacing Settings */}
@@ -533,20 +549,11 @@ function PersonalityForm({ personality, onChange, onOpenQuestionsDialog }: Perso
                 <SelectItem value="every_30_minutes">Every 30 minutes</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              How often to suggest breaks during long assessment sessions to prevent user fatigue
+            </p>
           </div>
         </div>
-      </div>
-
-      <div>
-        <Label htmlFor="systemPrompt">System Prompt Template</Label>
-        <Textarea
-          id="systemPrompt"
-          value={personality.system_prompt_template}
-          onChange={(e) => onChange({ ...personality, system_prompt_template: e.target.value })}
-          placeholder="Define the system prompt template for this personality..."
-          className="mt-1 font-mono text-sm"
-          rows={8}
-        />
       </div>
     </div>
   )
