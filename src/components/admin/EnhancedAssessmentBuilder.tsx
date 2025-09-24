@@ -220,7 +220,23 @@ export function EnhancedAssessmentBuilder({
   assessment,
   onSave
 }: EnhancedAssessmentBuilderProps) {
-  const [config, setConfig] = useState<EnhancedAssessmentConfig>(assessment || defaultConfig)
+  // Merge assessment with defaults to ensure all required fields exist
+  const [config, setConfig] = useState<EnhancedAssessmentConfig>(() => {
+    if (!assessment) return defaultConfig
+
+    return {
+      ...defaultConfig,
+      ...assessment,
+      // Ensure critical fields have defaults
+      assessment_level: assessment.assessment_level || defaultConfig.assessment_level,
+      gateway_configuration: assessment.gateway_configuration || defaultConfig.gateway_configuration,
+      has_custom_gateways: assessment.has_custom_gateways ?? defaultConfig.has_custom_gateways,
+      general_gateways_enabled: assessment.general_gateways_enabled ?? defaultConfig.general_gateways_enabled,
+      quiz_enabled: assessment.quiz_enabled ?? defaultConfig.quiz_enabled,
+      quiz_passing_score: assessment.quiz_passing_score || defaultConfig.quiz_passing_score,
+      quiz_max_attempts: assessment.quiz_max_attempts || defaultConfig.quiz_max_attempts
+    }
+  })
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
   const [isLoadingPersonalities, setIsLoadingPersonalities] = useState(true)
   const [showTestingChat, setShowTestingChat] = useState(false)
@@ -804,7 +820,7 @@ Keep the response under 150 words and end with a specific question.`)
               <div>
                 <Label htmlFor="assessmentLevel">Assessment Level</Label>
                 <Select
-                  value={config.assessment_level.toString()}
+                  value={(config.assessment_level || 1).toString()}
                   onValueChange={(value) => setConfig(prev => ({ ...prev, assessment_level: parseInt(value) }))}
                 >
                   <SelectTrigger>
@@ -1302,7 +1318,7 @@ Keep the response under 150 words and end with a specific question.`)
             <CardContent>
               <AssessmentGatewayBuilder
                 assessmentId={config.id?.toString() || 'new'}
-                assessmentLevel={config.assessment_level}
+                assessmentLevel={config.assessment_level || 1}
                 assessmentName={config.name || 'New Assessment'}
                 onGatewaysChange={(gateways) => {
                   // Update config with gateway information
@@ -1443,7 +1459,7 @@ Keep the response under 150 words and end with a specific question.`)
                             >
                               <p className="whitespace-pre-wrap">{message.content}</p>
                               <p className="text-xs mt-1 opacity-70">
-                                {message.timestamp.toLocaleTimeString()}
+                                {message.timestamp?.toLocaleTimeString() || 'Unknown time'}
                               </p>
                             </div>
                           </div>
