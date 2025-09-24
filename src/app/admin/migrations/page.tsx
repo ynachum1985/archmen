@@ -83,6 +83,7 @@ export default function MigrationsPage() {
         <h1 className="text-3xl font-bold mb-2">Database Migrations</h1>
         <p className="text-gray-600">
           Run these migrations to set up the conversational gateway quiz system and assessment levels.
+          <span className="text-green-600 font-medium">✅ Database migrations have been completed via Supabase!</span>
         </p>
       </div>
 
