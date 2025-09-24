@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
-import { ProgressionManager } from "@/components/admin/ProgressionManager"
+import { UserManagement } from "@/components/admin/UserManagement"
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
@@ -419,9 +419,9 @@ export default function AdminPage() {
               <Users className="h-4 w-4" />
               Archetypes
             </TabsTrigger>
-            <TabsTrigger value="progression" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Progression
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              User Management
             </TabsTrigger>
             <TabsTrigger value="ai-personality" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
@@ -679,9 +679,9 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
-          {/* Progression Tab */}
-          <TabsContent value="progression" className="mt-6">
-            <ProgressionManager />
+          {/* User Management Tab */}
+          <TabsContent value="users" className="mt-6">
+            <UserManagement />
           </TabsContent>
 
           {/* AI Personality Tab */}

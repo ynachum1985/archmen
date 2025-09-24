@@ -439,150 +439,52 @@ Provide a thorough but compassionate assessment of their readiness.`
     )
   }
 
-  // Show notice if database tables don't exist yet
-  if (availableTemplates.length === 0 && gateways.length === 0 && assessmentId === 'new') {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium">Assessment Gateways</h3>
-            <p className="text-sm text-gray-600">
-              Configure requirements users must meet before accessing this assessment
-            </p>
-          </div>
-        </div>
-
-        <Card className="border-dashed border-2 border-gray-300">
-          <CardContent className="flex items-center justify-center p-8">
-            <div className="text-center">
-              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h4 className="text-lg font-medium text-gray-900 mb-2">Gateway System Ready</h4>
-              <p className="text-gray-600 mb-4">
-                Save this assessment first to configure conversational gateway quiz prompts.
-              </p>
-              <p className="text-sm text-gray-500">
-                The gateway system will be available after the assessment is created and the database migrations are run.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quiz Prompts Configuration - Always show for new assessments */}
-        <div className="space-y-6 mt-8 pt-8 border-t">
-          <div>
-            <h3 className="text-lg font-medium mb-2">Conversational Gateway Quiz</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Configure the AI prompts for the conversational quiz that users must pass before accessing this assessment.
-              The quiz will be conducted in the chat interface as a natural conversation.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Set Questions Prompt */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-blue-600" />
-                  Set Questions Prompt
-                </CardTitle>
-                <CardDescription>
-                  Defines the standard questions the AI should ask to assess readiness for this specific assessment.
-                  These are consistent questions that test core competencies for Level {assessmentLevel}.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="setQuestionsPrompt">AI Prompt for Set Questions</Label>
-                    <Textarea
-                      id="setQuestionsPrompt"
-                      value={setQuestionsPrompt}
-                      onChange={(e) => setSetQuestionsPrompt(e.target.value)}
-                      rows={12}
-                      className="font-mono text-sm"
-                      placeholder="Enter the prompt that guides the AI to ask standard readiness questions..."
-                    />
-                  </div>
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-xs text-blue-700 font-medium mb-1">Purpose:</p>
-                    <p className="text-xs text-blue-600">
-                      This prompt tells the AI what specific questions to ask to test if the user is ready for
-                      the "{assessmentName}" assessment. Questions should be relevant to Level {assessmentLevel} complexity.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Experience Analysis Prompt */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-purple-600" />
-                  Experience Analysis Prompt
-                </CardTitle>
-                <CardDescription>
-                  Guides the AI to analyze the user's previous assessment history and generate personalized
-                  questions based on their journey and growth patterns.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="experienceAnalysisPrompt">AI Prompt for Experience Analysis</Label>
-                    <Textarea
-                      id="experienceAnalysisPrompt"
-                      value={experienceAnalysisPrompt}
-                      onChange={(e) => setExperienceAnalysisPrompt(e.target.value)}
-                      rows={12}
-                      className="font-mono text-sm"
-                      placeholder="Enter the prompt that guides the AI to analyze user history and create personalized questions..."
-                    />
-                  </div>
-                  <div className="bg-purple-50 p-3 rounded-lg">
-                    <p className="text-xs text-purple-700 font-medium mb-1">Purpose:</p>
-                    <p className="text-xs text-purple-600">
-                      This prompt tells the AI to review the user's previous assessments, archetype discoveries,
-                      and growth patterns to create personalized readiness questions for "{assessmentName}".
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={saveQuizPrompts}
-              className="flex items-center gap-2"
-              disabled={assessmentId === 'new'}
-            >
-              <Save className="h-4 w-4" />
-              {assessmentId === 'new' ? 'Save Assessment First' : 'Save Quiz Prompts'}
-            </Button>
-          </div>
-
-          {/* Preview Section */}
-          <Card className="bg-gray-50">
-            <CardHeader>
-              <CardTitle className="text-sm">How the Conversational Gateway Works</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-gray-600">
-              <div className="space-y-2">
-                <p><strong>1. User attempts to access assessment:</strong> They click on "{assessmentName}" in their dashboard</p>
-                <p><strong>2. Gateway quiz initiated:</strong> AI starts a conversation using both prompts above</p>
-                <p><strong>3. Set questions asked:</strong> AI asks standard readiness questions for Level {assessmentLevel}</p>
-                <p><strong>4. Experience analysis:</strong> AI reviews their history and asks personalized follow-up questions</p>
-                <p><strong>5. Readiness evaluation:</strong> AI determines if they're ready and either grants access or provides guidance</p>
-                <p><strong>6. Assessment access:</strong> If ready, they can proceed to the full "{assessmentName}" assessment</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+  // Always show the simplified quiz prompts interface
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Set Questions Prompt */}
+      <div className="space-y-3">
+        <Label htmlFor="setQuestionsPrompt" className="text-base font-medium">
+          Set Questions Prompt
+        </Label>
+        <Textarea
+          id="setQuestionsPrompt"
+          value={setQuestionsPrompt}
+          onChange={(e) => setSetQuestionsPrompt(e.target.value)}
+          rows={16}
+          className="font-mono text-sm resize-none"
+          placeholder="Enter the prompt that guides the AI to ask standard readiness questions..."
+        />
       </div>
-    )
-  }
+
+      {/* Experience Analysis Prompt */}
+      <div className="space-y-3">
+        <Label htmlFor="experienceAnalysisPrompt" className="text-base font-medium">
+          Experience Analysis Prompt
+        </Label>
+        <Textarea
+          id="experienceAnalysisPrompt"
+          value={experienceAnalysisPrompt}
+          onChange={(e) => setExperienceAnalysisPrompt(e.target.value)}
+          rows={16}
+          className="font-mono text-sm resize-none"
+          placeholder="Enter the prompt that guides the AI to analyze user history and create personalized questions..."
+        />
+      </div>
+
+      {/* Save Button - Full Width */}
+      <div className="lg:col-span-2 flex justify-end pt-4">
+        <Button
+          onClick={saveQuizPrompts}
+          className="flex items-center gap-2"
+          disabled={assessmentId === 'new'}
+        >
+          <Save className="h-4 w-4" />
+          {assessmentId === 'new' ? 'Save Assessment First' : 'Save Quiz Prompts'}
+        </Button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6">

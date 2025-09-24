@@ -32,7 +32,7 @@ import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import { AssessmentTestingChat } from './AssessmentTestingChat'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { AssessmentContentDisplay } from './AssessmentContentDisplay'
-import { AssessmentGatewayBuilder } from './AssessmentGatewayBuilder'
+import { AssessmentGatewayBuilder } from './AssessmentGatewayBuilderSimple'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
