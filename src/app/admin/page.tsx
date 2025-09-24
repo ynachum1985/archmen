@@ -124,6 +124,12 @@ export default function AdminPage() {
 
   // Convert assessment data from Supabase to EnhancedAssessmentConfig format
   const convertToAssessmentConfig = (assessment: any) => {
+    // Safety check for undefined assessment
+    if (!assessment) {
+      console.error('Assessment is undefined in convertToAssessmentConfig')
+      return null
+    }
+
     // If this is already a full assessment from Supabase, use it directly
     if (assessment.system_prompt || assessment.combined_prompt) {
       return {
@@ -180,10 +186,10 @@ export default function AdminPage() {
       category: assessment.isMain ? 'Relationship Assessment' : 'Specialized Assessment',
       purpose: `This assessment is designed to ${assessment.description?.toLowerCase() || 'assess relationship patterns'}`,
       assessmentPrompt: `You are conducting the "${assessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences.`,
-      expectedDuration: Math.ceil(assessment.questionCount * 1.5),
+      expectedDuration: Math.ceil((assessment.questionCount || 8) * 1.5),
       systemPrompt: `You are analyzing ${assessment.name?.toLowerCase() || 'relationship'} patterns.`,
-      minQuestions: Math.max(8, assessment.questionCount - 3),
-      maxQuestions: assessment.questionCount + 3,
+      minQuestions: Math.max(8, (assessment.questionCount || 8) - 3),
+      maxQuestions: (assessment.questionCount || 8) + 3,
       evidenceThreshold: 70,
       adaptationSensitivity: 50,
       cycleSettings: {
@@ -432,68 +438,6 @@ export default function AdminPage() {
           {/* Assessments Tab - Overview of existing assessments */}
           <TabsContent value="assessments" className="mt-6">
             <div className="space-y-6">
-              {/* Quick Access Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <Link href="/admin/migrations">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer border-orange-200 hover:border-orange-300">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-orange-700">
-                        <Database className="h-5 w-5" />
-                        Database Setup
-                      </CardTitle>
-                      <CardDescription>
-                        Run migrations for gateway quiz system
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-orange-600">
-                        Set up conversational gateway tables
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-blue-700">
-                      <FileText className="h-5 w-5" />
-                      Assessments
-                    </CardTitle>
-                    <CardDescription>
-                      Manage psychological assessments
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
-                      {assessmentCategories.length}
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Available assessments
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-purple-700">
-                      <BarChart3 className="h-5 w-5" />
-                      Analytics
-                    </CardTitle>
-                    <CardDescription>
-                      System usage metrics
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-purple-600 mb-1">
-                      Soon
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      User engagement data
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
               <div className="flex items-center justify-end">
                 <Button className="bg-emerald-500 hover:bg-emerald-600">
                   <Plus className="w-4 h-4 mr-2" />
@@ -553,8 +497,13 @@ export default function AdminPage() {
                           onClick={() => {
                             // Convert mock data to proper assessment config and open edit dialog
                             const assessmentConfig = convertToAssessmentConfig(category)
-                            setEditingAssessment(assessmentConfig)
-                            setShowEditAssessmentDialog(true)
+                            if (assessmentConfig) {
+                              setEditingAssessment(assessmentConfig)
+                              setShowEditAssessmentDialog(true)
+                            } else {
+                              console.error('Failed to convert assessment config for:', category)
+                              alert('Error loading assessment for editing. Please try again.')
+                            }
                           }}
                         >
                           Edit Assessment
@@ -725,7 +674,7 @@ export default function AdminPage() {
               </DialogDescription>
             </DialogHeader>
 
-            {editingAssessment && (
+            {editingAssessment && editingAssessment.id && (
               <div className="mt-4">
                 <EnhancedAssessmentBuilder
                   assessment={editingAssessment}
@@ -736,6 +685,12 @@ export default function AdminPage() {
                   }}
                   onTest={handleTestEnhancedAssessment}
                 />
+              </div>
+            )}
+
+            {!editingAssessment && showEditAssessmentDialog && (
+              <div className="mt-4 p-4 text-center">
+                <p className="text-red-600">Error loading assessment data. Please close this dialog and try again.</p>
               </div>
             )}
           </DialogContent>
