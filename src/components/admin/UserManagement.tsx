@@ -98,13 +98,87 @@ export function UserManagement() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [expandedAssessment, setExpandedAssessment] = useState<string | null>(null)
   const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
+  const [liveConversations, setLiveConversations] = useState<any[]>([])
+  const [isLiveMonitoring, setIsLiveMonitoring] = useState(false)
 
   const supabase = createClient()
 
   useEffect(() => {
     loadUsers()
     loadUserProgress()
+    startLiveMonitoring()
   }, [])
+
+  const startLiveMonitoring = () => {
+    setIsLiveMonitoring(true)
+
+    // Set up real-time subscription for live conversations
+    const subscription = supabase
+      .channel('live_conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'assessment_quiz_attempts',
+          filter: 'completed_at=is.null'
+        },
+        (payload) => {
+          console.log('Live conversation update:', payload)
+          loadLiveConversations()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quiz_question_responses'
+        },
+        (payload) => {
+          console.log('Live question response:', payload)
+          loadLiveConversations()
+        }
+      )
+      .subscribe()
+
+    // Initial load
+    loadLiveConversations()
+
+    return () => {
+      subscription.unsubscribe()
+      setIsLiveMonitoring(false)
+    }
+  }
+
+  const loadLiveConversations = async () => {
+    try {
+      const { data: liveAttempts, error } = await supabase
+        .from('assessment_quiz_attempts')
+        .select(`
+          id,
+          user_id,
+          started_at,
+          enhanced_assessments!inner(name, assessment_level),
+          quiz_question_responses(
+            id,
+            question_number,
+            question_text,
+            user_response,
+            created_at
+          )
+        `)
+        .is('completed_at', null)
+        .order('started_at', { ascending: false })
+        .limit(10)
+
+      if (error) throw error
+
+      setLiveConversations(liveAttempts || [])
+    } catch (error) {
+      console.error('Error loading live conversations:', error)
+    }
+  }
 
   const loadUsers = async () => {
     try {
@@ -126,14 +200,14 @@ export function UserManagement() {
       
       // Create comprehensive mock user data with one detailed example
       const mockUsers: User[] = [
-        // Detailed mock user for demonstration
+        // Real user with test data for demonstration
         {
-          id: 'demo_user_001',
-          email: 'sarah.johnson@example.com',
+          id: '1db3df34-7431-4870-9e5b-d2dcb083e3db',
+          email: 'yossinac@gmail.com',
           created_at: '2024-01-10T09:00:00Z',
           last_sign_in_at: '2024-03-15T14:30:00Z',
           email_confirmed_at: '2024-01-10T09:15:00Z',
-          user_metadata: { name: 'Sarah Johnson' },
+          user_metadata: { name: 'Test User with Real Data' },
           app_metadata: { role: 'user' }
         },
         // Additional mock users
@@ -195,14 +269,14 @@ export function UserManagement() {
         }
       })
 
-      // Add mock progress for demo user
-      progressMap['demo_user_001'] = {
-        user_id: 'demo_user_001',
-        assessments_completed: 2,
-        quiz_attempts: 3,
-        last_activity: '2024-03-15T14:30:00Z',
-        current_level: 2,
-        emotional_maturity_score: 9
+      // Add mock progress for real test user
+      progressMap['1db3df34-7431-4870-9e5b-d2dcb083e3db'] = {
+        user_id: '1db3df34-7431-4870-9e5b-d2dcb083e3db',
+        assessments_completed: 1,
+        quiz_attempts: 1,
+        last_activity: '2024-01-15T11:15:00Z',
+        current_level: 1,
+        emotional_maturity_score: 8
       }
 
       setUserProgress(progressMap)
@@ -239,122 +313,116 @@ export function UserManagement() {
   const loadDetailedUserHistory = async (user: User) => {
     setIsLoadingHistory(true)
     try {
-      // In a real implementation, this would call an API endpoint
-      // For now, we'll create comprehensive mock data
-      const mockDetailedHistory: UserDetailedHistory = {
-        user,
-        assessments: [
-          {
-            id: 'attempt_1',
-            assessment_name: 'Relationship Foundations',
-            assessment_level: 1,
-            started_at: '2024-01-15T10:30:00Z',
-            completed_at: '2024-01-15T11:15:00Z',
-            readiness_score: 85,
-            emotional_maturity_score: 8,
-            quiz_passed: true,
-            specific_feedback: 'Excellent self-awareness and communication skills. Shows strong foundation for deeper work. Areas for growth: boundary setting and conflict resolution.',
-            conversation_history: [
-              {
-                id: 'msg_1',
-                question_number: 1,
-                question_type: 'set_question',
-                question_text: 'Welcome to your readiness assessment for Relationship Foundations. Let\'s start by exploring your communication patterns. How do you typically express your needs in close relationships?',
-                user_response: 'I try to be direct but kind. Sometimes I struggle when the other person gets defensive, and I end up backing down to avoid conflict.',
-                ai_reasoning: 'User shows awareness of communication style and identifies specific challenge with defensive responses. This indicates good self-reflection but potential boundary issues.',
-                timestamp: '2024-01-15T10:32:00Z',
-                question_context: { assessment_level: 1, quiz_phase: 'introduction' }
-              },
-              {
-                id: 'msg_2',
-                question_number: 2,
-                question_type: 'set_question',
-                question_text: 'That shows good self-awareness about your communication style. When you mention backing down to avoid conflict, can you tell me about a recent situation where this happened and how it felt for you?',
-                user_response: 'Last week with my partner about household responsibilities. They got upset when I brought it up, so I just said "never mind" and did the tasks myself. I felt frustrated and unheard, but also guilty for causing tension.',
-                ai_reasoning: 'Clear example of conflict avoidance and people-pleasing patterns. User experiences emotional consequences but prioritizes harmony over needs. This is common Level 1 pattern.',
-                timestamp: '2024-01-15T10:35:00Z',
-                question_context: { previous_response: 'backing down to avoid conflict', quiz_phase: 'set_questions' }
-              },
-              {
-                id: 'msg_3',
-                question_number: 3,
-                question_type: 'experience_based',
-                question_text: 'I can hear the internal conflict between wanting to be heard and wanting to maintain harmony. This is actually very common and shows emotional intelligence. How do you think this pattern might be affecting your relationships over time?',
-                user_response: 'I think it builds resentment on my side, and my partner probably doesn\'t even realize there are issues because I don\'t follow through on conversations. It\'s not sustainable, but I don\'t know how to change it without causing more problems.',
-                ai_reasoning: 'Excellent insight into long-term consequences. User understands the systemic impact and expresses desire for change while acknowledging fear. Ready for foundational work.',
-                timestamp: '2024-01-15T10:38:00Z',
-                question_context: { quiz_phase: 'experience_analysis' }
-              },
-              {
-                id: 'msg_4',
-                question_number: 4,
-                question_type: 'conclusion',
-                question_text: 'ASSESSMENT: Based on our conversation, you demonstrate strong self-awareness, emotional intelligence, and insight into relationship patterns. Your ability to identify specific examples and understand long-term consequences shows readiness for foundational relationship work. Score: 85/100. You\'re well-prepared to explore communication skills, boundary setting, and conflict resolution in the Relationship Foundations assessment.',
-                user_response: '',
-                ai_reasoning: 'User meets all criteria for Level 1 readiness: self-awareness (high), specific examples (provided), emotional insight (demonstrated), growth motivation (expressed). Score reflects strong foundation with room for skill development.',
-                timestamp: '2024-01-15T10:42:00Z',
-                question_context: { final_assessment: true }
-              }
-            ]
-          },
-          {
-            id: 'attempt_2',
-            assessment_name: 'Shadow Work Integration',
-            assessment_level: 2,
-            started_at: '2024-02-20T14:15:00Z',
-            completed_at: '2024-02-20T15:00:00Z',
-            readiness_score: 78,
-            emotional_maturity_score: 9,
-            quiz_passed: true,
-            specific_feedback: 'Significant growth since Level 1. Shows integration of previous insights and readiness for shadow work. Demonstrates emotional regulation and deeper self-reflection.',
-            conversation_history: [
-              {
-                id: 'msg_5',
-                question_number: 1,
-                question_type: 'set_question',
-                question_text: 'Welcome back! I can see from your previous assessment that you scored 85/100 and showed excellent self-awareness around communication patterns. How have you been applying those insights since completing Relationship Foundations?',
-                user_response: 'I\'ve been practicing speaking up more, even when it feels uncomfortable. I had that conversation with my partner about household tasks again, and this time I stayed present even when they got defensive. It was hard but we actually worked it out.',
-                ai_reasoning: 'Clear evidence of integration and application of previous insights. User demonstrates growth in conflict tolerance and boundary maintenance. This shows readiness for deeper work.',
-                timestamp: '2024-02-20T14:17:00Z',
-                question_context: { assessment_level: 2, previous_score: 85, quiz_phase: 'experience_analysis' }
-              },
-              {
-                id: 'msg_6',
-                question_number: 2,
-                question_type: 'experience_based',
-                question_text: 'That\'s remarkable progress! You\'ve moved from avoiding conflict to staying present through difficulty. Shadow work involves exploring the parts of ourselves we typically avoid or judge. What aspects of yourself do you find most challenging to accept?',
-                user_response: 'I struggle with my anger. I was taught that anger is bad, so I suppress it, but then it comes out as passive-aggression or I turn it on myself. I\'m starting to see that my anger might actually be telling me something important about my boundaries.',
-                ai_reasoning: 'Sophisticated understanding of shadow dynamics. User identifies suppressed emotion, recognizes unhealthy expressions, and shows insight into anger as boundary information. Ready for shadow integration work.',
-                timestamp: '2024-02-20T14:22:00Z',
-                question_context: { quiz_phase: 'shadow_exploration' }
-              }
-            ]
-          }
-        ],
-        total_conversations: 8,
-        avg_session_duration: 42,
-        progression_timeline: [
-          {
-            date: '2024-01-15',
-            event: 'Completed Level 1 Assessment',
-            details: 'Relationship Foundations - Score: 85/100'
-          },
-          {
-            date: '2024-02-20',
-            event: 'Completed Level 2 Assessment',
-            details: 'Shadow Work Integration - Score: 78/100'
-          },
-          {
-            date: '2024-03-01',
-            event: 'Started Level 3 Assessment',
-            details: 'Advanced Relationship Dynamics - In Progress'
-          }
-        ]
+      // Load real user assessment history from database
+      const { data: assessmentAttempts, error: attemptsError } = await supabase
+        .from('assessment_quiz_attempts')
+        .select(`
+          id,
+          assessment_id,
+          user_id,
+          started_at,
+          completed_at,
+          readiness_score,
+          emotional_maturity_score,
+          quiz_passed,
+          specific_feedback,
+          enhanced_assessments!inner(
+            name,
+            assessment_level,
+            category
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('started_at', { ascending: true })
+
+      if (attemptsError) {
+        console.error('Error loading assessment attempts:', attemptsError)
+        throw attemptsError
       }
 
-      setUserDetailedHistory(mockDetailedHistory)
+      // Load conversation history for each assessment
+      const assessmentsWithConversations: AssessmentAttempt[] = []
+
+      for (const attempt of assessmentAttempts || []) {
+        const { data: conversations, error: convError } = await supabase
+          .from('quiz_question_responses')
+          .select('*')
+          .eq('quiz_attempt_id', attempt.id)
+          .order('question_number', { ascending: true })
+
+        if (convError) {
+          console.error('Error loading conversations:', convError)
+          continue
+        }
+
+        const conversationHistory: ConversationMessage[] = conversations?.map(conv => ({
+          id: conv.id,
+          question_number: conv.question_number,
+          question_type: conv.question_type || 'set_question',
+          question_text: conv.question_text || '',
+          user_response: conv.user_response,
+          ai_reasoning: conv.response_analysis?.ai_reasoning || 'No AI reasoning recorded',
+          timestamp: conv.created_at,
+          question_context: conv.question_context
+        })) || []
+
+        assessmentsWithConversations.push({
+          id: attempt.id,
+          assessment_name: attempt.enhanced_assessments.name,
+          assessment_level: attempt.enhanced_assessments.assessment_level,
+          started_at: attempt.started_at,
+          completed_at: attempt.completed_at,
+          readiness_score: attempt.readiness_score,
+          emotional_maturity_score: attempt.emotional_maturity_score,
+          quiz_passed: attempt.quiz_passed,
+          specific_feedback: attempt.specific_feedback,
+          conversation_history: conversationHistory
+        })
+      }
+
+      // Calculate analytics
+      const totalConversations = assessmentsWithConversations.reduce(
+        (sum, assessment) => sum + assessment.conversation_history.length, 0
+      )
+
+      const avgSessionDuration = assessmentsWithConversations.length > 0
+        ? Math.round(assessmentsWithConversations.reduce((sum, assessment) => {
+            if (assessment.completed_at && assessment.started_at) {
+              const duration = new Date(assessment.completed_at).getTime() - new Date(assessment.started_at).getTime()
+              return sum + (duration / (1000 * 60)) // Convert to minutes
+            }
+            return sum
+          }, 0) / assessmentsWithConversations.filter(a => a.completed_at).length)
+        : 0
+
+      // Create progression timeline
+      const progressionTimeline = assessmentsWithConversations.map(assessment => ({
+        date: new Date(assessment.started_at).toLocaleDateString(),
+        event: assessment.completed_at ? 'Completed Assessment' : 'Started Assessment',
+        details: `${assessment.assessment_name} (Level ${assessment.assessment_level})${
+          assessment.readiness_score ? ` - Score: ${assessment.readiness_score}/100` : ''
+        }`
+      }))
+
+      const realDetailedHistory: UserDetailedHistory = {
+        user,
+        assessments: assessmentsWithConversations,
+        total_conversations: totalConversations,
+        avg_session_duration: avgSessionDuration,
+        progression_timeline: progressionTimeline
+      }
+
+      setUserDetailedHistory(realDetailedHistory)
     } catch (error) {
       console.error('Error loading detailed user history:', error)
+      // Fallback to empty state
+      setUserDetailedHistory({
+        user,
+        assessments: [],
+        total_conversations: 0,
+        avg_session_duration: 0,
+        progression_timeline: []
+      })
     } finally {
       setIsLoadingHistory(false)
     }
@@ -380,7 +448,7 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Users
@@ -388,6 +456,15 @@ export function UserManagement() {
           <TabsTrigger value="progress" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Progress
+          </TabsTrigger>
+          <TabsTrigger value="live" className="flex items-center gap-2 relative">
+            <Clock className="h-4 w-4" />
+            Live Monitor
+            {liveConversations.length > 0 && (
+              <Badge className="ml-1 h-5 w-5 p-0 text-xs bg-green-500 text-white">
+                {liveConversations.length}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -527,6 +604,120 @@ export function UserManagement() {
                   <div className="text-sm text-purple-700">Quiz Attempts</div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Live Monitor Tab */}
+        <TabsContent value="live" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Live Assessment Monitoring
+                {isLiveMonitoring && (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                    Live
+                  </Badge>
+                )}
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Monitor users taking assessments in real-time
+              </p>
+            </CardHeader>
+            <CardContent>
+              {liveConversations.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-lg font-medium">No Active Assessments</p>
+                  <p className="text-sm">Users currently taking assessments will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {liveConversations.map((conversation) => (
+                    <Card key={conversation.id} className="border-blue-200 bg-blue-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                            <div>
+                              <h4 className="font-medium">
+                                {conversation.enhanced_assessments.name}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                Level {conversation.enhanced_assessments.assessment_level} •
+                                Started {new Date(conversation.started_at).toLocaleTimeString()}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge variant="outline">
+                            User: {conversation.user_id.slice(-8)}
+                          </Badge>
+                        </div>
+
+                        {/* Live Conversation Progress */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Progress:</span>
+                            <span className="font-medium">
+                              {conversation.quiz_question_responses?.length || 0} questions answered
+                            </span>
+                          </div>
+
+                          {/* Latest Question/Response */}
+                          {conversation.quiz_question_responses && conversation.quiz_question_responses.length > 0 && (
+                            <div className="bg-white p-3 rounded border">
+                              <div className="text-xs text-gray-500 mb-1">Latest Question:</div>
+                              <div className="text-sm mb-2">
+                                {conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.question_text}
+                              </div>
+                              {conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.user_response && (
+                                <>
+                                  <div className="text-xs text-gray-500 mb-1">User Response:</div>
+                                  <div className="text-sm text-blue-600">
+                                    {conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.user_response}
+                                  </div>
+                                </>
+                              )}
+                              <div className="text-xs text-gray-400 mt-2">
+                                {new Date(conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.created_at).toLocaleTimeString()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Find user and view details
+                              const user = users.find(u => u.id === conversation.user_id)
+                              if (user) viewUserDetails(user)
+                            }}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View User
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Refresh this specific conversation
+                              loadLiveConversations()
+                            }}
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            Refresh
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
