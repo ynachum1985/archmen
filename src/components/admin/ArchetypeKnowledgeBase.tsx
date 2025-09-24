@@ -42,7 +42,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
   // Embedding settings state
   const [chunkSize, setChunkSize] = useState(1000)
   const [chunkOverlap, setChunkOverlap] = useState(200)
-  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')
+  const [embeddingModel, setEmbeddingModel] = useState('mistral-embed')
 
   // Media studio state
   const [showMediaStudio, setShowMediaStudio] = useState(false)
@@ -490,9 +490,17 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="text-embedding-3-small">text-embedding-3-small</SelectItem>
-                    <SelectItem value="text-embedding-3-large">text-embedding-3-large</SelectItem>
-                    <SelectItem value="text-embedding-ada-002">text-embedding-ada-002</SelectItem>
+                    {/* OpenAI Models */}
+                    <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small (1536d)</SelectItem>
+                    <SelectItem value="text-embedding-3-large">OpenAI: text-embedding-3-large (3072d)</SelectItem>
+                    <SelectItem value="text-embedding-ada-002">OpenAI: text-embedding-ada-002 (1536d)</SelectItem>
+
+                    {/* Mistral Models */}
+                    <SelectItem value="mistral-embed">Mistral: mistral-embed (1024d) - Best cost/accuracy</SelectItem>
+
+                    {/* Voyage AI Models */}
+                    <SelectItem value="voyage-3-lite">Voyage AI: voyage-3-lite (512d) - High relevance</SelectItem>
+                    <SelectItem value="voyage-3-large">Voyage AI: voyage-3-large (1024d) - Premium quality</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -804,7 +812,12 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                   onChange={(e) => setEmbeddingModel(e.target.value)}
                   className="h-8 text-xs border rounded px-1 w-full"
                 >
-                  <option value="text-embedding-3-small">3-small</option>
+                  <option value="text-embedding-3-small">OpenAI 3-small</option>
+                  <option value="text-embedding-3-large">OpenAI 3-large</option>
+                  <option value="text-embedding-ada-002">OpenAI ada-002</option>
+                  <option value="mistral-embed">Mistral embed</option>
+                  <option value="voyage-3-lite">Voyage 3-lite</option>
+                  <option value="voyage-3-large">Voyage 3-large</option>
                   <option value="text-embedding-3-large">3-large</option>
                   <option value="text-embedding-ada-002">ada-002</option>
                 </select>

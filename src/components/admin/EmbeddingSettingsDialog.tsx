@@ -45,7 +45,7 @@ export function EmbeddingSettingsDialog({
   const [settings, setSettings] = useState<EmbeddingSettings>({
     chunkSize: 1000,
     chunkOverlap: 200,
-    embeddingModel: 'text-embedding-3-small',
+    embeddingModel: 'mistral-embed',
     temperature: 0.7,
     maxTokens: 2000,
     enableSemanticSearch: true,
@@ -176,9 +176,17 @@ export function EmbeddingSettingsDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="text-embedding-3-small">text-embedding-3-small</SelectItem>
-                      <SelectItem value="text-embedding-3-large">text-embedding-3-large</SelectItem>
-                      <SelectItem value="text-embedding-ada-002">text-embedding-ada-002</SelectItem>
+                      {/* OpenAI Models */}
+                      <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small (1536d)</SelectItem>
+                      <SelectItem value="text-embedding-3-large">OpenAI: text-embedding-3-large (3072d)</SelectItem>
+                      <SelectItem value="text-embedding-ada-002">OpenAI: text-embedding-ada-002 (1536d)</SelectItem>
+
+                      {/* Mistral Models */}
+                      <SelectItem value="mistral-embed">Mistral: mistral-embed (1024d) - Best cost/accuracy</SelectItem>
+
+                      {/* Voyage AI Models */}
+                      <SelectItem value="voyage-3-lite">Voyage AI: voyage-3-lite (512d) - High relevance</SelectItem>
+                      <SelectItem value="voyage-3-large">Voyage AI: voyage-3-large (1024d) - Premium quality</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

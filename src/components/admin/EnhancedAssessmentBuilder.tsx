@@ -260,7 +260,7 @@ export function EnhancedAssessmentBuilder({
   // Embedding settings state
   const [chunkSize, setChunkSize] = useState(1000)
   const [chunkOverlap, setChunkOverlap] = useState(200)
-  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')
+  const [embeddingModel, setEmbeddingModel] = useState('mistral-embed')
   const [topK, setTopK] = useState(10)
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7)
 
@@ -1290,9 +1290,12 @@ Keep the response under 150 words and end with a specific question.`)
                     onChange={(e) => setEmbeddingModel(e.target.value)}
                     className="h-8 text-sm border border-gray-300 rounded-md px-2 w-full"
                   >
-                    <option value="text-embedding-3-small">3-small</option>
-                    <option value="text-embedding-3-large">3-large</option>
-                    <option value="text-embedding-ada-002">ada-002</option>
+                    <option value="text-embedding-3-small">OpenAI 3-small</option>
+                    <option value="text-embedding-3-large">OpenAI 3-large</option>
+                    <option value="text-embedding-ada-002">OpenAI ada-002</option>
+                    <option value="mistral-embed">Mistral embed</option>
+                    <option value="voyage-3-lite">Voyage 3-lite</option>
+                    <option value="voyage-3-large">Voyage 3-large</option>
                   </select>
                 </div>
                 <div>
