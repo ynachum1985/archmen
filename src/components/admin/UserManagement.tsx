@@ -428,6 +428,14 @@ export function UserManagement() {
     }
   }
 
+  const isUserLive = (userId: string) => {
+    return liveConversations.some(conv => conv.user_id === userId)
+  }
+
+  const getUserLiveConversation = (userId: string) => {
+    return liveConversations.find(conv => conv.user_id === userId)
+  }
+
   const viewUserDetails = async (user: User) => {
     setSelectedUser(user)
     setShowUserDetails(true)
@@ -448,23 +456,19 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Users
-          </TabsTrigger>
-          <TabsTrigger value="progress" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Progress
-          </TabsTrigger>
-          <TabsTrigger value="live" className="flex items-center gap-2 relative">
-            <Clock className="h-4 w-4" />
-            Live Monitor
             {liveConversations.length > 0 && (
               <Badge className="ml-1 h-5 w-5 p-0 text-xs bg-green-500 text-white">
                 {liveConversations.length}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="progress" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Progress
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -518,12 +522,36 @@ export function UserManagement() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Users className="h-5 w-5 text-blue-600" />
+                          <div className="relative">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              isUserLive(user.id) ? 'bg-green-100' : 'bg-blue-100'
+                            }`}>
+                              <Users className={`h-5 w-5 ${
+                                isUserLive(user.id) ? 'text-green-600' : 'text-blue-600'
+                              }`} />
+                            </div>
+                            {/* Live Indicator */}
+                            {isUserLive(user.id) && (
+                              <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white">
+                                <div className="h-full w-full bg-green-400 rounded-full animate-ping"></div>
+                              </div>
+                            )}
                           </div>
                           <div>
-                            <h3 className="font-medium">{user.user_metadata?.name || 'Unknown User'}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium">{user.user_metadata?.name || 'Unknown User'}</h3>
+                              {isUserLive(user.id) && (
+                                <Badge className="bg-green-500 text-white text-xs px-2 py-0">
+                                  LIVE
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-600">{user.email}</p>
+                            {isUserLive(user.id) && (
+                              <div className="text-xs text-green-600 font-medium mt-1">
+                                📝 Taking: {getUserLiveConversation(user.id)?.enhanced_assessments?.name}
+                              </div>
+                            )}
                             <div className="flex items-center gap-4 mt-1">
                               <span className="text-xs text-gray-500">
                                 Joined: {new Date(user.created_at).toLocaleDateString()}
@@ -608,119 +636,7 @@ export function UserManagement() {
           </Card>
         </TabsContent>
 
-        {/* Live Monitor Tab */}
-        <TabsContent value="live" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Live Assessment Monitoring
-                {isLiveMonitoring && (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
-                    Live
-                  </Badge>
-                )}
-              </CardTitle>
-              <p className="text-sm text-gray-600">
-                Monitor users taking assessments in real-time
-              </p>
-            </CardHeader>
-            <CardContent>
-              {liveConversations.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p className="text-lg font-medium">No Active Assessments</p>
-                  <p className="text-sm">Users currently taking assessments will appear here</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {liveConversations.map((conversation) => (
-                    <Card key={conversation.id} className="border-blue-200 bg-blue-50">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                            <div>
-                              <h4 className="font-medium">
-                                {conversation.enhanced_assessments.name}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                Level {conversation.enhanced_assessments.assessment_level} •
-                                Started {new Date(conversation.started_at).toLocaleTimeString()}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge variant="outline">
-                            User: {conversation.user_id.slice(-8)}
-                          </Badge>
-                        </div>
 
-                        {/* Live Conversation Progress */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Progress:</span>
-                            <span className="font-medium">
-                              {conversation.quiz_question_responses?.length || 0} questions answered
-                            </span>
-                          </div>
-
-                          {/* Latest Question/Response */}
-                          {conversation.quiz_question_responses && conversation.quiz_question_responses.length > 0 && (
-                            <div className="bg-white p-3 rounded border">
-                              <div className="text-xs text-gray-500 mb-1">Latest Question:</div>
-                              <div className="text-sm mb-2">
-                                {conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.question_text}
-                              </div>
-                              {conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.user_response && (
-                                <>
-                                  <div className="text-xs text-gray-500 mb-1">User Response:</div>
-                                  <div className="text-sm text-blue-600">
-                                    {conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.user_response}
-                                  </div>
-                                </>
-                              )}
-                              <div className="text-xs text-gray-400 mt-2">
-                                {new Date(conversation.quiz_question_responses[conversation.quiz_question_responses.length - 1]?.created_at).toLocaleTimeString()}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Find user and view details
-                              const user = users.find(u => u.id === conversation.user_id)
-                              if (user) viewUserDetails(user)
-                            }}
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            View User
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Refresh this specific conversation
-                              loadLiveConversations()
-                            }}
-                          >
-                            <RefreshCw className="h-3 w-3 mr-1" />
-                            Refresh
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
           <Card>
@@ -756,11 +672,17 @@ export function UserManagement() {
 
       {/* Enhanced User Details Dialog */}
       <Dialog open={showUserDetails} onOpenChange={setShowUserDetails}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               User Analysis Dashboard
+              {selectedUser && isUserLive(selectedUser.id) && (
+                <Badge className="bg-green-500 text-white">
+                  <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
+                  LIVE NOW
+                </Badge>
+              )}
             </DialogTitle>
             <DialogDescription>
               Comprehensive view of user interactions, assessments, and AI conversations
@@ -800,6 +722,76 @@ export function UserManagement() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Live Conversation Section */}
+              {selectedUser && isUserLive(selectedUser.id) && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                      Live Assessment in Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const liveConv = getUserLiveConversation(selectedUser.id)
+                      if (!liveConv) return null
+
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium text-green-800">
+                                {liveConv.enhanced_assessments?.name}
+                              </h4>
+                              <p className="text-sm text-green-600">
+                                Level {liveConv.enhanced_assessments?.assessment_level} •
+                                Started {new Date(liveConv.started_at).toLocaleTimeString()}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="border-green-300 text-green-700">
+                              {liveConv.quiz_question_responses?.length || 0} questions answered
+                            </Badge>
+                          </div>
+
+                          {/* Latest Question/Response */}
+                          {liveConv.quiz_question_responses && liveConv.quiz_question_responses.length > 0 && (
+                            <div className="bg-white p-3 rounded border border-green-200">
+                              <div className="text-xs text-green-600 font-medium mb-1">Latest Question:</div>
+                              <div className="text-sm mb-2">
+                                {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.question_text}
+                              </div>
+                              {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.user_response && (
+                                <>
+                                  <div className="text-xs text-green-600 font-medium mb-1">User Response:</div>
+                                  <div className="text-sm text-green-700 bg-green-50 p-2 rounded">
+                                    {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.user_response}
+                                  </div>
+                                </>
+                              )}
+                              <div className="text-xs text-gray-500 mt-2">
+                                {new Date(liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.created_at).toLocaleTimeString()}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => loadLiveConversations()}
+                              className="border-green-300 text-green-700 hover:bg-green-100"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              Refresh Live Data
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Loading State */}
               {isLoadingHistory && (
