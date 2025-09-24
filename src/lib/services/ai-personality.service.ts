@@ -61,8 +61,18 @@ export class AIPersonalityService {
       ...personality,
       open_ended_questions: personality.open_ended_questions || [],
       clarifying_questions: personality.clarifying_questions || [],
+      specific_questions: personality.specific_questions || [],
       goals: personality.goals || [],
-      behavior_traits: personality.behavior_traits || []
+      behavior_traits: personality.behavior_traits || [],
+      safety_limits: personality.safety_limits || [],
+      escalation_triggers: personality.escalation_triggers || [],
+      preferred_interventions: personality.preferred_interventions || [],
+      pacing_settings: personality.pacing_settings || {
+        questions_per_session: 8,
+        pause_between_questions: 30,
+        max_session_duration: 45,
+        break_frequency: 'every_15_minutes'
+      }
     }))
   }
 
@@ -83,8 +93,18 @@ export class AIPersonalityService {
       ...personality,
       open_ended_questions: personality.open_ended_questions || [],
       clarifying_questions: personality.clarifying_questions || [],
+      specific_questions: personality.specific_questions || [],
       goals: personality.goals || [],
-      behavior_traits: personality.behavior_traits || []
+      behavior_traits: personality.behavior_traits || [],
+      safety_limits: personality.safety_limits || [],
+      escalation_triggers: personality.escalation_triggers || [],
+      preferred_interventions: personality.preferred_interventions || [],
+      pacing_settings: personality.pacing_settings || {
+        questions_per_session: 8,
+        pause_between_questions: 30,
+        max_session_duration: 45,
+        break_frequency: 'every_15_minutes'
+      }
     }))
   }
 
@@ -134,8 +154,18 @@ export class AIPersonalityService {
       ...data,
       open_ended_questions: data.open_ended_questions || [],
       clarifying_questions: data.clarifying_questions || [],
+      specific_questions: data.specific_questions || [],
       goals: data.goals || [],
-      behavior_traits: data.behavior_traits || []
+      behavior_traits: data.behavior_traits || [],
+      safety_limits: data.safety_limits || [],
+      escalation_triggers: data.escalation_triggers || [],
+      preferred_interventions: data.preferred_interventions || [],
+      pacing_settings: data.pacing_settings || {
+        questions_per_session: 8,
+        pause_between_questions: 30,
+        max_session_duration: 45,
+        break_frequency: 'every_15_minutes'
+      }
     }
   }
 
@@ -160,8 +190,18 @@ export class AIPersonalityService {
       ...data,
       open_ended_questions: data.open_ended_questions || [],
       clarifying_questions: data.clarifying_questions || [],
+      specific_questions: data.specific_questions || [],
       goals: data.goals || [],
-      behavior_traits: data.behavior_traits || []
+      behavior_traits: data.behavior_traits || [],
+      safety_limits: data.safety_limits || [],
+      escalation_triggers: data.escalation_triggers || [],
+      preferred_interventions: data.preferred_interventions || [],
+      pacing_settings: data.pacing_settings || {
+        questions_per_session: 8,
+        pause_between_questions: 30,
+        max_session_duration: 45,
+        break_frequency: 'every_15_minutes'
+      }
     }
   }
 

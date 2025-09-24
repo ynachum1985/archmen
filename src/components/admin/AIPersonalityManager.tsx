@@ -549,9 +549,7 @@ function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
                 <SelectItem value="every_30_minutes">Every 30 minutes</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-gray-500 mt-1">
-              How often to suggest breaks during long assessment sessions to prevent user fatigue
-            </p>
+
           </div>
         </div>
       </div>
