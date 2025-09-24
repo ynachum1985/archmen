@@ -28,7 +28,8 @@ import {
   Target,
   TrendingUp,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  ChevronUp
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -93,7 +94,7 @@ export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showUserDetails, setShowUserDetails] = useState(false)
+  const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [userDetailedHistory, setUserDetailedHistory] = useState<UserDetailedHistory | null>(null)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [expandedAssessment, setExpandedAssessment] = useState<string | null>(null)
@@ -436,10 +437,15 @@ export function UserManagement() {
     return liveConversations.find(conv => conv.user_id === userId)
   }
 
-  const viewUserDetails = async (user: User) => {
-    setSelectedUser(user)
-    setShowUserDetails(true)
-    await loadDetailedUserHistory(user)
+  const toggleUserDetails = async (user: User) => {
+    if (expandedUser === user.id) {
+      setExpandedUser(null)
+      setUserDetailedHistory(null)
+    } else {
+      setExpandedUser(user.id)
+      setSelectedUser(user)
+      await loadDetailedUserHistory(user)
+    }
   }
 
   if (isLoading) {
@@ -476,50 +482,42 @@ export function UserManagement() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users" className="space-y-4">
+        <TabsContent value="users" className="space-y-6">
           {/* Search and Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                User Search
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Search by email or name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <Button onClick={loadUsers} variant="outline">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
+          <div className="pb-4 border-b border-gray-100">
+            <div className="flex items-center gap-2 mb-4">
+              <Search className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">User Search</h3>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search by email or name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-            </CardContent>
-          </Card>
+              <Button onClick={loadUsers} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
 
           {/* Users List */}
-          <div className="grid gap-4">
+          <div>
             {filteredUsers.length === 0 ? (
-              <Card>
-                <CardContent className="flex items-center justify-center p-8">
-                  <div className="text-center">
-                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">No users found</p>
-                    <p className="text-sm text-gray-500">Users will appear here as they sign up and use assessments</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No users found</p>
+                <p className="text-sm text-gray-500">Users will appear here as they sign up and use assessments</p>
+              </div>
             ) : (
               filteredUsers.map((user) => {
                 const progress = userProgress[user.id]
                 return (
-                  <Card key={user.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
+                  <div key={user.id} className="border-b border-gray-100 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="px-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="relative">
@@ -574,11 +572,6 @@ export function UserManagement() {
                               <div className="text-xs text-gray-500">
                                 {progress.quiz_attempts} quiz attempts
                               </div>
-                              {progress.emotional_maturity_score && (
-                                <Badge variant="outline" className="text-xs">
-                                  Maturity: {progress.emotional_maturity_score}/10
-                                </Badge>
-                              )}
                             </div>
                           )}
 
@@ -586,9 +579,13 @@ export function UserManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => viewUserDetails(user)}
+                              onClick={() => toggleUserDetails(user)}
                             >
-                              <Eye className="h-4 w-4" />
+                              {expandedUser === user.id ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </Button>
                             <Button
                               variant="outline"
@@ -600,8 +597,195 @@ export function UserManagement() {
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      {/* Inline User Details */}
+                      {expandedUser === user.id && (
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                          {/* Live Conversation Section */}
+                          {isUserLive(user.id) && (
+                            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                <h4 className="font-medium text-green-700">Live Assessment in Progress</h4>
+                              </div>
+                              {(() => {
+                                const liveConv = getUserLiveConversation(user.id)
+                                if (!liveConv) return null
+
+                                return (
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <h5 className="font-medium text-green-800">
+                                          {liveConv.enhanced_assessments?.name}
+                                        </h5>
+                                        <p className="text-sm text-green-600">
+                                          Level {liveConv.enhanced_assessments?.assessment_level} •
+                                          Started {new Date(liveConv.started_at).toLocaleTimeString()}
+                                        </p>
+                                      </div>
+                                      <div className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded">
+                                        {liveConv.quiz_question_responses?.length || 0} questions answered
+                                      </div>
+                                    </div>
+
+                                    {/* Latest Question/Response */}
+                                    {liveConv.quiz_question_responses && liveConv.quiz_question_responses.length > 0 && (
+                                      <div className="bg-white p-3 rounded border border-green-200">
+                                        <div className="text-xs text-green-600 font-medium mb-1">Latest Question:</div>
+                                        <div className="text-sm mb-2">
+                                          {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.question_text}
+                                        </div>
+                                        {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.user_response && (
+                                          <>
+                                            <div className="text-xs text-green-600 font-medium mb-1">User Response:</div>
+                                            <div className="text-sm text-green-700 bg-green-50 p-2 rounded">
+                                              {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.user_response}
+                                            </div>
+                                          </>
+                                        )}
+                                        <div className="text-xs text-gray-500 mt-2">
+                                          {new Date(liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.created_at).toLocaleTimeString()}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => loadLiveConversations()}
+                                      className="border-green-300 text-green-700 hover:bg-green-100"
+                                    >
+                                      <RefreshCw className="h-3 w-3 mr-1" />
+                                      Refresh Live Data
+                                    </Button>
+                                  </div>
+                                )
+                              })()}
+                            </div>
+                          )}
+
+                          {/* Loading State */}
+                          {isLoadingHistory && (
+                            <div className="flex items-center justify-center p-8">
+                              <div className="text-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                                <p className="text-gray-600">Loading detailed history...</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* User Analysis Content */}
+                          {userDetailedHistory && selectedUser && (
+                            <div className="space-y-6">
+                              {/* Progress Overview */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-blue-600">{userDetailedHistory.totalAssessments}</div>
+                                  <div className="text-sm text-gray-600">Assessments Completed</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-green-600">{userDetailedHistory.totalConversations}</div>
+                                  <div className="text-sm text-gray-600">AI Conversations</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-purple-600">{userDetailedHistory.averageSessionTime}m</div>
+                                  <div className="text-sm text-gray-600">Avg Session Time</div>
+                                </div>
+                              </div>
+
+                              {/* Assessment History */}
+                              <div>
+                                <h4 className="text-lg font-semibold mb-4">Assessment History</h4>
+                                <div className="space-y-4">
+                                  {userDetailedHistory.assessments.map((assessment, index) => (
+                                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                          <h5 className="font-medium">{assessment.name}</h5>
+                                          <p className="text-sm text-gray-600">
+                                            Level {assessment.level} • Completed {new Date(assessment.completedAt).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <div className="text-sm text-gray-600">Score: {assessment.score}/10</div>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setExpandedAssessment(expandedAssessment === assessment.id ? null : assessment.id)}
+                                          >
+                                            {expandedAssessment === assessment.id ? (
+                                              <ChevronUp className="h-4 w-4" />
+                                            ) : (
+                                              <ChevronDown className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </div>
+
+                                      {expandedAssessment === assessment.id && (
+                                        <div className="space-y-4 pt-4 border-t border-gray-100">
+                                          {/* AI Summary */}
+                                          <div className="bg-blue-50 p-3 rounded">
+                                            <h6 className="font-medium text-blue-800 mb-2">AI Assessment Summary</h6>
+                                            <p className="text-sm text-blue-700">{assessment.aiSummary}</p>
+                                          </div>
+
+                                          {/* Conversation History */}
+                                          <div>
+                                            <h6 className="font-medium mb-3">Conversation History</h6>
+                                            <div className="space-y-3">
+                                              {assessment.conversations.map((conv, convIndex) => (
+                                                <div key={convIndex} className="bg-gray-50 p-3 rounded">
+                                                  <div className="flex items-center justify-between mb-2">
+                                                    <div className="text-sm font-medium">Question {conv.questionNumber}</div>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      onClick={() => setExpandedConversation(expandedConversation === `${assessment.id}-${convIndex}` ? null : `${assessment.id}-${convIndex}`)}
+                                                    >
+                                                      {expandedConversation === `${assessment.id}-${convIndex}` ? (
+                                                        <ChevronUp className="h-3 w-3" />
+                                                      ) : (
+                                                        <ChevronDown className="h-3 w-3" />
+                                                      )}
+                                                    </Button>
+                                                  </div>
+
+                                                  <div className="text-sm mb-2">
+                                                    <strong>Q:</strong> {conv.question}
+                                                  </div>
+                                                  <div className="text-sm mb-2">
+                                                    <strong>A:</strong> {conv.response}
+                                                  </div>
+
+                                                  {expandedConversation === `${assessment.id}-${convIndex}` && (
+                                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                                      <div className="bg-yellow-50 p-3 rounded">
+                                                        <h6 className="font-medium text-yellow-800 mb-2">AI Analysis</h6>
+                                                        <p className="text-sm text-yellow-700">{conv.aiReasoning}</p>
+                                                      </div>
+                                                      <div className="mt-2 text-xs text-gray-500">
+                                                        Context: {conv.context}
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )
               })
             )}
@@ -638,384 +822,33 @@ export function UserManagement() {
 
 
 
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Authentication Settings</h4>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Configure user authentication and access controls
-                  </p>
-                  <Button variant="outline" size="sm">
-                    Configure Auth Settings
-                  </Button>
-                </div>
-                
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">User Permissions</h4>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Manage user roles and assessment access levels
-                  </p>
-                  <Button variant="outline" size="sm">
-                    Manage Permissions
-                  </Button>
-                </div>
+        <TabsContent value="settings" className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">User Management Settings</h3>
+            <div className="space-y-6">
+              <div className="py-4 border-b border-gray-100">
+                <h4 className="font-medium mb-2">Authentication Settings</h4>
+                <p className="text-sm text-gray-600 mb-3">
+                  Configure user authentication and access controls
+                </p>
+                <Button variant="outline" size="sm">
+                  Configure Auth Settings
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+
+              <div className="py-4 border-b border-gray-100">
+                <h4 className="font-medium mb-2">User Permissions</h4>
+                <p className="text-sm text-gray-600 mb-3">
+                  Manage user roles and assessment access levels
+                </p>
+                <Button variant="outline" size="sm">
+                  Manage Permissions
+                </Button>
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
-
-      {/* Enhanced User Details Dialog */}
-      <Dialog open={showUserDetails} onOpenChange={setShowUserDetails}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              User Analysis Dashboard
-              {selectedUser && isUserLive(selectedUser.id) && (
-                <Badge className="bg-green-500 text-white">
-                  <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
-                  LIVE NOW
-                </Badge>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              Comprehensive view of user interactions, assessments, and AI conversations
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedUser && (
-            <div className="space-y-6">
-              {/* User Overview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">User Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <Label className="text-xs text-gray-500">Email</Label>
-                      <p className="text-sm font-medium">{selectedUser.email}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-500">Name</Label>
-                      <p className="text-sm font-medium">{selectedUser.user_metadata?.name || 'Not set'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-500">Member Since</Label>
-                      <p className="text-sm font-medium">{new Date(selectedUser.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-500">Last Active</Label>
-                      <p className="text-sm font-medium">
-                        {selectedUser.last_sign_in_at
-                          ? new Date(selectedUser.last_sign_in_at).toLocaleDateString()
-                          : 'Never'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Live Conversation Section */}
-              {selectedUser && isUserLive(selectedUser.id) && (
-                <Card className="border-green-200 bg-green-50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-green-700">
-                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                      Live Assessment in Progress
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {(() => {
-                      const liveConv = getUserLiveConversation(selectedUser.id)
-                      if (!liveConv) return null
-
-                      return (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium text-green-800">
-                                {liveConv.enhanced_assessments?.name}
-                              </h4>
-                              <p className="text-sm text-green-600">
-                                Level {liveConv.enhanced_assessments?.assessment_level} •
-                                Started {new Date(liveConv.started_at).toLocaleTimeString()}
-                              </p>
-                            </div>
-                            <Badge variant="outline" className="border-green-300 text-green-700">
-                              {liveConv.quiz_question_responses?.length || 0} questions answered
-                            </Badge>
-                          </div>
-
-                          {/* Latest Question/Response */}
-                          {liveConv.quiz_question_responses && liveConv.quiz_question_responses.length > 0 && (
-                            <div className="bg-white p-3 rounded border border-green-200">
-                              <div className="text-xs text-green-600 font-medium mb-1">Latest Question:</div>
-                              <div className="text-sm mb-2">
-                                {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.question_text}
-                              </div>
-                              {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.user_response && (
-                                <>
-                                  <div className="text-xs text-green-600 font-medium mb-1">User Response:</div>
-                                  <div className="text-sm text-green-700 bg-green-50 p-2 rounded">
-                                    {liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.user_response}
-                                  </div>
-                                </>
-                              )}
-                              <div className="text-xs text-gray-500 mt-2">
-                                {new Date(liveConv.quiz_question_responses[liveConv.quiz_question_responses.length - 1]?.created_at).toLocaleTimeString()}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => loadLiveConversations()}
-                              className="border-green-300 text-green-700 hover:bg-green-100"
-                            >
-                              <RefreshCw className="h-3 w-3 mr-1" />
-                              Refresh Live Data
-                            </Button>
-                          </div>
-                        </div>
-                      )
-                    })()}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Loading State */}
-              {isLoadingHistory && (
-                <Card>
-                  <CardContent className="flex items-center justify-center p-8">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-                      <p className="text-gray-600">Loading detailed history...</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Detailed History */}
-              {userDetailedHistory && (
-                <>
-                  {/* Progress Statistics */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5" />
-                        Progress Statistics
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                          <div className="text-2xl font-bold text-blue-600">{userDetailedHistory.assessments.length}</div>
-                          <div className="text-sm text-blue-700">Assessments</div>
-                        </div>
-                        <div className="text-center p-3 bg-green-50 rounded-lg">
-                          <div className="text-2xl font-bold text-green-600">{userDetailedHistory.total_conversations}</div>
-                          <div className="text-sm text-green-700">AI Conversations</div>
-                        </div>
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                          <div className="text-2xl font-bold text-purple-600">{userDetailedHistory.avg_session_duration}m</div>
-                          <div className="text-sm text-purple-700">Avg Session</div>
-                        </div>
-                        <div className="text-center p-3 bg-orange-50 rounded-lg">
-                          <div className="text-2xl font-bold text-orange-600">
-                            {userDetailedHistory.assessments[userDetailedHistory.assessments.length - 1]?.emotional_maturity_score || 'N/A'}
-                          </div>
-                          <div className="text-sm text-orange-700">Latest Maturity</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Assessment History */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        Assessment History & AI Conversations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {userDetailedHistory.assessments.map((assessment) => (
-                        <div key={assessment.id} className="border rounded-lg p-4">
-                          <div
-                            className="flex items-center justify-between cursor-pointer"
-                            onClick={() => setExpandedAssessment(
-                              expandedAssessment === assessment.id ? null : assessment.id
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-2">
-                                {expandedAssessment === assessment.id ?
-                                  <ChevronDown className="h-4 w-4" /> :
-                                  <ChevronRight className="h-4 w-4" />
-                                }
-                                <Target className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium">{assessment.assessment_name}</h4>
-                                <p className="text-sm text-gray-600">
-                                  Level {assessment.assessment_level} •
-                                  {assessment.completed_at ?
-                                    ` Completed ${new Date(assessment.completed_at).toLocaleDateString()}` :
-                                    ' In Progress'
-                                  }
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              {assessment.readiness_score && (
-                                <Badge variant={assessment.quiz_passed ? "default" : "destructive"}>
-                                  {assessment.readiness_score}/100
-                                </Badge>
-                              )}
-                              <Badge variant="outline">
-                                Maturity: {assessment.emotional_maturity_score}/10
-                              </Badge>
-                            </div>
-                          </div>
-
-                          {expandedAssessment === assessment.id && (
-                            <div className="mt-4 space-y-4">
-                              {/* AI Feedback */}
-                              {assessment.specific_feedback && (
-                                <div className="bg-blue-50 p-3 rounded-lg">
-                                  <Label className="text-sm font-medium text-blue-700">AI Assessment Summary</Label>
-                                  <p className="text-sm text-blue-600 mt-1">{assessment.specific_feedback}</p>
-                                </div>
-                              )}
-
-                              {/* Conversation History */}
-                              <div className="space-y-3">
-                                <Label className="text-sm font-medium">Complete AI Conversation</Label>
-                                {assessment.conversation_history.map((message, index) => (
-                                  <div key={message.id} className="border-l-4 border-gray-200 pl-4 py-2">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <MessageSquare className="h-4 w-4 text-gray-500" />
-                                      <span className="text-xs text-gray-500">
-                                        Q{message.question_number} • {message.question_type} •
-                                        {new Date(message.timestamp).toLocaleTimeString()}
-                                      </span>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                      <div className="bg-gray-50 p-3 rounded">
-                                        <Label className="text-xs text-gray-600">AI Question:</Label>
-                                        <p className="text-sm mt-1">{message.question_text}</p>
-                                      </div>
-
-                                      {message.user_response && (
-                                        <div className="bg-blue-50 p-3 rounded">
-                                          <Label className="text-xs text-blue-600">User Response:</Label>
-                                          <p className="text-sm mt-1">{message.user_response}</p>
-                                        </div>
-                                      )}
-
-                                      {message.ai_reasoning && (
-                                        <div className="bg-yellow-50 p-3 rounded">
-                                          <Label className="text-xs text-yellow-700 flex items-center gap-1">
-                                            <Brain className="h-3 w-3" />
-                                            AI Reasoning & Analysis:
-                                          </Label>
-                                          <p className="text-sm mt-1 text-yellow-600">{message.ai_reasoning}</p>
-                                        </div>
-                                      )}
-
-                                      {message.question_context && (
-                                        <details className="text-xs">
-                                          <summary className="text-gray-500 cursor-pointer">Context Data</summary>
-                                          <pre className="text-gray-400 mt-1 bg-gray-100 p-2 rounded text-xs overflow-x-auto">
-                                            {JSON.stringify(message.question_context, null, 2)}
-                                          </pre>
-                                        </details>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* Progression Timeline */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5" />
-                        Progression Timeline
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {userDetailedHistory.progression_timeline.map((event, index) => (
-                          <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                            <Calendar className="h-4 w-4 text-gray-500" />
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">{event.event}</span>
-                                <span className="text-sm text-gray-500">{event.date}</span>
-                              </div>
-                              <p className="text-sm text-gray-600">{event.details}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
-
-              {/* Admin Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Admin Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => resetUserPassword(selectedUser.id)}
-                    >
-                      <Key className="h-4 w-4 mr-2" />
-                      Reset Password
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => toggleUserStatus(selectedUser.id, false)}
-                    >
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      Enable User
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => toggleUserStatus(selectedUser.id, true)}
-                    >
-                      <UserX className="h-4 w-4 mr-2" />
-                      Disable User
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
