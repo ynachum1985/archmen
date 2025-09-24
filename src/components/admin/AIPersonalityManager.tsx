@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X, Sparkles } from 'lucide-react'
 import { AIPersonality, NewAIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
-import { UnifiedPersonalityForm } from './UnifiedPersonalityForm'
+import { QuestionsDialog } from './QuestionsDialog'
 
 export function AIPersonalityManager() {
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
@@ -25,21 +25,23 @@ export function AIPersonalityManager() {
     description: '',
     open_ended_questions: [''],
     clarifying_questions: [''],
-    unified_questions: [],
+    specific_questions: [''],
     goals: [''],
     behavior_traits: [''],
-    system_prompt_template: '',
-    is_active: true,
-    personality_config: {
-      questioning_approach: '',
-      behavioral_traits: '',
-      goals_and_objectives: ''
+    safety_limits: [''],
+    escalation_triggers: [''],
+    preferred_interventions: [''],
+    pacing_settings: {
+      questions_per_session: 8,
+      pause_between_questions: 30,
+      max_session_duration: 45,
+      break_frequency: 'every_15_minutes'
     },
-    questioning_style: 'reflective',
-    tone: 'warm',
-    challenge_level: 5,
-    emotional_attunement: 7
+    system_prompt_template: '',
+    is_active: true
   })
+
+  const [showQuestionsDialog, setShowQuestionsDialog] = useState(false)
   
 
 
@@ -100,19 +102,20 @@ export function AIPersonalityManager() {
       description: '',
       open_ended_questions: [''],
       clarifying_questions: [''],
+      specific_questions: [''],
       goals: [''],
       behavior_traits: [''],
-      system_prompt_template: '',
-      is_active: true,
-      personality_config: {
-        questioning_approach: '',
-        behavioral_traits: '',
-        goals_and_objectives: ''
+      safety_limits: [''],
+      escalation_triggers: [''],
+      preferred_interventions: [''],
+      pacing_settings: {
+        questions_per_session: 8,
+        pause_between_questions: 30,
+        max_session_duration: 45,
+        break_frequency: 'every_15_minutes'
       },
-      questioning_style: 'reflective',
-      tone: 'warm',
-      challenge_level: 5,
-      emotional_attunement: 7
+      system_prompt_template: '',
+      is_active: true
     })
   }
 
@@ -123,35 +126,26 @@ export function AIPersonalityManager() {
     setNewPersonality({
       name: personality.name,
       description: personality.description,
-      open_ended_questions: personality.open_ended_questions,
-      clarifying_questions: personality.clarifying_questions,
-      goals: personality.goals,
-      behavior_traits: personality.behavior_traits,
+      open_ended_questions: personality.open_ended_questions || [],
+      clarifying_questions: personality.clarifying_questions || [],
+      specific_questions: personality.specific_questions || [],
+      goals: personality.goals || [],
+      behavior_traits: personality.behavior_traits || [],
+      safety_limits: personality.safety_limits || [],
+      escalation_triggers: personality.escalation_triggers || [],
+      preferred_interventions: personality.preferred_interventions || [],
+      pacing_settings: personality.pacing_settings || {
+        questions_per_session: 8,
+        pause_between_questions: 30,
+        max_session_duration: 45,
+        break_frequency: 'every_15_minutes'
+      },
       system_prompt_template: personality.system_prompt_template,
       is_active: personality.is_active
     })
   }
 
-  const addArrayItem = (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>) => {
-    setNewPersonality(prev => ({
-      ...prev,
-      [field]: [...(prev[field] || []), '']
-    }))
-  }
 
-  const updateArrayItem = (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>, index: number, value: string) => {
-    setNewPersonality(prev => ({
-      ...prev,
-      [field]: (prev[field] || []).map((item, i) => i === index ? value : item)
-    }))
-  }
-
-  const removeArrayItem = (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>, index: number) => {
-    setNewPersonality(prev => ({
-      ...prev,
-      [field]: (prev[field] || []).filter((_, i) => i !== index)
-    }))
-  }
 
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">Loading personalities...</div>
@@ -180,9 +174,10 @@ export function AIPersonalityManager() {
                   Configure a new AI personality for assessments.
                 </DialogDescription>
               </DialogHeader>
-              <UnifiedPersonalityForm
+              <PersonalityForm
                 personality={newPersonality}
                 onChange={setNewPersonality}
+                onOpenQuestionsDialog={() => setShowQuestionsDialog(true)}
               />
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
@@ -282,9 +277,10 @@ export function AIPersonalityManager() {
               Modify the AI personality configuration.
             </DialogDescription>
           </DialogHeader>
-          <UnifiedPersonalityForm
+          <PersonalityForm
             personality={newPersonality}
             onChange={setNewPersonality}
+            onOpenQuestionsDialog={() => setShowQuestionsDialog(true)}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingPersonality(null)}>
@@ -296,6 +292,262 @@ export function AIPersonalityManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Questions Dialog */}
+      <QuestionsDialog
+        open={showQuestionsDialog}
+        onOpenChange={setShowQuestionsDialog}
+        personality={newPersonality}
+        onChange={setNewPersonality}
+      />
+    </div>
+  )
+}
+
+interface PersonalityFormProps {
+  personality: NewAIPersonality
+  onChange: (personality: NewAIPersonality) => void
+  onOpenQuestionsDialog: () => void
+}
+
+function PersonalityForm({ personality, onChange, onOpenQuestionsDialog }: PersonalityFormProps) {
+  const addArrayItem = (field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>) => {
+    onChange({
+      ...personality,
+      [field]: [...(personality[field] || []), '']
+    })
+  }
+
+  const updateArrayItem = (
+    field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>,
+    index: number,
+    value: string
+  ) => {
+    const items = [...(personality[field] || [])]
+    items[index] = value
+    onChange({
+      ...personality,
+      [field]: items
+    })
+  }
+
+  const removeArrayItem = (
+    field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>,
+    index: number
+  ) => {
+    const items = [...(personality[field] || [])]
+    items.splice(index, 1)
+    onChange({
+      ...personality,
+      [field]: items
+    })
+  }
+
+  const renderArrayField = (
+    field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>,
+    label: string,
+    placeholder: string
+  ) => (
+    <div className="space-y-3">
+      <Label className="text-base font-medium">{label}</Label>
+      {(personality[field] || []).map((item, index) => (
+        <div key={index} className="flex gap-2">
+          <Textarea
+            value={item}
+            onChange={(e) => updateArrayItem(field, index, e.target.value)}
+            placeholder={placeholder}
+            className="flex-1"
+            rows={2}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => removeArrayItem(field, index)}
+            className="self-start mt-1"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => addArrayItem(field)}
+        className="w-full"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add {label.slice(0, -1)}
+      </Button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Personality Name</Label>
+          <Input
+            id="name"
+            value={personality.name}
+            onChange={(e) => onChange({ ...personality, name: e.target.value })}
+            placeholder="e.g., Empathetic Guide"
+            className="mt-1"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="active"
+            checked={personality.is_active}
+            onCheckedChange={(checked) => onChange({ ...personality, is_active: checked })}
+          />
+          <Label htmlFor="active">Active</Label>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={personality.description}
+          onChange={(e) => onChange({ ...personality, description: e.target.value })}
+          placeholder="Describe this AI personality's approach and style..."
+          className="mt-1"
+          rows={3}
+        />
+      </div>
+
+      {/* Questions Section */}
+      <div className="space-y-3">
+        <Label className="text-base font-medium">Questions</Label>
+        <div className="p-4 border rounded-lg bg-gray-50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-600">
+              Configure open-ended, clarifying, and specific questions
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onOpenQuestionsDialog}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Manage Questions
+            </Button>
+          </div>
+          <div className="text-xs text-gray-500">
+            Open-ended: {personality.open_ended_questions?.length || 0} questions •
+            Clarifying: {personality.clarifying_questions?.length || 0} questions •
+            Specific: {personality.specific_questions?.length || 0} questions
+          </div>
+        </div>
+      </div>
+
+      {/* Array Fields */}
+      <div className="space-y-6">
+        {renderArrayField('goals', 'Goals', 'Enter a goal this personality aims to accomplish...')}
+        {renderArrayField('behavior_traits', 'Behavior Traits', 'Enter a behavior trait that describes this personality...')}
+        {renderArrayField('safety_limits', 'Safety Limits', 'Enter a safety guideline or limit...')}
+        {renderArrayField('escalation_triggers', 'Escalation Triggers', 'Enter a situation that should trigger escalation...')}
+        {renderArrayField('preferred_interventions', 'Preferred Interventions', 'Enter a preferred intervention strategy...')}
+      </div>
+
+      {/* Pacing Settings */}
+      <div className="space-y-3">
+        <Label className="text-base font-medium">Pacing Settings</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <Label htmlFor="questionsPerSession">Questions per Session</Label>
+            <Input
+              id="questionsPerSession"
+              type="number"
+              min="1"
+              max="20"
+              value={personality.pacing_settings.questions_per_session}
+              onChange={(e) => onChange({
+                ...personality,
+                pacing_settings: {
+                  ...personality.pacing_settings,
+                  questions_per_session: parseInt(e.target.value) || 8
+                }
+              })}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="pauseBetween">Pause Between (seconds)</Label>
+            <Input
+              id="pauseBetween"
+              type="number"
+              min="0"
+              max="300"
+              value={personality.pacing_settings.pause_between_questions}
+              onChange={(e) => onChange({
+                ...personality,
+                pacing_settings: {
+                  ...personality.pacing_settings,
+                  pause_between_questions: parseInt(e.target.value) || 30
+                }
+              })}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="maxDuration">Max Duration (minutes)</Label>
+            <Input
+              id="maxDuration"
+              type="number"
+              min="5"
+              max="120"
+              value={personality.pacing_settings.max_session_duration}
+              onChange={(e) => onChange({
+                ...personality,
+                pacing_settings: {
+                  ...personality.pacing_settings,
+                  max_session_duration: parseInt(e.target.value) || 45
+                }
+              })}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="breakFrequency">Break Frequency</Label>
+            <Select
+              value={personality.pacing_settings.break_frequency}
+              onValueChange={(value) => onChange({
+                ...personality,
+                pacing_settings: {
+                  ...personality.pacing_settings,
+                  break_frequency: value
+                }
+              })}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="never">Never</SelectItem>
+                <SelectItem value="every_10_minutes">Every 10 minutes</SelectItem>
+                <SelectItem value="every_15_minutes">Every 15 minutes</SelectItem>
+                <SelectItem value="every_20_minutes">Every 20 minutes</SelectItem>
+                <SelectItem value="every_30_minutes">Every 30 minutes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="systemPrompt">System Prompt Template</Label>
+        <Textarea
+          id="systemPrompt"
+          value={personality.system_prompt_template}
+          onChange={(e) => onChange({ ...personality, system_prompt_template: e.target.value })}
+          placeholder="Define the system prompt template for this personality..."
+          className="mt-1 font-mono text-sm"
+          rows={8}
+        />
+      </div>
     </div>
   )
 }

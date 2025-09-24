@@ -1,14 +1,10 @@
 import { createClient } from '@/lib/supabase/client'
 
-export interface UnifiedQuestion {
-  id: string
-  question_text: string
-  question_type: 'open_ended' | 'clarifying' | 'specific' | 'follow_up'
-  category: string
-  difficulty_level: 'easy' | 'moderate' | 'challenging' | 'deep'
-  emotional_tone: 'neutral' | 'warm' | 'curious' | 'challenging' | 'supportive'
-  is_active: boolean
-  order_index: number
+export interface PacingSettings {
+  questions_per_session: number
+  pause_between_questions: number // seconds
+  max_session_duration: number // minutes
+  break_frequency: string // e.g., 'every_15_minutes'
 }
 
 export interface AIPersonality {
@@ -17,32 +13,17 @@ export interface AIPersonality {
   description: string
   open_ended_questions: string[]
   clarifying_questions: string[]
-  unified_questions?: UnifiedQuestion[]
+  specific_questions: string[]
   goals: string[]
   behavior_traits: string[]
+  safety_limits: string[]
+  escalation_triggers: string[]
+  preferred_interventions: string[]
+  pacing_settings: PacingSettings
   system_prompt_template: string
   is_active: boolean
   created_at: string
   updated_at: string
-
-  // Enhanced fields for RAG and UX
-  personality_config?: {
-    questioning_approach?: string
-    behavioral_traits?: string
-    goals_and_objectives?: string
-  }
-  parsed_questions?: string[]
-  parsed_traits?: string[]
-  parsed_goals?: string[]
-  embedding?: number[]
-
-  // Existing schema fields
-  questioning_style?: string
-  tone?: string
-  challenge_level?: number
-  emotional_attunement?: number
-  sample_openers?: string[]
-  sample_followups?: string[]
 }
 
 export interface NewAIPersonality {
@@ -50,24 +31,15 @@ export interface NewAIPersonality {
   description: string
   open_ended_questions: string[]
   clarifying_questions: string[]
-  unified_questions?: UnifiedQuestion[]
+  specific_questions: string[]
   goals: string[]
   behavior_traits: string[]
+  safety_limits: string[]
+  escalation_triggers: string[]
+  preferred_interventions: string[]
+  pacing_settings: PacingSettings
   system_prompt_template: string
   is_active?: boolean
-
-  // Enhanced fields for UX
-  personality_config?: {
-    questioning_approach?: string
-    behavioral_traits?: string
-    goals_and_objectives?: string
-  }
-
-  // Optional existing schema fields
-  questioning_style?: string
-  tone?: string
-  challenge_level?: number
-  emotional_attunement?: number
 }
 
 export class AIPersonalityService {
