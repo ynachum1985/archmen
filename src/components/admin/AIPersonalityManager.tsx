@@ -25,8 +25,8 @@ export function AIPersonalityManager() {
     open_ended_questions: [''],
     clarifying_questions: [''],
     specific_questions: [''],
-    goals: [''],
-    behavior_traits: [''],
+    goals: [],
+    behavior_traits: [],
     safety_limits: [''],
     escalation_triggers: [''],
     preferred_interventions: [''],
@@ -100,8 +100,8 @@ export function AIPersonalityManager() {
       open_ended_questions: [''],
       clarifying_questions: [''],
       specific_questions: [''],
-      goals: [''],
-      behavior_traits: [''],
+      goals: [],
+      behavior_traits: [],
       safety_limits: [''],
       escalation_triggers: [''],
       preferred_interventions: [''],
@@ -240,24 +240,29 @@ export function AIPersonalityManager() {
                   </div>
                 </div>
               </div>
-              <CardDescription>{personality.description}</CardDescription>
+              <CardDescription className="line-clamp-2">
+                {personality.system_prompt_template || 'No system prompt configured'}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">Questions</span>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm font-medium">Questions</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Total: {(personality.open_ended_questions || []).length + (personality.clarifying_questions || []).length + (personality.specific_questions || []).length} questions
+                </div>
               </div>
-              <div className="text-sm text-gray-600">
-                {(personality.open_ended_questions || []).length} open-ended, {(personality.clarifying_questions || []).length} clarifying
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">Goals</span>
-              </div>
-              <div className="text-sm text-gray-600">
-                {(personality.goals || []).slice(0, 2).join(', ')}
-                {(personality.goals || []).length > 2 && ` +${(personality.goals || []).length - 2} more`}
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium">Safety & Pacing</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {(personality.safety_limits || []).length} safety limits • {personality.pacing_settings?.questions_per_session || 8} questions/session
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -297,76 +302,7 @@ interface PersonalityFormProps {
 }
 
 function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
-  const addArrayItem = (field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>) => {
-    onChange({
-      ...personality,
-      [field]: [...(personality[field] || []), '']
-    })
-  }
 
-  const updateArrayItem = (
-    field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>,
-    index: number,
-    value: string
-  ) => {
-    const items = [...(personality[field] || [])]
-    items[index] = value
-    onChange({
-      ...personality,
-      [field]: items
-    })
-  }
-
-  const removeArrayItem = (
-    field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>,
-    index: number
-  ) => {
-    const items = [...(personality[field] || [])]
-    items.splice(index, 1)
-    onChange({
-      ...personality,
-      [field]: items
-    })
-  }
-
-  const renderArrayField = (
-    field: keyof Pick<NewAIPersonality, 'goals' | 'behavior_traits' | 'safety_limits' | 'escalation_triggers' | 'preferred_interventions'>,
-    label: string,
-    placeholder: string
-  ) => (
-    <div className="space-y-3">
-      <Label className="text-base font-medium">{label}</Label>
-      {(personality[field] || []).map((item, index) => (
-        <div key={index} className="flex gap-2">
-          <Textarea
-            value={item}
-            onChange={(e) => updateArrayItem(field, index, e.target.value)}
-            placeholder={placeholder}
-            className="flex-1"
-            rows={2}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => removeArrayItem(field, index)}
-            className="self-start mt-1"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => addArrayItem(field)}
-        className="w-full"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add {label.slice(0, -1)}
-      </Button>
-    </div>
-  )
 
   return (
     <div className="space-y-6">
@@ -431,12 +367,7 @@ function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
         </p>
       </div>
 
-      {/* Array Fields */}
-      <div className="space-y-6">
-        {renderArrayField('goals', 'Goals', 'Enter a goal this personality aims to accomplish...')}
-        {renderArrayField('behavior_traits', 'Behavior Traits', 'Enter a behavior trait that describes this personality...')}
-
-        {/* Combined Safety Section */}
+      {/* Combined Safety Section */}
         <div className="space-y-3">
           <Label className="text-base font-medium">Safety, Triggers & Interventions</Label>
           <Textarea
