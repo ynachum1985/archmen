@@ -72,7 +72,11 @@ interface EnhancedAssessmentConfig {
 
   // AI Personality
   selectedPersonalityId?: string
-  
+
+  // Live Assessment LLM Configuration
+  liveProvider?: LLMProvider
+  liveModel?: string
+
   // Questioning Examples
   questionExamples: {
     openEnded: string[]
@@ -155,6 +159,11 @@ QUESTIONING STRATEGY:
 
   // AI Personality
   selectedPersonalityId: undefined,
+
+  // Live Assessment LLM Configuration
+  liveProvider: 'openai',
+  liveModel: 'gpt-4-turbo-preview',
+
   questionExamples: {
     openEnded: [
       "Tell me about a time when you felt most authentic and true to yourself. What were you doing, and what made that moment special?",
@@ -234,7 +243,9 @@ export function EnhancedAssessmentBuilder({
       general_gateways_enabled: assessment.general_gateways_enabled ?? defaultConfig.general_gateways_enabled,
       quiz_enabled: assessment.quiz_enabled ?? defaultConfig.quiz_enabled,
       quiz_passing_score: assessment.quiz_passing_score || defaultConfig.quiz_passing_score,
-      quiz_max_attempts: assessment.quiz_max_attempts || defaultConfig.quiz_max_attempts
+      quiz_max_attempts: assessment.quiz_max_attempts || defaultConfig.quiz_max_attempts,
+      liveProvider: assessment.liveProvider || defaultConfig.liveProvider,
+      liveModel: assessment.liveModel || defaultConfig.liveModel
     }
   })
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
@@ -263,6 +274,10 @@ export function EnhancedAssessmentBuilder({
   const [isTestingLLM, setIsTestingLLM] = useState<boolean>(false)
   const [availableProviders, setAvailableProviders] = useState<LLMProvider[]>([])
   const [showLLMComparison, setShowLLMComparison] = useState<boolean>(false)
+
+  // Live Assessment LLM Configuration states
+  const [liveProvider, setLiveProvider] = useState<LLMProvider>('openai')
+  const [liveModel, setLiveModel] = useState<string>('gpt-4-turbo-preview')
 
   // Chat Testing state
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
@@ -352,6 +367,21 @@ Keep the response under 150 words and end with a specific question.`)
       initializeChat()
     }
   }, [selectedProvider, selectedModel, assessment, isApiActivated])
+
+  // Sync live provider and model with config
+  useEffect(() => {
+    setLiveProvider(config.liveProvider || 'openai')
+    setLiveModel(config.liveModel || 'gpt-4-turbo-preview')
+  }, [config.liveProvider, config.liveModel])
+
+  // Update config when live provider/model changes
+  useEffect(() => {
+    setConfig(prev => ({
+      ...prev,
+      liveProvider,
+      liveModel
+    }))
+  }, [liveProvider, liveModel])
 
   // Initialize chat session
   const initializeChat = async () => {
@@ -1013,12 +1043,78 @@ Keep the response under 150 words and end with a specific question.`)
               </Select>
             </div>
 
+            {/* Live Assessment LLM Configuration */}
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Live Assessment LLM Configuration</Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Choose the provider and model that will be used for live assessments with users
+                </p>
+              </div>
 
+              <div className="flex items-center gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs">LLM Provider</Label>
+                  <Select value={liveProvider} onValueChange={setLiveProvider}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Select provider" />
+                    </SelectTrigger>
+                    <SelectContent className="animate-none">
+                      {availableProviders.map((provider) => (
+                        <SelectItem key={provider} value={provider}>
+                          {LLM_PROVIDERS[provider as keyof typeof LLM_PROVIDERS].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
+                <div className="space-y-1">
+                  <Label className="text-xs">Model</Label>
+                  <Select value={liveModel} onValueChange={setLiveModel}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent className="animate-none">
+                      {liveProvider && Object.keys(LLM_PROVIDERS[liveProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
+                {liveProvider && liveModel && (
+                  <div className="text-xs text-gray-500">
+                    {(() => {
+                      const provider = LLM_PROVIDERS[liveProvider as keyof typeof LLM_PROVIDERS]
+                      const model = provider?.models[liveModel as keyof typeof provider.models]
+                      if (model && 'inputCost' in model && 'outputCost' in model) {
+                        return (
+                          <>
+                            <div>Cost: ${model.inputCost}/1K in</div>
+                            <div>${model.outputCost}/1K out</div>
+                          </>
+                        )
+                      } else if (model && 'inputCost' in model) {
+                        return <div>Cost: ${model.inputCost}/1K tokens</div>
+                      } else {
+                        return <div>Free (Local)</div>
+                      }
+                    })()}
+                  </div>
+                )}
+              </div>
 
-
-
+              {liveProvider && liveModel && (
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    <strong>Live Configuration:</strong> Users will experience assessments using {LLM_PROVIDERS[liveProvider].name} - {liveModel}
+                  </p>
+                </div>
+              )}
+            </div>
 
         </TabsContent>
 
