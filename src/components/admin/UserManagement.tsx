@@ -198,12 +198,17 @@ export function UserManagement() {
 
       // Get unique user IDs
       const uniqueUserIds = [...new Set(data?.map(item => item.user_id) || [])]
-      
+
       // Create comprehensive mock user data with one detailed example
+      const testUserId = '1db3df34-7431-4870-9e5b-d2dcb083e3db'
+
+      // Filter out the test user ID if it exists in uniqueUserIds to prevent duplicates
+      const filteredUniqueIds = uniqueUserIds.filter(id => id !== testUserId)
+
       const mockUsers: User[] = [
         // Real user with test data for demonstration
         {
-          id: '1db3df34-7431-4870-9e5b-d2dcb083e3db',
+          id: testUserId,
           email: 'yossinac@gmail.com',
           created_at: '2024-01-10T09:00:00Z',
           last_sign_in_at: '2024-03-15T14:30:00Z',
@@ -211,8 +216,8 @@ export function UserManagement() {
           user_metadata: { name: 'Test User with Real Data' },
           app_metadata: { role: 'user' }
         },
-        // Additional mock users
-        ...uniqueUserIds.slice(0, 9).map((userId, index) => ({
+        // Additional mock users (excluding the test user to prevent duplicates)
+        ...filteredUniqueIds.slice(0, 9).map((userId, index) => ({
           id: userId,
           email: `user${index + 2}@example.com`,
           created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -463,7 +468,7 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Users
@@ -472,10 +477,6 @@ export function UserManagement() {
                 {liveConversations.length}
               </Badge>
             )}
-          </TabsTrigger>
-          <TabsTrigger value="progress" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Progress
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -814,35 +815,6 @@ export function UserManagement() {
             )}
           </div>
         </TabsContent>
-
-        <TabsContent value="progress" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Progress Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{users.length}</div>
-                  <div className="text-sm text-blue-700">Total Users</div>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {Object.values(userProgress).reduce((sum, p) => sum + p.assessments_completed, 0)}
-                  </div>
-                  <div className="text-sm text-green-700">Assessments Completed</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {Object.values(userProgress).reduce((sum, p) => sum + p.quiz_attempts, 0)}
-                  </div>
-                  <div className="text-sm text-purple-700">Quiz Attempts</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
 
 
         <TabsContent value="settings" className="space-y-6">

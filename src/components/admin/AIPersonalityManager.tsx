@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X, Sparkles } from 'lucide-react'
 import { AIPersonality, NewAIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
+import { UnifiedPersonalityForm } from './UnifiedPersonalityForm'
 
 export function AIPersonalityManager() {
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
@@ -24,6 +25,7 @@ export function AIPersonalityManager() {
     description: '',
     open_ended_questions: [''],
     clarifying_questions: [''],
+    unified_questions: [],
     goals: [''],
     behavior_traits: [''],
     system_prompt_template: '',
@@ -178,12 +180,9 @@ export function AIPersonalityManager() {
                   Configure a new AI personality for assessments.
                 </DialogDescription>
               </DialogHeader>
-              <PersonalityForm
+              <UnifiedPersonalityForm
                 personality={newPersonality}
                 onChange={setNewPersonality}
-                onAddArrayItem={addArrayItem}
-                onUpdateArrayItem={updateArrayItem}
-                onRemoveArrayItem={removeArrayItem}
               />
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
@@ -283,12 +282,9 @@ export function AIPersonalityManager() {
               Modify the AI personality configuration.
             </DialogDescription>
           </DialogHeader>
-          <PersonalityForm
+          <UnifiedPersonalityForm
             personality={newPersonality}
             onChange={setNewPersonality}
-            onAddArrayItem={addArrayItem}
-            onUpdateArrayItem={updateArrayItem}
-            onRemoveArrayItem={removeArrayItem}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingPersonality(null)}>
@@ -304,173 +300,4 @@ export function AIPersonalityManager() {
   )
 }
 
-interface PersonalityFormProps {
-  personality: NewAIPersonality
-  onChange: (personality: NewAIPersonality) => void
-  onAddArrayItem: (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>) => void
-  onUpdateArrayItem: (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>, index: number, value: string) => void
-  onRemoveArrayItem: (field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>, index: number) => void
-}
 
-function PersonalityForm({ personality, onChange, onAddArrayItem, onUpdateArrayItem, onRemoveArrayItem }: PersonalityFormProps) {
-  const renderArrayField = (
-    field: keyof Pick<NewAIPersonality, 'open_ended_questions' | 'clarifying_questions' | 'goals' | 'behavior_traits'>,
-    label: string,
-    placeholder: string
-  ) => (
-    <div className="space-y-3">
-      <Label className="text-base font-medium">{label}</Label>
-      {(personality[field] || []).map((item, index) => (
-        <div key={index} className="flex gap-2">
-          <Textarea
-            value={item}
-            onChange={(e) => onUpdateArrayItem(field, index, e.target.value)}
-            placeholder={placeholder}
-            className="flex-1"
-            rows={2}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onRemoveArrayItem(field, index)}
-            className="self-start mt-1"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => onAddArrayItem(field)}
-        className="w-full"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add {label.slice(0, -1)}
-      </Button>
-    </div>
-  )
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Personality Name</Label>
-          <Input
-            id="name"
-            value={personality.name}
-            onChange={(e) => onChange({ ...personality, name: e.target.value })}
-            placeholder="e.g., Empathetic Guide"
-            className="mt-1"
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="active"
-            checked={personality.is_active}
-            onCheckedChange={(checked) => onChange({ ...personality, is_active: checked })}
-          />
-          <Label htmlFor="active">Active</Label>
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={personality.description}
-          onChange={(e) => onChange({ ...personality, description: e.target.value })}
-          placeholder="Describe this AI personality's approach and style..."
-          className="mt-1"
-          rows={3}
-        />
-      </div>
-
-      {/* Individual Fields Mode */}
-      <div className="space-y-6">
-        {renderArrayField('open_ended_questions', 'Open-Ended Questions', 'Enter an open-ended question this personality would ask...')}
-        {renderArrayField('clarifying_questions', 'Clarifying Questions', 'Enter a clarifying question this personality would ask...')}
-        {renderArrayField('goals', 'Goals', 'Enter a goal this personality aims to accomplish...')}
-        {renderArrayField('behavior_traits', 'Behavior Traits', 'Enter a behavior trait that describes this personality...')}
-      </div>
-
-      {/* Enhanced Configuration Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="questioningStyle">Questioning Style</Label>
-          <Select
-            value={personality.questioning_style || 'reflective'}
-            onValueChange={(value) => onChange({ ...personality, questioning_style: value })}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="reflective">Reflective</SelectItem>
-              <SelectItem value="direct">Direct</SelectItem>
-              <SelectItem value="exploratory">Exploratory</SelectItem>
-              <SelectItem value="analytical">Analytical</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="tone">Tone</Label>
-          <Select
-            value={personality.tone || 'warm'}
-            onValueChange={(value) => onChange({ ...personality, tone: value })}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="warm">Warm</SelectItem>
-              <SelectItem value="professional">Professional</SelectItem>
-              <SelectItem value="casual">Casual</SelectItem>
-              <SelectItem value="formal">Formal</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="challengeLevel">Challenge Level (1-10)</Label>
-          <Input
-            id="challengeLevel"
-            type="number"
-            min="1"
-            max="10"
-            value={personality.challenge_level || 5}
-            onChange={(e) => onChange({ ...personality, challenge_level: parseInt(e.target.value) || 5 })}
-            className="mt-1"
-          />
-        </div>
-        <div>
-          <Label htmlFor="emotionalAttunement">Emotional Attunement (1-10)</Label>
-          <Input
-            id="emotionalAttunement"
-            type="number"
-            min="1"
-            max="10"
-            value={personality.emotional_attunement || 7}
-            onChange={(e) => onChange({ ...personality, emotional_attunement: parseInt(e.target.value) || 7 })}
-            className="mt-1"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="systemPrompt">System Prompt Template</Label>
-        <Textarea
-          id="systemPrompt"
-          value={personality.system_prompt_template}
-          onChange={(e) => onChange({ ...personality, system_prompt_template: e.target.value })}
-          placeholder="Define the system prompt template for this personality..."
-          className="mt-1 font-mono text-sm"
-          rows={8}
-        />
-      </div>
-    </div>
-  )
-}

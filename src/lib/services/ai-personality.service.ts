@@ -1,11 +1,23 @@
 import { createClient } from '@/lib/supabase/client'
 
+export interface UnifiedQuestion {
+  id: string
+  question_text: string
+  question_type: 'open_ended' | 'clarifying' | 'specific' | 'follow_up'
+  category: string
+  difficulty_level: 'easy' | 'moderate' | 'challenging' | 'deep'
+  emotional_tone: 'neutral' | 'warm' | 'curious' | 'challenging' | 'supportive'
+  is_active: boolean
+  order_index: number
+}
+
 export interface AIPersonality {
   id: string
   name: string
   description: string
   open_ended_questions: string[]
   clarifying_questions: string[]
+  unified_questions?: UnifiedQuestion[]
   goals: string[]
   behavior_traits: string[]
   system_prompt_template: string
@@ -38,6 +50,7 @@ export interface NewAIPersonality {
   description: string
   open_ended_questions: string[]
   clarifying_questions: string[]
+  unified_questions?: UnifiedQuestion[]
   goals: string[]
   behavior_traits: string[]
   system_prompt_template: string
