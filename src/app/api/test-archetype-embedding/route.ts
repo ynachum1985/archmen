@@ -26,9 +26,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    // Generate embedding for the query
+    // Get the embedding model from the archetype settings or use default
+    const { data: settings } = await supabase
+      .from('archetype_embedding_settings')
+      .select('embedding_model')
+      .eq('archetype_id', archetypeId)
+      .single()
+
+    const embeddingModel = settings?.embedding_model || 'mistral-embed'
+
+    // Generate embedding for the query (using OpenAI for now, regardless of model)
     const embeddingResponse = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
+      model: embeddingModel.startsWith('text-embedding') ? embeddingModel : 'text-embedding-3-small',
       input: query,
     })
 

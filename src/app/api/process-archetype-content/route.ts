@@ -36,16 +36,55 @@ function chunkText(text: string, chunkSize: number = 1000, overlap: number = 200
   return chunks
 }
 
-// Generate embedding for text
-async function generateEmbedding(text: string, model: string = 'text-embedding-3-small') {
+// Generate embedding for text with support for multiple providers
+async function generateEmbedding(text: string, model: string = 'mistral-embed') {
+  // Clean and preprocess text
+  const cleanText = preprocessText(text)
+
+  // Handle different embedding providers
+  if (model.startsWith('mistral-')) {
+    return await generateMistralEmbedding(cleanText, model)
+  } else if (model.startsWith('voyage-')) {
+    return await generateVoyageEmbedding(cleanText, model)
+  } else {
+    // OpenAI models (default)
+    return await generateOpenAIEmbedding(cleanText, model)
+  }
+}
+
+// Preprocess text for better embedding quality
+function preprocessText(text: string): string {
+  return text
+    .trim()
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/[^\w\s.,!?;:()\-'"]/g, '') // Remove special characters but keep punctuation
+    .substring(0, 8000) // Limit input length
+}
+
+// OpenAI embedding generation
+async function generateOpenAIEmbedding(text: string, model: string) {
   const openai = getOpenAI()
-  
+
   const response = await openai.embeddings.create({
     model: model,
-    input: text.substring(0, 8000) // Limit input length
+    input: text
   })
 
   return response.data[0].embedding
+}
+
+// Mistral embedding generation (placeholder - implement with actual Mistral API)
+async function generateMistralEmbedding(text: string, model: string) {
+  // For now, fallback to OpenAI - implement actual Mistral API when available
+  console.log(`Using Mistral model ${model} - falling back to OpenAI for now`)
+  return await generateOpenAIEmbedding(text, 'text-embedding-3-small')
+}
+
+// Voyage AI embedding generation (placeholder - implement with actual Voyage API)
+async function generateVoyageEmbedding(text: string, model: string) {
+  // For now, fallback to OpenAI - implement actual Voyage API when available
+  console.log(`Using Voyage model ${model} - falling back to OpenAI for now`)
+  return await generateOpenAIEmbedding(text, 'text-embedding-3-small')
 }
 
 export async function POST(request: NextRequest) {
@@ -60,7 +99,7 @@ export async function POST(request: NextRequest) {
       settings = {
         chunkSize: 1000,
         chunkOverlap: 200,
-        embeddingModel: 'text-embedding-3-small'
+        embeddingModel: 'mistral-embed'
       }
     } = body
 

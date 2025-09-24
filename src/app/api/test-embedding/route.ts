@@ -20,9 +20,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient()
 
-    // Generate embedding for the query
+    // Get the embedding model from the assessment settings or use default
+    const { data: settings } = await supabase
+      .from('assessment_embedding_settings')
+      .select('embedding_model')
+      .eq('assessment_id', assessmentId)
+      .single()
+
+    const embeddingModel = settings?.embedding_model || 'mistral-embed'
+
+    // Generate embedding for the query (using OpenAI for now, regardless of model)
     const embeddingResponse = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
+      model: embeddingModel.startsWith('text-embedding') ? embeddingModel : 'text-embedding-3-small',
       input: query,
     })
 
