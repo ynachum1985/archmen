@@ -368,35 +368,34 @@ function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
       </div>
 
       {/* Combined Safety Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-medium">Safety, Triggers & Interventions</Label>
-          <Textarea
-            value={[
-              ...(personality.safety_limits || []).map(item => `SAFETY: ${item}`),
-              ...(personality.escalation_triggers || []).map(item => `TRIGGER: ${item}`),
-              ...(personality.preferred_interventions || []).map(item => `INTERVENTION: ${item}`)
-            ].join('\n')}
-            onChange={(e) => {
-              const lines = e.target.value.split('\n').filter(line => line.trim())
-              const safety = lines.filter(line => line.startsWith('SAFETY:')).map(line => line.replace('SAFETY:', '').trim())
-              const triggers = lines.filter(line => line.startsWith('TRIGGER:')).map(line => line.replace('TRIGGER:', '').trim())
-              const interventions = lines.filter(line => line.startsWith('INTERVENTION:')).map(line => line.replace('INTERVENTION:', '').trim())
+      <div className="space-y-3">
+        <Label className="text-base font-medium">Safety, Triggers & Interventions</Label>
+        <Textarea
+          value={[
+            ...(personality.safety_limits || []).map(item => `SAFETY: ${item}`),
+            ...(personality.escalation_triggers || []).map(item => `TRIGGER: ${item}`),
+            ...(personality.preferred_interventions || []).map(item => `INTERVENTION: ${item}`)
+          ].join('\n')}
+          onChange={(e) => {
+            const lines = e.target.value.split('\n').filter(line => line.trim())
+            const safety = lines.filter(line => line.startsWith('SAFETY:')).map(line => line.replace('SAFETY:', '').trim())
+            const triggers = lines.filter(line => line.startsWith('TRIGGER:')).map(line => line.replace('TRIGGER:', '').trim())
+            const interventions = lines.filter(line => line.startsWith('INTERVENTION:')).map(line => line.replace('INTERVENTION:', '').trim())
 
-              onChange({
-                ...personality,
-                safety_limits: safety,
-                escalation_triggers: triggers,
-                preferred_interventions: interventions
-              })
-            }}
-            placeholder="Enter safety limits, escalation triggers, and preferred interventions:&#10;&#10;SAFETY: Avoid giving medical or therapeutic advice&#10;SAFETY: Do not encourage harmful behaviors&#10;&#10;TRIGGER: Mentions of self-harm or suicide&#10;TRIGGER: Expressions of violence toward others&#10;&#10;INTERVENTION: Gentle redirection to professional help&#10;INTERVENTION: Validation of feelings while maintaining boundaries"
-            className="mt-1"
-            rows={10}
-          />
-          <p className="text-xs text-gray-500">
-            Use prefixes: SAFETY: for safety limits, TRIGGER: for escalation triggers, INTERVENTION: for preferred interventions. One item per line.
-          </p>
-        </div>
+            onChange({
+              ...personality,
+              safety_limits: safety,
+              escalation_triggers: triggers,
+              preferred_interventions: interventions
+            })
+          }}
+          placeholder="Enter safety limits, escalation triggers, and preferred interventions:&#10;&#10;SAFETY: Avoid giving medical or therapeutic advice&#10;SAFETY: Do not encourage harmful behaviors&#10;&#10;TRIGGER: Mentions of self-harm or suicide&#10;TRIGGER: Expressions of violence toward others&#10;&#10;INTERVENTION: Gentle redirection to professional help&#10;INTERVENTION: Validation of feelings while maintaining boundaries"
+          className="mt-1"
+          rows={10}
+        />
+        <p className="text-xs text-gray-500">
+          Use prefixes: SAFETY: for safety limits, TRIGGER: for escalation triggers, INTERVENTION: for preferred interventions. One item per line.
+        </p>
       </div>
 
       {/* Pacing Settings */}
