@@ -334,8 +334,8 @@ function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
           value={personality.system_prompt_template}
           onChange={(e) => onChange({ ...personality, system_prompt_template: e.target.value })}
           placeholder="Define the system prompt template for this personality..."
-          className="mt-1 font-mono text-sm"
-          rows={8}
+          className="mt-1 font-mono text-sm resize-none"
+          rows={6}
         />
       </div>
 
@@ -359,8 +359,8 @@ function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
             })
           }}
           placeholder="Enter all questions here, one per line:&#10;&#10;Tell me about a moment when you felt most authentic...&#10;When you say that, what feelings come up?&#10;Do you tend to initiate plans or follow others?"
-          className="mt-1"
-          rows={8}
+          className="mt-1 resize-none"
+          rows={6}
         />
         <p className="text-xs text-gray-500">
           Enter all questions (open-ended, clarifying, and specific) in one text box, one question per line.
@@ -390,8 +390,8 @@ function PersonalityForm({ personality, onChange }: PersonalityFormProps) {
             })
           }}
           placeholder="Enter safety limits, escalation triggers, and preferred interventions:&#10;&#10;SAFETY: Avoid giving medical or therapeutic advice&#10;SAFETY: Do not encourage harmful behaviors&#10;&#10;TRIGGER: Mentions of self-harm or suicide&#10;TRIGGER: Expressions of violence toward others&#10;&#10;INTERVENTION: Gentle redirection to professional help&#10;INTERVENTION: Validation of feelings while maintaining boundaries"
-          className="mt-1"
-          rows={10}
+          className="mt-1 resize-none"
+          rows={6}
         />
         <p className="text-xs text-gray-500">
           Use prefixes: SAFETY: for safety limits, TRIGGER: for escalation triggers, INTERVENTION: for preferred interventions. One item per line.
