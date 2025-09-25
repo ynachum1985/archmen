@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ interface Assessment {
   is_active: boolean
 }
 
-export default function TestAssessmentPage() {
+function TestAssessmentContent() {
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -216,5 +216,20 @@ export default function TestAssessmentPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function TestAssessmentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+          <span className="text-gray-600">Loading assessment...</span>
+        </div>
+      </div>
+    }>
+      <TestAssessmentContent />
+    </Suspense>
   )
 }
