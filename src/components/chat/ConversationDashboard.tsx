@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Send,
   Settings,
@@ -17,7 +19,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
-  Brain
+  Brain,
+  Shield,
+  Eye
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -51,6 +55,9 @@ interface Assessment {
   description: string
   category: string
   expected_duration: number
+  assessment_level: number
+  status: 'draft' | 'live' | 'archived'
+  is_active: boolean
 }
 
 interface ConversationDashboardProps {
@@ -68,13 +75,21 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [showHomework, setShowHomework] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mainAssessmentCompleted, setMainAssessmentCompleted] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [selectedLevel, setSelectedLevel] = useState<string>('all')
+  const [selectedStatus, setSelectedStatus] = useState<string>('live')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadConversations()
     loadAssessments()
     checkMainAssessmentCompleted().then(setMainAssessmentCompleted)
+    checkAdminStatus()
   }, [userId])
+
+  useEffect(() => {
+    loadAssessments() // Reload when filters change
+  }, [selectedLevel, selectedStatus, isAdmin])
 
   useEffect(() => {
     if (activeConversationId) {
@@ -131,15 +146,57 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     }
   }
 
+  const checkAdminStatus = async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single()
+
+        if (!error && data) {
+          setIsAdmin(data.is_admin || false)
+          // If admin, default to showing all statuses
+          if (data.is_admin) {
+            setSelectedStatus('all')
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error)
+    }
+  }
+
   const loadAssessments = async () => {
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
+      let query = supabase
         .from('enhanced_assessments')
-        .select('id, name, description, category, expected_duration')
-        .eq('status', 'live')
-        .eq('is_active', true)
+        .select('id, name, description, category, expected_duration, assessment_level, status, is_active')
+
+      // Apply status filter based on admin privileges
+      if (isAdmin) {
+        if (selectedStatus !== 'all') {
+          query = query.eq('status', selectedStatus)
+        }
+      } else {
+        // Non-admin users only see live assessments
+        query = query.eq('status', 'live').eq('is_active', true)
+      }
+
+      // Apply level filter
+      if (selectedLevel !== 'all') {
+        query = query.eq('assessment_level', parseInt(selectedLevel))
+      }
+
+      query = query.order('assessment_level', { ascending: true })
         .order('name', { ascending: true })
+
+      const { data, error } = await query
 
       if (error) throw error
 
@@ -147,6 +204,46 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     } catch (error) {
       console.error('Error loading assessments:', error)
     }
+  }
+
+  const handleStatusChange = async (assessmentId: string, newStatus: 'draft' | 'live' | 'archived') => {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('enhanced_assessments')
+        .update({
+          status: newStatus,
+          is_active: newStatus === 'live'
+        })
+        .eq('id', assessmentId)
+
+      if (error) throw error
+
+      // Reload assessments to reflect changes
+      loadAssessments()
+    } catch (error) {
+      console.error('Error updating assessment status:', error)
+    }
+  }
+
+  const getLevelBadge = (level: number) => {
+    const levelConfig = {
+      1: { label: 'Level 1', color: 'bg-blue-100 text-blue-800' },
+      2: { label: 'Level 2', color: 'bg-purple-100 text-purple-800' },
+      3: { label: 'Level 3', color: 'bg-red-100 text-red-800' }
+    }
+    const config = levelConfig[level as keyof typeof levelConfig] || levelConfig[1]
+    return <Badge className={`${config.color} text-xs`}>{config.label}</Badge>
+  }
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      draft: { label: '🟡 Draft', color: 'bg-yellow-100 text-yellow-800' },
+      live: { label: '🟢 Live', color: 'bg-green-100 text-green-800' },
+      archived: { label: '🔴 Archived', color: 'bg-gray-100 text-gray-800' }
+    }
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
+    return <Badge className={`${config.color} text-xs`}>{config.label}</Badge>
   }
 
   const checkMainAssessmentCompleted = async () => {
@@ -354,55 +451,127 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
             <div className="space-y-4">
               {/* Available Assessments */}
               <div>
-                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 px-2">
-                  Available Assessments
-                </h3>
+                <div className="flex items-center justify-between mb-2 px-2">
+                  <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    {isAdmin ? 'All Assessments' : 'Available Assessments'}
+                    {isAdmin && <Shield className="inline h-3 w-3 ml-1" />}
+                  </h3>
+                </div>
+
+                {/* Admin Filters */}
+                {isAdmin && (
+                  <div className="space-y-2 mb-3 px-2">
+                    <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="All Levels" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Levels</SelectItem>
+                        <SelectItem value="1">Level 1 - Foundation</SelectItem>
+                        <SelectItem value="2">Level 2 - Integration</SelectItem>
+                        <SelectItem value="3">Level 3 - Mastery</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="draft">🟡 Draft</SelectItem>
+                        <SelectItem value="live">🟢 Live</SelectItem>
+                        <SelectItem value="archived">🔴 Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   {assessments.map((assessment) => {
                     const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
-                    const isAccessible = isMainAssessment || mainAssessmentCompleted
+                    const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
 
                     return (
-                      <button
-                        key={assessment.id}
-                        onClick={() => isAccessible ? createNewConversation(assessment) : null}
-                        disabled={!isAccessible}
-                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
-                          isAccessible
-                            ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
-                            : 'opacity-50 cursor-not-allowed bg-gray-100/30'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <Brain className={`h-3 w-3 ${isAccessible ? 'text-blue-500' : 'text-gray-400'}`} />
-                          <div className={`font-medium text-sm truncate ${
-                            isAccessible ? 'text-gray-900' : 'text-gray-500'
-                          }`}>
-                            {assessment.name}
-                            {isMainAssessment && (
-                              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                Start Here
-                              </span>
-                            )}
-                            {!isAccessible && (
-                              <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                                Locked
-                              </span>
-                            )}
+                      <div key={assessment.id} className="space-y-2">
+                        <button
+                          onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                          disabled={!isAccessible}
+                          className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
+                            isAccessible
+                              ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
+                              : 'opacity-50 cursor-not-allowed bg-gray-100/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <Brain className={`h-3 w-3 ${isAccessible ? 'text-blue-500' : 'text-gray-400'}`} />
+                            <div className={`font-medium text-sm truncate ${
+                              isAccessible ? 'text-gray-900' : 'text-gray-500'
+                            }`}>
+                              {assessment.name}
+                              {isMainAssessment && (
+                                <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                  Start Here
+                                </span>
+                              )}
+                              {!isAccessible && (
+                                <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                                  Locked
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
-                          {assessment.description}
-                        </div>
-                        <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
-                          {assessment.expected_duration} min • {assessment.category}
-                        </div>
-                        {!isAccessible && (
-                          <div className="text-xs text-gray-400 mt-1 italic">
-                            Complete Main Assessment to unlock
+
+                          <div className="flex items-center gap-2 mb-1">
+                            {getLevelBadge(assessment.assessment_level)}
+                            {isAdmin && getStatusBadge(assessment.status)}
+                          </div>
+
+                          <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
+                            {assessment.description}
+                          </div>
+                          <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
+                            {assessment.expected_duration} min • {assessment.category}
+                          </div>
+                          {!isAccessible && (
+                            <div className="text-xs text-gray-400 mt-1 italic">
+                              Complete Main Assessment to unlock
+                            </div>
+                          )}
+                        </button>
+
+                        {/* Admin Controls */}
+                        {isAdmin && (
+                          <div className="flex items-center gap-1 px-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                const testUrl = `/dashboard/assessments/test?id=${assessment.id}&preview=true`
+                                window.open(testUrl, '_blank')
+                              }}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              Test
+                            </Button>
+
+                            <Select
+                              value={assessment.status}
+                              onValueChange={(newStatus) => handleStatusChange(assessment.id, newStatus as any)}
+                            >
+                              <SelectTrigger className="h-6 w-20 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="live">Live</SelectItem>
+                                <SelectItem value="archived">Archive</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         )}
-                      </button>
+                      </div>
                     )
                   })}
                 </div>
@@ -462,23 +631,31 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         {/* Mobile Assessment Selector */}
         <div className="md:hidden bg-white/40 border-b border-gray-200/50 p-3">
           <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="text-xs font-medium text-gray-600 whitespace-nowrap">Assessments:</span>
+            <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
+              {isAdmin ? 'All Assessments:' : 'Assessments:'}
+            </span>
             {assessments.map((assessment) => {
               const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
-              const isAccessible = isMainAssessment || mainAssessmentCompleted
+              const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
 
               return (
-                <button
-                  key={assessment.id}
-                  onClick={() => isAccessible ? createNewConversation(assessment) : null}
-                  disabled={!isAccessible}
-                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                    isAccessible
-                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  {assessment.name}
+                <div key={assessment.id} className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                    disabled={!isAccessible}
+                    className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                      isAccessible
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {assessment.name}
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {getLevelBadge(assessment.assessment_level)}
+                    {isAdmin && getStatusBadge(assessment.status)}
+                  </div>
+                </div>
                   {isMainAssessment && <span className="ml-1">⭐</span>}
                 </button>
               )

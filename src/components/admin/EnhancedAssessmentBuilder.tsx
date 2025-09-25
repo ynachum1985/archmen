@@ -608,8 +608,15 @@ Keep the response under 150 words and end with a specific question.`)
 
 
   const handleSave = async () => {
+    // Ensure assessment is saved as draft initially so it appears in user dashboard
+    const assessmentToSave = {
+      ...config,
+      status: config.status || 'draft',
+      is_active: config.status === 'live' || config.is_active === true
+    }
+
     // Save to parent component
-    onSave(config)
+    onSave(assessmentToSave)
 
     // Also sync to database
     try {
@@ -620,25 +627,26 @@ Keep the response under 150 words and end with a specific question.`)
         },
         body: JSON.stringify({
           assessment: {
-            name: config.name,
-            description: config.description,
-            category: config.category,
-            purpose: config.purpose,
-            systemPrompt: config.systemPrompt,
-            assessmentPrompt: config.assessmentPrompt,
-            minQuestions: config.minQuestions,
-            maxQuestions: config.maxQuestions,
-            evidenceThreshold: config.evidenceThreshold,
-            adaptationSensitivity: config.adaptationSensitivity,
-            expectedDuration: config.expectedDuration,
-            questionExamples: config.questionExamples,
-            responseRequirements: config.responseRequirements,
-            adaptiveLogic: config.cycleSettings,
-            cycleSettings: config.cycleSettings,
-            selectedPersonalityId: config.selectedPersonalityId,
-            reportGeneration: config.reportGeneration,
-            status: config.status,
-            is_active: config.is_active
+            name: assessmentToSave.name,
+            description: assessmentToSave.description,
+            category: assessmentToSave.category,
+            purpose: assessmentToSave.purpose,
+            systemPrompt: assessmentToSave.systemPrompt,
+            assessmentPrompt: assessmentToSave.assessmentPrompt,
+            minQuestions: assessmentToSave.minQuestions,
+            maxQuestions: assessmentToSave.maxQuestions,
+            evidenceThreshold: assessmentToSave.evidenceThreshold,
+            adaptationSensitivity: assessmentToSave.adaptationSensitivity,
+            expectedDuration: assessmentToSave.expectedDuration,
+            questionExamples: assessmentToSave.questionExamples,
+            responseRequirements: assessmentToSave.responseRequirements,
+            adaptiveLogic: assessmentToSave.cycleSettings,
+            cycleSettings: assessmentToSave.cycleSettings,
+            selectedPersonalityId: assessmentToSave.selectedPersonalityId,
+            reportGeneration: assessmentToSave.reportGeneration,
+            assessment_level: assessmentToSave.assessment_level,
+            status: assessmentToSave.status,
+            is_active: assessmentToSave.is_active
           }
         })
       })
@@ -646,6 +654,14 @@ Keep the response under 150 words and end with a specific question.`)
       const result = await response.json()
       if (result.success) {
         console.log(`Assessment ${result.action} successfully in database`)
+        // Update config with any returned data (like ID for new assessments)
+        if (result.assessment) {
+          setConfig(prev => ({
+            ...prev,
+            id: result.assessment.id,
+            ...result.assessment
+          }))
+        }
       } else {
         console.error('Failed to sync assessment to database:', result.error)
       }
@@ -1143,22 +1159,6 @@ Keep the response under 150 words and end with a specific question.`)
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* Test as User Button */}
-                  {config.name && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        // Open assessment in new tab as user would see it
-                        const testUrl = `/dashboard/assessments/test?id=${config.id || 'test'}&preview=true`
-                        window.open(testUrl, '_blank')
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <span>👤</span>
-                      Test as User
-                    </Button>
-                  )}
-
                   {/* Status Management Buttons */}
                   {config.status === 'draft' && (
                     <Button
@@ -1212,17 +1212,11 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
 
               {/* Status Information */}
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600">
-                  {config.status === 'draft' && (
-                    <p>📝 <strong>Draft:</strong> Only visible to admins. Use "Test as User" to experience the assessment. Click "Make Live" when ready to publish.</p>
-                  )}
-                  {config.status === 'live' && (
-                    <p>✅ <strong>Live:</strong> Available to all users in the assessment list and user dashboard. Users can start this assessment.</p>
-                  )}
-                  {config.status === 'archived' && (
-                    <p>📦 <strong>Archived:</strong> Hidden from users but preserved in the system. Can be restored to draft for editing.</p>
-                  )}
+              <div className="mt-4 p-2 bg-gray-50 rounded-lg">
+                <div className="text-xs text-gray-500">
+                  {config.status === 'draft' && 'Draft - Admin only'}
+                  {config.status === 'live' && 'Live - Available to users'}
+                  {config.status === 'archived' && 'Archived - Hidden'}
                 </div>
               </div>
             </div>
