@@ -67,6 +67,29 @@ interface ConversationDashboardProps {
   userId: string
 }
 
+// Helper function to detect if a message contains practice suggestions
+const detectPracticeInMessage = (content: string): { hasPractice: boolean; practiceType: string; suggestedDuration: number } => {
+  const lowerContent = content.toLowerCase()
+
+  const practiceKeywords = {
+    meditation: { keywords: ['meditat', 'mindful', 'breath', 'center'], duration: 10 },
+    affirmation: { keywords: ['affirm', 'repeat', 'say to yourself', 'mantra'], duration: 5 },
+    journaling: { keywords: ['journal', 'write', 'reflect on paper', 'document'], duration: 15 },
+    exercise: { keywords: ['exercise', 'movement', 'stretch', 'walk'], duration: 20 },
+    reflection: { keywords: ['reflect', 'consider', 'think about', 'contemplate'], duration: 10 },
+    practice: { keywords: ['practice', 'try this', 'homework', 'assignment'], duration: 15 },
+    integration: { keywords: ['integrate', 'apply', 'implement', 'use this'], duration: 15 }
+  }
+
+  for (const [type, { keywords, duration }] of Object.entries(practiceKeywords)) {
+    if (keywords.some(keyword => lowerContent.includes(keyword))) {
+      return { hasPractice: true, practiceType: type, suggestedDuration: duration }
+    }
+  }
+
+  return { hasPractice: false, practiceType: '', suggestedDuration: 15 }
+}
+
 export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [assessments, setAssessments] = useState<Assessment[]>([])
@@ -806,33 +829,29 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                   )}
 
                   {/* Add to Calendar Button for AI messages with practice suggestions */}
-                  {message.role === 'assistant' && (
-                    message.content.toLowerCase().includes('practice') ||
-                    message.content.toLowerCase().includes('exercise') ||
-                    message.content.toLowerCase().includes('meditation') ||
-                    message.content.toLowerCase().includes('affirmation') ||
-                    message.content.toLowerCase().includes('journal') ||
-                    message.content.toLowerCase().includes('reflect')
-                  ) && (
-                    <div className="mt-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPractice({
-                            title: 'Practice from Conversation',
-                            description: message.content.slice(0, 200) + (message.content.length > 200 ? '...' : ''),
-                            duration: 15
-                          })
-                          setShowAddToCalendar(true)
-                        }}
-                        className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs"
-                      >
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Add to Calendar
-                      </Button>
-                    </div>
-                  )}
+                  {message.role === 'assistant' && (() => {
+                    const practiceDetection = detectPracticeInMessage(message.content)
+                    return practiceDetection.hasPractice && (
+                      <div className="mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedPractice({
+                              title: `${practiceDetection.practiceType.charAt(0).toUpperCase() + practiceDetection.practiceType.slice(1)} Practice`,
+                              description: message.content.slice(0, 200) + (message.content.length > 200 ? '...' : ''),
+                              duration: practiceDetection.suggestedDuration
+                            })
+                            setShowAddToCalendar(true)
+                          }}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs"
+                        >
+                          <Calendar className="h-3 w-3 mr-1" />
+                          Add to Calendar
+                        </Button>
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 {message.role === 'user' && (
