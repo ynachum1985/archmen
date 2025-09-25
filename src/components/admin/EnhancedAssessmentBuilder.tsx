@@ -1150,6 +1150,14 @@ Keep the response under 150 words and end with a specific question.`)
                 </div>
 
                 <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleSave}
+                    variant="outline"
+                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                  >
+                    Save Draft
+                  </Button>
+
                   <Select
                     value={config.status || 'draft'}
                     onValueChange={(newStatus: 'draft' | 'live' | 'archived') => {

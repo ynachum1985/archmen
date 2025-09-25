@@ -76,7 +76,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mainAssessmentCompleted, setMainAssessmentCompleted] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [selectedStatus, setSelectedStatus] = useState<string>('live')
+  const [currentAssessment, setCurrentAssessment] = useState<any>(null)
   const [level1Open, setLevel1Open] = useState(true)
   const [level2Open, setLevel2Open] = useState(true)
   const [level3Open, setLevel3Open] = useState(true)
@@ -90,8 +90,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   }, [userId])
 
   useEffect(() => {
-    loadAssessments() // Reload when filters change
-  }, [selectedStatus, isAdmin])
+    loadAssessments()
+  }, [isAdmin])
 
   useEffect(() => {
     if (activeConversationId) {
@@ -180,13 +180,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         .from('enhanced_assessments')
         .select('id, name, description, category, expected_duration, assessment_level, status, is_active')
 
-      // Apply status filter based on admin privileges
-      if (isAdmin) {
-        if (selectedStatus !== 'all') {
-          query = query.eq('status', selectedStatus)
-        }
-      } else {
-        // Non-admin users only see live assessments
+      // Admin users see all assessments, regular users only see live ones
+      if (!isAdmin) {
         query = query.eq('status', 'live').eq('is_active', true)
       }
 
@@ -203,8 +198,29 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     }
   }
 
-  const handleStatusChange = (newStatus: 'draft' | 'live' | 'archived' | 'all') => {
-    setSelectedStatus(newStatus)
+  const handleCurrentAssessmentStatusChange = async (newStatus: 'draft' | 'live' | 'archived') => {
+    if (!currentAssessment || !isAdmin) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('enhanced_assessments')
+        .update({
+          status: newStatus,
+          is_active: newStatus === 'live'
+        })
+        .eq('id', currentAssessment.id)
+
+      if (error) throw error
+
+      // Update current assessment state
+      setCurrentAssessment(prev => ({ ...prev, status: newStatus }))
+
+      // Reload assessments to reflect changes
+      loadAssessments()
+    } catch (error) {
+      console.error('Error updating assessment status:', error)
+    }
   }
 
   const getAssessmentsByLevel = (level: number) => {
@@ -311,6 +327,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       setConversations(prev => [newConversation, ...prev])
       setActiveConversationId(data.id)
+      setCurrentAssessment(assessment || null) // Set current assessment for status management
     } catch (error) {
       console.error('Error creating conversation:', error)
     }
@@ -420,9 +437,9 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1 p-2">
+        <ScrollArea className="flex-1 p-2 h-0">
           {!sidebarCollapsed && (
-            <div className="space-y-4">
+            <div className="space-y-4 h-full overflow-y-auto">
               {/* Assessment Levels */}
               <div className="space-y-2">
                 {/* Level 1 */}
@@ -611,16 +628,18 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Admin Status Filter */}
-            {isAdmin && (
-              <Select value={selectedStatus} onValueChange={handleStatusChange}>
+            {/* Admin Status Management for Current Assessment */}
+            {isAdmin && currentAssessment && (
+              <Select
+                value={currentAssessment.status || 'draft'}
+                onValueChange={handleCurrentAssessmentStatusChange}
+              >
                 <SelectTrigger className="h-8 w-24 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="live">Live</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="live">Live</SelectItem>
                   <SelectItem value="archived">Archive</SelectItem>
                 </SelectContent>
               </Select>
