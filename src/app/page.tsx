@@ -254,7 +254,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <Button asChild className="w-full mt-6" variant="outline">
-                <Link href="/auth/signup">Get Started</Link>
+                <Link href="/register">Get Started</Link>
               </Button>
             </CardContent>
           </Card>
@@ -278,7 +278,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <Button asChild className="w-full mt-6">
-                <Link href="/auth/signup">Start Free Trial</Link>
+                <Link href="/register">Start Free Trial</Link>
               </Button>
             </CardContent>
           </Card>
@@ -302,7 +302,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <Button asChild className="w-full mt-6" variant="outline">
-                <Link href="/auth/signup">Get Lifetime Access</Link>
+                <Link href="/register">Get Lifetime Access</Link>
               </Button>
             </CardContent>
           </Card>
@@ -316,7 +316,7 @@ export default function HomePage() {
           Join thousands of men who have discovered their authentic selves through archetypal understanding
         </p>
         <Button asChild size="lg">
-          <Link href="/auth/signup">
+          <Link href="/register">
             Start Your Journey Now <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
