@@ -25,9 +25,9 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { HomeworkCalendar } from '@/components/calendar/HomeworkCalendar'
 import { AddToCalendarModal } from '@/components/calendar/AddToCalendarModal'
-import { UserSettingsModal } from '@/components/settings/UserSettingsModal'
+import { InlineHomeworkView } from '@/components/calendar/InlineHomeworkView'
+import { InlineSettingsView } from '@/components/settings/InlineSettingsView'
 
 interface Message {
   id: string
@@ -97,8 +97,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [showHomework, setShowHomework] = useState(false)
+  const [currentView, setCurrentView] = useState<'chat' | 'homework' | 'settings'>('chat')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mainAssessmentCompleted, setMainAssessmentCompleted] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -720,28 +719,33 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
               </Select>
             )}
 
-            <Link href="/">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
-              >
-                <Home className="h-4 w-4" />
-              </Button>
-            </Link>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowHomework(true)}
-              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
+              onClick={() => setCurrentView('chat')}
+              className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                currentView === 'chat' ? 'bg-gray-100 text-gray-900' : ''
+              }`}
+            >
+              <Brain className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCurrentView('homework')}
+              className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                currentView === 'homework' ? 'bg-gray-100 text-gray-900' : ''
+              }`}
             >
               <Calendar className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowSettings(true)}
-              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
+              onClick={() => setCurrentView('settings')}
+              className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                currentView === 'settings' ? 'bg-gray-100 text-gray-900' : ''
+              }`}
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -776,10 +780,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
           </div>
         </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((message) => (
+        {/* Dynamic Content Area */}
+        {currentView === 'chat' ? (
+          <>
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -908,14 +915,18 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
             </div>
           </div>
         </div>
+          </>
+        ) : currentView === 'homework' ? (
+          <InlineHomeworkView
+            userId={userId}
+            currentAssessmentId={currentAssessment?.id}
+          />
+        ) : currentView === 'settings' ? (
+          <InlineSettingsView userId={userId} />
+        ) : null}
       </div>
 
-      {/* Homework Calendar Modal */}
-      <HomeworkCalendar
-        isOpen={showHomework}
-        onClose={() => setShowHomework(false)}
-        userId={userId}
-      />
+
 
       {/* Add to Calendar Modal */}
       {selectedPractice && (
@@ -937,12 +948,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         />
       )}
 
-      {/* Settings Modal */}
-      <UserSettingsModal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        userId={userId}
-      />
+
     </div>
   )
 }
