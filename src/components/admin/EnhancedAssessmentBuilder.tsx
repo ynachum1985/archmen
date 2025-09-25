@@ -22,7 +22,8 @@ import {
   Clock,
   BarChart3,
   TestTube,
-  Sparkles
+  Sparkles,
+  Info
 } from 'lucide-react'
 
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
