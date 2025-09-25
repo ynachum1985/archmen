@@ -656,8 +656,6 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                     {isAdmin && getStatusBadge(assessment.status)}
                   </div>
                 </div>
-                  {isMainAssessment && <span className="ml-1">⭐</span>}
-                </button>
               )
             })}
           </div>
