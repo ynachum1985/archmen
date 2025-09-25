@@ -1147,76 +1147,29 @@ Keep the response under 150 words and end with a specific question.`)
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-medium">Assessment Status</h3>
-                  <p className="text-sm text-gray-600">
-                    Current status: <span className={`font-medium ${
-                      config.status === 'live' ? 'text-green-600' :
-                      config.status === 'archived' ? 'text-gray-600' : 'text-yellow-600'
-                    }`}>
-                      {config.status === 'draft' ? '🟡 Draft' :
-                       config.status === 'live' ? '🟢 Live' : '🔴 Archived'}
-                    </span>
-                  </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* Status Management Buttons */}
-                  {config.status === 'draft' && (
-                    <Button
-                      onClick={() => {
-                        setConfig(prev => ({ ...prev, status: 'live', is_active: true }))
-                        handleSave()
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      🟢 Make Live
-                    </Button>
-                  )}
-
-                  {config.status === 'live' && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setConfig(prev => ({ ...prev, status: 'draft', is_active: false }))
-                        handleSave()
-                      }}
-                    >
-                      🟡 Back to Draft
-                    </Button>
-                  )}
-
-                  {(config.status === 'draft' || config.status === 'live') && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setConfig(prev => ({ ...prev, status: 'archived', is_active: false }))
-                        handleSave()
-                      }}
-                      className="text-gray-600 hover:text-gray-800"
-                    >
-                      🔴 Archive
-                    </Button>
-                  )}
-
-                  {config.status === 'archived' && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setConfig(prev => ({ ...prev, status: 'draft', is_active: false }))
-                        handleSave()
-                      }}
-                    >
-                      🟡 Restore to Draft
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Status Information */}
-              <div className="mt-4 p-2 bg-gray-50 rounded-lg">
-                <div className="text-xs text-gray-500">
-                  {config.status === 'draft' && 'Draft - Admin only'}
-                  {config.status === 'live' && 'Live - Available to users'}
-                  {config.status === 'archived' && 'Archived - Hidden'}
+                  <Select
+                    value={config.status || 'draft'}
+                    onValueChange={(newStatus: 'draft' | 'live' | 'archived') => {
+                      setConfig(prev => ({
+                        ...prev,
+                        status: newStatus,
+                        is_active: newStatus === 'live'
+                      }))
+                      handleSave()
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="live">Live</SelectItem>
+                      <SelectItem value="archived">Archive</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
