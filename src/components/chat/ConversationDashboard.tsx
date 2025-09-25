@@ -80,6 +80,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [level1Open, setLevel1Open] = useState(true)
   const [level2Open, setLevel2Open] = useState(true)
   const [level3Open, setLevel3Open] = useState(true)
+  const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
+  const [isResizing, setIsResizing] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -222,6 +224,35 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       console.error('Error updating assessment status:', error)
     }
   }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true)
+    e.preventDefault()
+  }
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return
+
+    const newWidth = e.clientX
+    if (newWidth >= 250 && newWidth <= 500) { // Min 250px, Max 500px
+      setSidebarWidth(newWidth)
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsResizing(false)
+  }
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isResizing])
 
   const getAssessmentsByLevel = (level: number) => {
     return assessments.filter(assessment => assessment.assessment_level === level)
@@ -420,7 +451,10 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   return (
     <div className="flex h-screen bg-gray-50/30">
       {/* Sidebar - Hidden on mobile */}
-      <div className={`hidden md:flex ${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white/60 backdrop-blur-sm border-r border-gray-200/50 flex-col transition-all duration-300`}>
+      <div
+        className={`hidden md:flex bg-white/60 backdrop-blur-sm border-r border-gray-200/50 flex-col transition-all duration-300 relative`}
+        style={{ width: sidebarCollapsed ? '64px' : `${sidebarWidth}px` }}
+      >
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-200/50 flex items-center justify-between">
           {!sidebarCollapsed && (
@@ -609,6 +643,15 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
             </div>
           )}
         </ScrollArea>
+
+        {/* Resize Handle */}
+        {!sidebarCollapsed && (
+          <div
+            className="absolute top-0 right-0 w-1 h-full bg-gray-300 hover:bg-blue-500 cursor-col-resize transition-colors"
+            onMouseDown={handleMouseDown}
+            style={{ cursor: isResizing ? 'col-resize' : 'col-resize' }}
+          />
+        )}
       </div>
 
       {/* Main Chat Area */}
