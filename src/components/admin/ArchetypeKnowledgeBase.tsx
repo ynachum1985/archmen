@@ -15,6 +15,7 @@ import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { ArchetypeContentDisplay } from './ArchetypeContentDisplay'
 import { ArchetypeFileUploadService, UploadedFile } from '@/lib/services/archetype-file-upload.service'
 import { LLM_PROVIDERS, type LLMProvider, multiLLMService } from '@/lib/services/multi-llm.service'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 interface ArchetypeKnowledgeBaseProps {
   archetypeId: string
@@ -546,7 +547,65 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
           {/* Test Embed Quality */}
           <div className="space-y-2 pt-4 border-t">
-            <Label className="text-sm font-medium">Test Embed Quality</Label>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium">Test Embed Quality</Label>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <Info className="h-4 w-4 text-gray-400" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>📚 How to Use Content Preprocessing & Testing</DialogTitle>
+                    <DialogDescription>
+                      Simple steps to optimize your archetype knowledge base
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">🧠 Content Preprocessing (Automatic)</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <div>✅ Text cleaning & normalization</div>
+                        <div>✅ Optimal chunking (1000 tokens)</div>
+                        <div>✅ Metadata enhancement</div>
+                        <div>✅ Model-specific optimization</div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <h4 className="font-medium text-green-900 mb-2">📝 How to Add Content</h4>
+                      <div className="text-sm text-green-800 space-y-1">
+                        <div>1. Paste text or upload files above</div>
+                        <div>2. Choose embedding model (Mistral = cost-effective)</div>
+                        <div>3. Click "Process Content" - preprocessing happens automatically</div>
+                        <div>4. View processed chunks below</div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                      <h4 className="font-medium text-orange-900 mb-2">🧪 How to Test Quality</h4>
+                      <div className="text-sm text-orange-800 space-y-1">
+                        <div>1. Enter test query: "What are the core traits of this archetype?"</div>
+                        <div>2. Click "Test" button</div>
+                        <div>3. Check similarity scores (>0.7 = good)</div>
+                        <div>4. Verify relevant content is retrieved</div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <h4 className="font-medium text-purple-900 mb-2">🎯 Optimization Tips</h4>
+                      <div className="text-sm text-purple-800 space-y-1">
+                        <div>• Start with Mistral Embed (default)</div>
+                        <div>• Test with Voyage AI for better relevance</div>
+                        <div>• Try different chunk sizes if needed</div>
+                        <div>• Re-process content after model changes</div>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="flex gap-2">
               <Input
                 value={testQuery}
