@@ -137,6 +137,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       const { data, error } = await supabase
         .from('enhanced_assessments')
         .select('id, name, description, category, expected_duration')
+        .eq('status', 'live')
         .eq('is_active', true)
         .order('name', { ascending: true })
 

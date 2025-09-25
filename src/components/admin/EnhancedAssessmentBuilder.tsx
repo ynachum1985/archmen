@@ -44,6 +44,10 @@ interface EnhancedAssessmentConfig {
   assessmentPrompt: string // Dedicated prompt field for LLM instructions
   expectedDuration: number
 
+  // Status Management
+  status?: 'draft' | 'live' | 'archived'
+  is_active?: boolean
+
   // Level and Gateway Configuration
   assessment_level: number // 1, 2, or 3
   gateway_configuration: Record<string, any>
@@ -121,6 +125,10 @@ const defaultConfig: EnhancedAssessmentConfig = {
   purpose: '',
   assessmentPrompt: '',
   expectedDuration: 15,
+
+  // Status Management
+  status: 'draft',
+  is_active: false,
 
   // Level and Gateway Configuration
   assessment_level: 1,
@@ -627,7 +635,9 @@ Keep the response under 150 words and end with a specific question.`)
             adaptiveLogic: config.cycleSettings,
             cycleSettings: config.cycleSettings,
             selectedPersonalityId: config.selectedPersonalityId,
-            reportGeneration: config.reportGeneration
+            reportGeneration: config.reportGeneration,
+            status: config.status,
+            is_active: config.is_active
           }
         })
       })
@@ -808,11 +818,10 @@ Keep the response under 150 words and end with a specific question.`)
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
           <TabsTrigger value="gateways">Assessment Gateways</TabsTrigger>
-          <TabsTrigger value="testing">Testing</TabsTrigger>
         </TabsList>
 
         {/* Setup Tab */}
@@ -1114,6 +1123,107 @@ Keep the response under 150 words and end with a specific question.`)
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Assessment Status Management */}
+            <div className="border-t pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium">Assessment Status</h3>
+                  <p className="text-sm text-gray-600">
+                    Current status: <span className={`font-medium ${
+                      config.status === 'live' ? 'text-green-600' :
+                      config.status === 'archived' ? 'text-gray-600' : 'text-yellow-600'
+                    }`}>
+                      {config.status === 'draft' ? '🟡 Draft' :
+                       config.status === 'live' ? '🟢 Live' : '🔴 Archived'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Test as User Button */}
+                  {config.name && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        // Open assessment in new tab as user would see it
+                        const testUrl = `/dashboard/assessments/test?id=${config.id || 'test'}&preview=true`
+                        window.open(testUrl, '_blank')
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <span>👤</span>
+                      Test as User
+                    </Button>
+                  )}
+
+                  {/* Status Management Buttons */}
+                  {config.status === 'draft' && (
+                    <Button
+                      onClick={() => {
+                        setConfig(prev => ({ ...prev, status: 'live', is_active: true }))
+                        handleSave()
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      🟢 Make Live
+                    </Button>
+                  )}
+
+                  {config.status === 'live' && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setConfig(prev => ({ ...prev, status: 'draft', is_active: false }))
+                        handleSave()
+                      }}
+                    >
+                      🟡 Back to Draft
+                    </Button>
+                  )}
+
+                  {(config.status === 'draft' || config.status === 'live') && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setConfig(prev => ({ ...prev, status: 'archived', is_active: false }))
+                        handleSave()
+                      }}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      🔴 Archive
+                    </Button>
+                  )}
+
+                  {config.status === 'archived' && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setConfig(prev => ({ ...prev, status: 'draft', is_active: false }))
+                        handleSave()
+                      }}
+                    >
+                      🟡 Restore to Draft
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Information */}
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <div className="text-sm text-gray-600">
+                  {config.status === 'draft' && (
+                    <p>📝 <strong>Draft:</strong> Only visible to admins. Use "Test as User" to experience the assessment. Click "Make Live" when ready to publish.</p>
+                  )}
+                  {config.status === 'live' && (
+                    <p>✅ <strong>Live:</strong> Available to all users in the assessment list and user dashboard. Users can start this assessment.</p>
+                  )}
+                  {config.status === 'archived' && (
+                    <p>📦 <strong>Archived:</strong> Hidden from users but preserved in the system. Can be restored to draft for editing.</p>
+                  )}
+                </div>
+              </div>
             </div>
 
         </TabsContent>
@@ -1502,194 +1612,7 @@ Keep the response under 150 words and end with a specific question.`)
           </Card>
         </TabsContent>
 
-        {/* Testing Tab - Available for all assessments */}
-        <TabsContent value="testing" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Assessment Testing</CardTitle>
-                    <CardDescription>
-                      Test this assessment with different LLM providers - experience it as a user would
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="space-y-1">
-                      <Label className="text-xs">LLM Provider</Label>
-                      <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Select provider" />
-                        </SelectTrigger>
-                        <SelectContent className="animate-none">
-                          {availableProviders.map((provider) => (
-                            <SelectItem key={provider} value={provider}>
-                              {LLM_PROVIDERS[provider as keyof typeof LLM_PROVIDERS].name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs">Model</Label>
-                      <Select value={selectedModel} onValueChange={setSelectedModel}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="Select model" />
-                        </SelectTrigger>
-                        <SelectContent className="animate-none">
-                          {selectedProvider && Object.keys(LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
-                            <SelectItem key={model} value={model}>
-                              {model}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {selectedProvider && selectedModel && (
-                      <div className="text-xs text-gray-500">
-                        {(() => {
-                          const provider = LLM_PROVIDERS[selectedProvider as keyof typeof LLM_PROVIDERS]
-                          const model = provider?.models[selectedModel as keyof typeof provider.models]
-                          if (model && 'inputCost' in model && 'outputCost' in model) {
-                            return (
-                              <>
-                                <div>Cost: ${model.inputCost}/1K in</div>
-                                <div>${model.outputCost}/1K out</div>
-                              </>
-                            )
-                          } else if (model && 'inputCost' in model) {
-                            return <div>Cost: ${model.inputCost}/1K tokens</div>
-                          } else {
-                            return <div>Free (Local)</div>
-                          }
-                        })()}
-                      </div>
-                    )}
-
-                    <Button
-                      onClick={() => setIsApiActivated(!isApiActivated)}
-                      variant={isApiActivated ? "destructive" : "default"}
-                      size="sm"
-                      className="ml-4"
-                    >
-                      {isApiActivated ? "🔴 Deactivate API" : "🟢 Activate API"}
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Chat Interface */}
-                  <div className="h-96 border rounded-lg p-4 bg-white overflow-y-auto">
-                    {chatMessages.length === 0 ? (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <p className="text-gray-500 mb-2">
-                            {!selectedProvider || !selectedModel
-                              ? 'Select an LLM provider and model to start testing'
-                              : !isApiActivated
-                              ? 'Click "Activate API" to enable testing and prevent accidental token usage'
-                              : 'Chat will initialize when you select a provider and model'
-                            }
-                          </p>
-                          {selectedProvider && selectedModel && (
-                            <p className="text-sm text-blue-600">
-                              Using {LLM_PROVIDERS[selectedProvider].name} - {selectedModel}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {chatMessages.map((message, index) => (
-                          <div
-                            key={index}
-                            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div
-                              className={`max-w-[80%] rounded-lg p-3 ${
-                                message.role === 'user'
-                                  ? 'bg-blue-500 text-white'
-                                  : 'bg-gray-100 text-gray-900'
-                              }`}
-                            >
-                              <p className="whitespace-pre-wrap">{message.content}</p>
-                              <p className="text-xs mt-1 opacity-70">
-                                {message.timestamp?.toLocaleTimeString() || 'Unknown time'}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                        {isChatLoading && (
-                          <div className="flex justify-start">
-                            <div className="bg-gray-100 rounded-lg p-3">
-                              <div className="flex items-center space-x-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                                <span className="text-sm text-gray-600">AI is thinking...</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Input Area */}
-                  <div className="flex gap-2">
-                    <Input
-                      value={currentInput}
-                      onChange={(e) => setCurrentInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Type your response to the assessment question..."
-                      className="flex-1"
-                      disabled={!selectedProvider || !selectedModel || isChatLoading}
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!selectedProvider || !selectedModel || !currentInput.trim() || isChatLoading || !isApiActivated}
-                    >
-                      {isChatLoading ? 'Sending...' : 'Send'}
-                    </Button>
-                  </div>
-
-                  {/* Status and Info */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-4">
-                      {selectedProvider && selectedModel && (
-                        <div className="text-gray-600">
-                          <span className="font-medium">Provider:</span> {LLM_PROVIDERS[selectedProvider].name} - {selectedModel}
-                        </div>
-                      )}
-                      {chatSession.questionCount > 0 && (
-                        <div className="text-gray-600">
-                          <span className="font-medium">Questions:</span> {chatSession.questionCount}
-                        </div>
-                      )}
-                    </div>
-
-                    {chatMessages.length > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={initializeChat}
-                        disabled={isChatLoading}
-                      >
-                        Reset Chat
-                      </Button>
-                    )}
-                  </div>
-
-                  {!selectedProvider || !selectedModel ? (
-                    <p className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
-                      Please select an LLM provider and model to start testing the assessment
-                    </p>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-
-        </TabsContent>
       </Tabs>
 
       {/* Testing Chat Modal */}

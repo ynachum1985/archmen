@@ -290,7 +290,8 @@ export default function AdminPage() {
           id: assessment.id,
           name: assessment.name,
           description: assessment.description || '',
-          status: assessment.is_active ? 'Active' : 'Draft',
+          status: assessment.status === 'live' ? 'Live' :
+                  assessment.status === 'archived' ? 'Archived' : 'Draft',
           archetypeCount: 0,
           questionCount: assessment.min_questions || 8,
           completionRate: 0,

@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
           cycle_settings: assessment.cycleSettings || { maxCycles: 3, evidencePerCycle: 3 },
           selected_personality_id: assessment.selectedPersonalityId || null,
           report_generation: assessment.reportGeneration || null,
-          is_active: true,
+          status: assessment.status || 'draft',
+          is_active: assessment.status === 'live' || assessment.is_active === true,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingAssessment.id)
@@ -83,7 +84,8 @@ export async function POST(request: NextRequest) {
           cycle_settings: assessment.cycleSettings || { maxCycles: 3, evidencePerCycle: 3 },
           selected_personality_id: assessment.selectedPersonalityId || null,
           report_generation: assessment.reportGeneration || null,
-          is_active: true,
+          status: assessment.status || 'draft',
+          is_active: assessment.status === 'live' || assessment.is_active === true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -114,9 +116,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Fetch all assessments from assessment_templates table (the new enhanced assessments)
+    // Fetch all assessments from enhanced_assessments table
     const { data: assessments, error } = await supabase
-      .from('assessment_templates')
+      .from('enhanced_assessments')
       .select('*')
       .order('created_at', { ascending: false })
 
@@ -132,7 +134,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in get assessments API:', error)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
