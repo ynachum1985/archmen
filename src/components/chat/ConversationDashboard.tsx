@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Home,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Brain
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -49,6 +50,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [level3Open, setLevel3Open] = useState(true)
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState<string>('live')
 
   useEffect(() => {
     loadAssessments()
