@@ -1,56 +1,24 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
-  Send,
-  Settings,
-  Calendar,
   Plus,
-  MoreHorizontal,
-  User,
-  Bot,
   Sparkles,
   ChevronLeft,
   ChevronRight,
   Home,
-  Brain,
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { AddToCalendarModal } from '@/components/calendar/AddToCalendarModal'
-import { InlineHomeworkView } from '@/components/calendar/InlineHomeworkView'
-import { InlineSettingsView } from '@/components/settings/InlineSettingsView'
+import { MinimalDashboard } from '@/components/dashboard/MinimalDashboard'
 
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
-  metadata?: {
-    archetypeConfidence?: Record<string, number>
-    suggestedActions?: Array<{
-      type: 'homework' | 'calendar' | 'reminder'
-      label: string
-      action: string
-    }>
-  }
-}
 
-interface Conversation {
-  id: string
-  title: string
-  lastMessage: string
-  timestamp: Date
-  isActive: boolean
-}
 
 interface Assessment {
   id: string
@@ -67,37 +35,11 @@ interface ConversationDashboardProps {
   userId: string
 }
 
-// Helper function to detect if a message contains practice suggestions
-const detectPracticeInMessage = (content: string): { hasPractice: boolean; practiceType: string; suggestedDuration: number } => {
-  const lowerContent = content.toLowerCase()
 
-  const practiceKeywords = {
-    meditation: { keywords: ['meditat', 'mindful', 'breath', 'center'], duration: 10 },
-    affirmation: { keywords: ['affirm', 'repeat', 'say to yourself', 'mantra'], duration: 5 },
-    journaling: { keywords: ['journal', 'write', 'reflect on paper', 'document'], duration: 15 },
-    exercise: { keywords: ['exercise', 'movement', 'stretch', 'walk'], duration: 20 },
-    reflection: { keywords: ['reflect', 'consider', 'think about', 'contemplate'], duration: 10 },
-    practice: { keywords: ['practice', 'try this', 'homework', 'assignment'], duration: 15 },
-    integration: { keywords: ['integrate', 'apply', 'implement', 'use this'], duration: 15 }
-  }
-
-  for (const [type, { keywords, duration }] of Object.entries(practiceKeywords)) {
-    if (keywords.some(keyword => lowerContent.includes(keyword))) {
-      return { hasPractice: true, practiceType: type, suggestedDuration: duration }
-    }
-  }
-
-  return { hasPractice: false, practiceType: '', suggestedDuration: 15 }
-}
 
 export function ConversationDashboard({ userId }: ConversationDashboardProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([])
   const [assessments, setAssessments] = useState<Assessment[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [currentView, setCurrentView] = useState<'chat' | 'homework' | 'settings'>('chat')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mainAssessmentCompleted, setMainAssessmentCompleted] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -107,16 +49,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [level3Open, setLevel3Open] = useState(true)
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
-  const [showAddToCalendar, setShowAddToCalendar] = useState(false)
-  const [selectedPractice, setSelectedPractice] = useState<{
-    title: string
-    description: string
-    duration?: number
-  } | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    loadConversations()
     loadAssessments()
     checkMainAssessmentCompleted().then(setMainAssessmentCompleted)
     checkAdminStatus()
@@ -126,60 +60,11 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     loadAssessments()
   }, [isAdmin])
 
-  useEffect(() => {
-    if (activeConversationId) {
-      loadMessages(activeConversationId)
-    }
-  }, [activeConversationId])
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
 
-  const loadConversations = async () => {
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('user_id', userId)
-        .order('updated_at', { ascending: false })
 
-      if (error) throw error
 
-      const formattedConversations: Conversation[] = (data || []).map(conv => {
-        // Create a better default title based on assessment name or timestamp
-        let defaultTitle = 'Conversation'
-        if (conv.metadata?.assessmentName) {
-          defaultTitle = conv.metadata.assessmentName
-        } else {
-          const date = new Date(conv.created_at)
-          defaultTitle = `Chat ${date.toLocaleDateString()}`
-        }
-
-        return {
-          id: conv.id,
-          title: conv.metadata?.title || defaultTitle,
-          lastMessage: conv.messages?.[conv.messages.length - 1]?.content?.substring(0, 50) + '...' || '',
-          timestamp: new Date(conv.updated_at),
-          isActive: conv.metadata?.status === 'active'
-        }
-      })
-
-      setConversations(formattedConversations)
-
-      // Auto-select first conversation if available
-      if (formattedConversations.length > 0) {
-        setActiveConversationId(formattedConversations[0].id)
-      }
-    } catch (error) {
-      console.error('Error loading conversations:', error)
-    }
-  }
 
   const checkAdminStatus = async () => {
     try {
@@ -323,31 +208,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     }
   }
 
-  const loadMessages = async (conversationId: string) => {
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('messages')
-        .eq('id', conversationId)
-        .single()
 
-      if (error) throw error
-
-      const conversationMessages = data?.messages || []
-      const formattedMessages: Message[] = conversationMessages.map((msg: any, index: number) => ({
-        id: `${conversationId}-${index}`,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.timestamp || Date.now()),
-        metadata: msg.metadata
-      }))
-
-      setMessages(formattedMessages)
-    } catch (error) {
-      console.error('Error loading messages:', error)
-    }
-  }
 
   const createNewConversation = async (assessment?: Assessment) => {
     try {
@@ -395,89 +256,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     }
   }
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading || !activeConversationId) return
 
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: input,
-      timestamp: new Date()
-    }
-
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
-    setIsLoading(true)
-
-    try {
-      // Call AI API for response
-      const response = await fetch('/api/conversation-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: activeConversationId,
-          message: input,
-          userId
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to get AI response')
-
-      const data = await response.json()
-      
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: data.content,
-        timestamp: new Date(),
-        metadata: data.metadata
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
-
-      // Update conversation in database
-      await updateConversation(activeConversationId, [...messages, userMessage, assistantMessage])
-
-    } catch (error) {
-      console.error('Error sending message:', error)
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again.',
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const updateConversation = async (conversationId: string, updatedMessages: Message[]) => {
-    try {
-      const supabase = createClient()
-      await supabase
-        .from('conversations')
-        .update({
-          messages: updatedMessages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp.toISOString(),
-            metadata: msg.metadata
-          })),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', conversationId)
-    } catch (error) {
-      console.error('Error updating conversation:', error)
-    }
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
-    }
-  }
 
   return (
     <div className="flex h-screen bg-gray-50/30">
@@ -719,36 +498,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
               </Select>
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentView('chat')}
-              className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
-                currentView === 'chat' ? 'bg-gray-100 text-gray-900' : ''
-              }`}
-            >
-              <Brain className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentView('homework')}
-              className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
-                currentView === 'homework' ? 'bg-gray-100 text-gray-900' : ''
-              }`}
-            >
-              <Calendar className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentView('settings')}
-              className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
-                currentView === 'settings' ? 'bg-gray-100 text-gray-900' : ''
-              }`}
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
+
           </div>
         </div>
 
@@ -780,173 +530,14 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
           </div>
         </div>
 
-        {/* Dynamic Content Area */}
-        {currentView === 'chat' ? (
-          <>
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="max-w-3xl mx-auto space-y-6">
-                {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.role === 'assistant' && (
-                  <Avatar className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-                    <AvatarFallback>
-                      <Bot className="h-4 w-4 text-gray-700" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                
-                <div className={`max-w-[80%] ${message.role === 'user' ? 'order-first' : ''}`}>
-                  <div
-                    className={`p-4 rounded-2xl ${
-                      message.role === 'user'
-                        ? 'bg-gray-900/90 text-white ml-auto'
-                        : 'bg-white/80 border border-gray-200/60 text-gray-900'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {message.content}
-                    </p>
-                  </div>
-                  
-                  {/* Archetype Confidence Indicators */}
-                  {message.metadata?.archetypeConfidence && (
-                    <div className="mt-3 p-3 bg-blue-50/60 rounded-lg border border-blue-200/40">
-                      <p className="text-xs text-blue-700 mb-2 font-medium">Archetype Insights</p>
-                      <div className="space-y-1">
-                        {Object.entries(message.metadata.archetypeConfidence).map(([archetype, confidence]) => (
-                          <div key={archetype} className="flex items-center justify-between">
-                            <span className="text-xs text-blue-600">{archetype}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-blue-500 transition-all duration-500"
-                                  style={{ width: `${confidence}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-blue-500 font-medium">{confidence}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+        {/* Minimal Dashboard */}
+        <MinimalDashboard userId={userId} />
 
-                  {/* Add to Calendar Button for AI messages with practice suggestions */}
-                  {message.role === 'assistant' && (() => {
-                    const practiceDetection = detectPracticeInMessage(message.content)
-                    return practiceDetection.hasPractice && (
-                      <div className="mt-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedPractice({
-                              title: `${practiceDetection.practiceType.charAt(0).toUpperCase() + practiceDetection.practiceType.slice(1)} Practice`,
-                              description: message.content.slice(0, 200) + (message.content.length > 200 ? '...' : ''),
-                              duration: practiceDetection.suggestedDuration
-                            })
-                            setShowAddToCalendar(true)
-                          }}
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs"
-                        >
-                          <Calendar className="h-3 w-3 mr-1" />
-                          Add to Calendar
-                        </Button>
-                      </div>
-                    )
-                  })()}
-                </div>
-
-                {message.role === 'user' && (
-                  <Avatar className="w-8 h-8 bg-gray-100">
-                    <AvatarFallback>
-                      <User className="h-4 w-4 text-gray-600" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex gap-3">
-                <Avatar className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-                  <AvatarFallback>
-                    <Bot className="h-4 w-4 text-gray-700" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-white/80 border border-gray-200/60 p-4 rounded-2xl">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-
-        {/* Input Area */}
-        <div className="bg-white/60 backdrop-blur-sm border-t border-gray-200/50 p-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex gap-3 items-end">
-              <div className="flex-1 relative">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Share your thoughts and experiences..."
-                  className="min-h-[44px] bg-white/80 border-gray-200/60 rounded-xl resize-none pr-12 text-sm"
-                  disabled={isLoading}
-                />
-              </div>
-              <Button
-                onClick={sendMessage}
-                disabled={!input.trim() || isLoading}
-                className="bg-gray-900/90 hover:bg-gray-900 text-white border-0 rounded-xl h-11 px-4"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-          </>
-        ) : currentView === 'homework' ? (
-          <InlineHomeworkView
-            userId={userId}
-            currentAssessmentId={currentAssessment?.id}
-          />
-        ) : currentView === 'settings' ? (
-          <InlineSettingsView userId={userId} />
-        ) : null}
       </div>
 
 
 
-      {/* Add to Calendar Modal */}
-      {selectedPractice && (
-        <AddToCalendarModal
-          isOpen={showAddToCalendar}
-          onClose={() => {
-            setShowAddToCalendar(false)
-            setSelectedPractice(null)
-          }}
-          userId={userId}
-          practiceTitle={selectedPractice.title}
-          practiceDescription={selectedPractice.description}
-          suggestedDuration={selectedPractice.duration}
-          onScheduled={() => {
-            setShowAddToCalendar(false)
-            setSelectedPractice(null)
-            // Optionally show a success message
-          }}
-        />
-      )}
+
 
 
     </div>
