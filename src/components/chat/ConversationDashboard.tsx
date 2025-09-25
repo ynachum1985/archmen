@@ -25,6 +25,9 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { HomeworkCalendar } from '@/components/calendar/HomeworkCalendar'
+import { AddToCalendarModal } from '@/components/calendar/AddToCalendarModal'
+import { UserSettingsModal } from '@/components/settings/UserSettingsModal'
 
 interface Message {
   id: string
@@ -82,6 +85,12 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [level3Open, setLevel3Open] = useState(true)
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
+  const [showAddToCalendar, setShowAddToCalendar] = useState(false)
+  const [selectedPractice, setSelectedPractice] = useState<{
+    title: string
+    description: string
+    duration?: number
+  } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -783,7 +792,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                             <span className="text-xs text-blue-600">{archetype}</span>
                             <div className="flex items-center gap-2">
                               <div className="w-16 h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className="h-full bg-blue-500 transition-all duration-500"
                                   style={{ width: `${confidence}%` }}
                                 />
@@ -793,6 +802,35 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Add to Calendar Button for AI messages with practice suggestions */}
+                  {message.role === 'assistant' && (
+                    message.content.toLowerCase().includes('practice') ||
+                    message.content.toLowerCase().includes('exercise') ||
+                    message.content.toLowerCase().includes('meditation') ||
+                    message.content.toLowerCase().includes('affirmation') ||
+                    message.content.toLowerCase().includes('journal') ||
+                    message.content.toLowerCase().includes('reflect')
+                  ) && (
+                    <div className="mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPractice({
+                            title: 'Practice from Conversation',
+                            description: message.content.slice(0, 200) + (message.content.length > 200 ? '...' : ''),
+                            duration: 15
+                          })
+                          setShowAddToCalendar(true)
+                        }}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs"
+                      >
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Add to Calendar
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -852,6 +890,40 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
           </div>
         </div>
       </div>
+
+      {/* Homework Calendar Modal */}
+      <HomeworkCalendar
+        isOpen={showHomework}
+        onClose={() => setShowHomework(false)}
+        userId={userId}
+      />
+
+      {/* Add to Calendar Modal */}
+      {selectedPractice && (
+        <AddToCalendarModal
+          isOpen={showAddToCalendar}
+          onClose={() => {
+            setShowAddToCalendar(false)
+            setSelectedPractice(null)
+          }}
+          userId={userId}
+          practiceTitle={selectedPractice.title}
+          practiceDescription={selectedPractice.description}
+          suggestedDuration={selectedPractice.duration}
+          onScheduled={() => {
+            setShowAddToCalendar(false)
+            setSelectedPractice(null)
+            // Optionally show a success message
+          }}
+        />
+      )}
+
+      {/* Settings Modal */}
+      <UserSettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        userId={userId}
+      />
     </div>
   )
 }
