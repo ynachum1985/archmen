@@ -21,6 +21,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { CleanTaskView } from '@/components/calendar/CleanTaskView'
 import { SimpleSettingsView } from '@/components/settings/SimpleSettingsView'
+import { InlineChatView } from '@/components/chat/InlineChatView'
 
 
 
@@ -54,7 +55,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>('live')
-  const [currentView, setCurrentView] = useState<'tasks' | 'settings'>('tasks')
+  const [currentView, setCurrentView] = useState<'chat' | 'tasks' | 'settings'>('chat')
+  const [currentConversation, setCurrentConversation] = useState<any>(null)
 
   useEffect(() => {
     loadAssessments()
@@ -219,12 +221,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const handleAssessmentSelect = async (assessment: Assessment) => {
     try {
       setCurrentAssessment(assessment)
+      setCurrentView('chat') // Switch to chat view instead of navigating away
       const supabase = createClient()
 
       // First, try to find an existing conversation for this assessment
       const { data: existingConversations, error: searchError } = await supabase
         .from('conversations')
-        .select('id, metadata, updated_at')
+        .select('*')
         .eq('user_id', userId)
         .eq('metadata->>assessmentId', assessment.id)
         .order('updated_at', { ascending: false })
@@ -233,13 +236,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       if (searchError) throw searchError
 
       if (existingConversations && existingConversations.length > 0) {
-        // Navigate to existing conversation
-        window.location.href = `/chat/${existingConversations[0].id}`
+        // Load existing conversation into chat view
+        setCurrentConversation(existingConversations[0])
         return
       }
 
       // If no existing conversation, create a new one
-      await createNewConversation(assessment)
+      await createNewConversationInline(assessment)
     } catch (error) {
       console.error('Error selecting assessment:', error)
     }
@@ -346,6 +349,63 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       setConversations(prev => [newConversation, ...prev])
       window.location.href = `/chat/${data.id}`
+      setCurrentAssessment(fullAssessment || null)
+    } catch (error) {
+      console.error('Error creating conversation:', error)
+    }
+  }
+
+  const createNewConversationInline = async (assessment?: Assessment) => {
+    try {
+      const supabase = createClient()
+
+      // Get full assessment details including prompts and configurations
+      let fullAssessment = assessment
+      if (assessment?.id) {
+        const { data: assessmentDetails } = await supabase
+          .from('enhanced_assessments')
+          .select('*')
+          .eq('id', assessment.id)
+          .single()
+
+        if (assessmentDetails) {
+          fullAssessment = assessmentDetails
+        }
+      }
+
+      // Create assessment-specific welcome message using configured prompts
+      const welcomeMessage = fullAssessment
+        ? getAssessmentWelcomeMessage(fullAssessment)
+        : "Hello! I'm here to help you discover your archetypal patterns through conversation. Let's begin this journey of self-discovery together. What brings you here today?"
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: userId,
+          messages: [{
+            role: 'assistant',
+            content: welcomeMessage,
+            timestamp: new Date().toISOString()
+          }],
+          metadata: {
+            title: fullAssessment ? fullAssessment.name : 'General Conversation',
+            status: 'active',
+            phase: 'assessment',
+            assessmentId: fullAssessment?.id,
+            category: fullAssessment?.category,
+            assessmentLevel: fullAssessment?.assessment_level,
+            hasGateways: fullAssessment?.has_custom_gateways,
+            quizEnabled: fullAssessment?.quiz_enabled,
+            systemPrompt: fullAssessment?.system_prompt || fullAssessment?.assessmentPrompt
+          }
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Set the new conversation as current conversation for inline chat
+      setCurrentConversation(data)
       setCurrentAssessment(fullAssessment || null)
     } catch (error) {
       console.error('Error creating conversation:', error)
@@ -619,6 +679,16 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => setCurrentView('chat')}
+                className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                  currentView === 'chat' ? 'bg-gray-100 text-gray-900' : ''
+                }`}
+              >
+                <Brain className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setCurrentView('tasks')}
                 className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
                   currentView === 'tasks' ? 'bg-gray-100 text-gray-900' : ''
@@ -669,7 +739,13 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
         </div>
 
         {/* Dynamic Content Area */}
-        {currentView === 'tasks' ? (
+        {currentView === 'chat' ? (
+          <InlineChatView
+            conversation={currentConversation}
+            userId={userId}
+            onConversationUpdate={setCurrentConversation}
+          />
+        ) : currentView === 'tasks' ? (
           <CleanTaskView userId={userId} currentAssessmentId={currentAssessment?.id} />
         ) : currentView === 'settings' ? (
           <SimpleSettingsView userId={userId} />
