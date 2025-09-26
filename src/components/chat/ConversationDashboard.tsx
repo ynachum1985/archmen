@@ -102,7 +102,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       const supabase = createClient()
       let query = supabase
         .from('enhanced_assessments')
-        .select('id, name, description, category, expected_duration, assessment_level, status, is_active')
+        .select('id, name, description, category, expected_duration, assessment_level, status, is_active, quiz_enabled, has_custom_gateways, quiz_set_questions_prompt, quiz_experience_analysis_prompt')
 
       // Admin users see all assessments, regular users only see live ones
       if (!isAdmin) {
@@ -215,6 +215,35 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   }
 
 
+
+  const handleAssessmentSelect = async (assessment: Assessment) => {
+    try {
+      setCurrentAssessment(assessment)
+      const supabase = createClient()
+
+      // First, try to find an existing conversation for this assessment
+      const { data: existingConversations, error: searchError } = await supabase
+        .from('conversations')
+        .select('id, metadata, updated_at')
+        .eq('user_id', userId)
+        .eq('metadata->>assessmentId', assessment.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+
+      if (searchError) throw searchError
+
+      if (existingConversations && existingConversations.length > 0) {
+        // Navigate to existing conversation
+        window.location.href = `/chat/${existingConversations[0].id}`
+        return
+      }
+
+      // If no existing conversation, create a new one
+      await createNewConversation(assessment)
+    } catch (error) {
+      console.error('Error selecting assessment:', error)
+    }
+  }
 
   const navigateToActiveAssessment = async () => {
     try {
