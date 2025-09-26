@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { ModernCalendarView } from '@/components/calendar/ModernCalendarView'
+import { CleanTaskView } from '@/components/calendar/CleanTaskView'
 import { SimpleSettingsView } from '@/components/settings/SimpleSettingsView'
 
 
@@ -348,13 +348,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                       return (
                         <button
                           key={assessment.id}
-                          onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                          onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
                           disabled={!isAccessible}
                           className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
                             isAccessible
                               ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
                               : 'opacity-50 cursor-not-allowed bg-gray-100/30'
-                          }`}
+                          } ${currentAssessment?.id === assessment.id ? 'bg-blue-50 border-blue-200' : ''}`}
                         >
                           <div className="flex items-center gap-2 mb-1">
                             <Brain className={`h-3 w-3 ${isAccessible ? 'text-blue-500' : 'text-gray-400'}`} />
@@ -405,13 +405,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                       return (
                         <button
                           key={assessment.id}
-                          onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                          onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
                           disabled={!isAccessible}
                           className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
                             isAccessible
                               ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
                               : 'opacity-50 cursor-not-allowed bg-gray-100/30'
-                          }`}
+                          } ${currentAssessment?.id === assessment.id ? 'bg-purple-50 border-purple-200' : ''}`}
                         >
                           <div className="flex items-center gap-2 mb-1">
                             <Brain className={`h-3 w-3 ${isAccessible ? 'text-purple-500' : 'text-gray-400'}`} />
@@ -457,13 +457,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
                       return (
                         <button
                           key={assessment.id}
-                          onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                          onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
                           disabled={!isAccessible}
                           className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
                             isAccessible
                               ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
                               : 'opacity-50 cursor-not-allowed bg-gray-100/30'
-                          }`}
+                          } ${currentAssessment?.id === assessment.id ? 'bg-red-50 border-red-200' : ''}`}
                         >
                           <div className="flex items-center gap-2 mb-1">
                             <Brain className={`h-3 w-3 ${isAccessible ? 'text-red-500' : 'text-gray-400'}`} />
@@ -585,11 +585,11 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
               return (
                 <button
                   key={assessment.id}
-                  onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                  onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
                   disabled={!isAccessible}
                   className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                     isAccessible
-                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      ? `${currentAssessment?.id === assessment.id ? 'bg-blue-200 text-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
                 >
@@ -602,7 +602,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
         {/* Dynamic Content Area */}
         {currentView === 'tasks' ? (
-          <ModernCalendarView userId={userId} currentAssessmentId={currentAssessment?.id} />
+          <CleanTaskView userId={userId} currentAssessmentId={currentAssessment?.id} />
         ) : currentView === 'settings' ? (
           <SimpleSettingsView userId={userId} />
         ) : null}
