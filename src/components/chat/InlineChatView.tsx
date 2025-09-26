@@ -153,7 +153,7 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white/40 backdrop-blur-sm">
+    <div className="flex-1 flex flex-col bg-white/40 backdrop-blur-sm relative">
       {/* Chat Header */}
       <div className="border-b border-gray-200/50 p-4 bg-white/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -169,41 +169,46 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
         </div>
       </div>
 
-      {/* Chat Messages */}
-      <div className="flex-1 flex flex-col">
-        <ChatMessageList className="flex-1 p-4">
-          {conversation.messages.map((msg, index) => (
-            <ChatBubble
-              key={index}
-              variant={msg.role === 'user' ? 'sent' : 'received'}
-            >
-              <ChatBubbleAvatar
-                src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
-                fallback={msg.role === 'assistant' ? 'AI' : 'You'}
-              />
-              <ChatBubbleMessage>
-                {msg.content}
-              </ChatBubbleMessage>
-            </ChatBubble>
-          ))}
+      {/* Chat Messages - with bottom padding for fixed input */}
+      <div className="flex-1 overflow-hidden">
+        <ChatMessageList className="h-full pb-24">
+          <div className="max-w-3xl mx-auto px-4">
+            {conversation.messages.map((msg, index) => (
+              <ChatBubble
+                key={index}
+                variant={msg.role === 'user' ? 'sent' : 'received'}
+                className="mb-6"
+              >
+                <ChatBubbleAvatar
+                  src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
+                  fallback={msg.role === 'assistant' ? 'AI' : 'You'}
+                />
+                <ChatBubbleMessage>
+                  {msg.content}
+                </ChatBubbleMessage>
+              </ChatBubble>
+            ))}
+          </div>
         </ChatMessageList>
+      </div>
 
-        {/* Message Input */}
-        <div className="p-4 border-t bg-white/60 backdrop-blur-sm">
-          <div className="flex gap-3">
+      {/* Fixed Message Input - ChatGPT style */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-transparent backdrop-blur-sm border-t border-gray-200/50">
+        <div className="max-w-3xl mx-auto p-4">
+          <div className="relative">
             <Textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1 min-h-[3rem] max-h-[8rem] resize-none bg-white/80 backdrop-blur-sm border-gray-200/50 focus:border-blue-300 rounded-lg"
+              placeholder="Message ArchMen..."
+              className="w-full min-h-[3rem] max-h-[8rem] resize-none bg-white/90 backdrop-blur-sm border-gray-300/50 focus:border-blue-400 rounded-xl pr-12 shadow-sm"
               disabled={sending}
             />
             <Button
               onClick={sendMessage}
               disabled={!message.trim() || sending}
               size="icon"
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg"
+              className="absolute right-2 bottom-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg h-8 w-8"
             >
               <Send className="h-4 w-4" />
             </Button>
