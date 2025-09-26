@@ -19,10 +19,8 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { MinimalDashboard } from '@/components/dashboard/MinimalDashboard'
-import { InlineHomeworkView } from '@/components/calendar/InlineHomeworkView'
+import { SimpleCalendarView } from '@/components/calendar/SimpleCalendarView'
 import { InlineSettingsView } from '@/components/settings/InlineSettingsView'
-import { InlineAssessmentView } from '@/components/assessments/InlineAssessmentView'
 
 
 
@@ -56,7 +54,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>('live')
-  const [currentView, setCurrentView] = useState<'assessments' | 'calendar' | 'settings'>('calendar')
+  const [currentView, setCurrentView] = useState<'chat' | 'calendar' | 'settings'>('calendar')
 
   useEffect(() => {
     loadAssessments()
@@ -217,6 +215,48 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   }
 
 
+
+  const navigateToActiveAssessment = async () => {
+    try {
+      const supabase = createClient()
+
+      // Find the most recent active conversation for this user
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select('id, metadata')
+        .eq('user_id', userId)
+        .not('metadata->>assessmentId', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+
+      if (error) throw error
+
+      if (conversations && conversations.length > 0) {
+        // Navigate to the active assessment chat
+        const conversationId = conversations[0].id
+        const assessmentId = conversations[0].metadata?.assessmentId
+
+        if (assessmentId) {
+          window.location.href = `/chat/${conversationId}`
+          return
+        }
+      }
+
+      // If no active conversation, create a new one with the main assessment
+      const mainAssessmentId = '550e8400-e29b-41d4-a716-446655440001'
+      const { data: assessment } = await supabase
+        .from('enhanced_assessments')
+        .select('*')
+        .eq('id', mainAssessmentId)
+        .single()
+
+      if (assessment) {
+        await createNewConversation(assessment)
+      }
+    } catch (error) {
+      console.error('Error navigating to active assessment:', error)
+    }
+  }
 
   const createNewConversation = async (assessment?: Assessment) => {
     try {
@@ -511,10 +551,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCurrentView('assessments')}
-                className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
-                  currentView === 'assessments' ? 'bg-gray-100 text-gray-900' : ''
-                }`}
+                onClick={() => navigateToActiveAssessment()}
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
               >
                 <Brain className="h-4 w-4" />
               </Button>
@@ -572,12 +610,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
         {/* Dynamic Content Area */}
         {currentView === 'calendar' ? (
-          <InlineHomeworkView
-            userId={userId}
-            currentAssessmentId={currentAssessment?.id}
-          />
-        ) : currentView === 'assessments' ? (
-          <InlineAssessmentView userId={userId} />
+          <SimpleCalendarView userId={userId} />
         ) : currentView === 'settings' ? (
           <InlineSettingsView userId={userId} />
         ) : null}
