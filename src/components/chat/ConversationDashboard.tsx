@@ -297,7 +297,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       }
 
       setConversations(prev => [newConversation, ...prev])
-      setActiveConversationId(data.id)
+      window.location.href = `/chat/${data.id}`
       setCurrentAssessment(assessment || null) // Set current assessment for status management
     } catch (error) {
       console.error('Error creating conversation:', error)
