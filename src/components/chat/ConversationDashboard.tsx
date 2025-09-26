@@ -20,7 +20,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { ModernCalendarView } from '@/components/calendar/ModernCalendarView'
-import { InlineSettingsView } from '@/components/settings/InlineSettingsView'
+import { SimpleSettingsView } from '@/components/settings/SimpleSettingsView'
 
 
 
@@ -604,7 +604,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         {currentView === 'tasks' ? (
           <ModernCalendarView userId={userId} currentAssessmentId={currentAssessment?.id} />
         ) : currentView === 'settings' ? (
-          <InlineSettingsView userId={userId} />
+          <SimpleSettingsView userId={userId} />
         ) : null}
 
       </div>
