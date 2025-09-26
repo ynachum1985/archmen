@@ -506,7 +506,39 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
               </Select>
             )}
 
-
+            {/* Navigation Buttons */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentView('assessments')}
+                className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                  currentView === 'assessments' ? 'bg-gray-100 text-gray-900' : ''
+                }`}
+              >
+                <Brain className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentView('calendar')}
+                className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                  currentView === 'calendar' ? 'bg-gray-100 text-gray-900' : ''
+                }`}
+              >
+                <Calendar className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentView('settings')}
+                className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                  currentView === 'settings' ? 'bg-gray-100 text-gray-900' : ''
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
