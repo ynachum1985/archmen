@@ -13,11 +13,16 @@ import {
   Home,
   ChevronDown,
   ChevronUp,
-  Brain
+  Brain,
+  Calendar,
+  Settings
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { MinimalDashboard } from '@/components/dashboard/MinimalDashboard'
+import { InlineHomeworkView } from '@/components/calendar/InlineHomeworkView'
+import { InlineSettingsView } from '@/components/settings/InlineSettingsView'
+import { InlineAssessmentView } from '@/components/assessments/InlineAssessmentView'
 
 
 
@@ -51,6 +56,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>('live')
+  const [currentView, setCurrentView] = useState<'assessments' | 'calendar' | 'settings'>('calendar')
 
   useEffect(() => {
     loadAssessments()
@@ -532,8 +538,17 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
           </div>
         </div>
 
-        {/* Minimal Dashboard */}
-        <MinimalDashboard userId={userId} />
+        {/* Dynamic Content Area */}
+        {currentView === 'calendar' ? (
+          <InlineHomeworkView
+            userId={userId}
+            currentAssessmentId={currentAssessment?.id}
+          />
+        ) : currentView === 'assessments' ? (
+          <InlineAssessmentView userId={userId} />
+        ) : currentView === 'settings' ? (
+          <InlineSettingsView userId={userId} />
+        ) : null}
 
       </div>
 
