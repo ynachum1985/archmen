@@ -291,8 +291,23 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     try {
       const supabase = createClient()
 
-      const welcomeMessage = assessment
-        ? `Hello! I'm here to guide you through the "${assessment.name}" assessment. This will take approximately ${assessment.expected_duration} minutes. ${assessment.description} Let's begin - what brings you to explore this topic today?`
+      // Get full assessment details including prompts and configurations
+      let fullAssessment = assessment
+      if (assessment?.id) {
+        const { data: assessmentDetails } = await supabase
+          .from('enhanced_assessments')
+          .select('*')
+          .eq('id', assessment.id)
+          .single()
+
+        if (assessmentDetails) {
+          fullAssessment = assessmentDetails
+        }
+      }
+
+      // Create assessment-specific welcome message using configured prompts
+      const welcomeMessage = fullAssessment
+        ? getAssessmentWelcomeMessage(fullAssessment)
         : "Hello! I'm here to help you discover your archetypal patterns through conversation. Let's begin this journey of self-discovery together. What brings you here today?"
 
       const { data, error } = await supabase
@@ -305,11 +320,15 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
             timestamp: new Date().toISOString()
           }],
           metadata: {
-            title: assessment ? assessment.name : 'General Conversation',
+            title: fullAssessment ? fullAssessment.name : 'General Conversation',
             status: 'active',
             phase: 'assessment',
-            assessmentId: assessment?.id,
-            category: assessment?.category
+            assessmentId: fullAssessment?.id,
+            category: fullAssessment?.category,
+            assessmentLevel: fullAssessment?.assessment_level,
+            hasGateways: fullAssessment?.has_custom_gateways,
+            quizEnabled: fullAssessment?.quiz_enabled,
+            systemPrompt: fullAssessment?.system_prompt || fullAssessment?.assessmentPrompt
           }
         })
         .select()
@@ -319,7 +338,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       const newConversation: Conversation = {
         id: data.id,
-        title: assessment ? assessment.name : 'General Conversation',
+        title: fullAssessment ? fullAssessment.name : 'General Conversation',
         lastMessage: welcomeMessage.substring(0, 50) + '...',
         timestamp: new Date(),
         isActive: true
@@ -327,10 +346,30 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       setConversations(prev => [newConversation, ...prev])
       window.location.href = `/chat/${data.id}`
-      setCurrentAssessment(assessment || null) // Set current assessment for status management
+      setCurrentAssessment(fullAssessment || null)
     } catch (error) {
       console.error('Error creating conversation:', error)
     }
+  }
+
+  const getAssessmentWelcomeMessage = (assessment: any): string => {
+    // Use custom quiz prompts if available, otherwise use default
+    if (assessment.quiz_set_questions_prompt) {
+      return `Welcome to the ${assessment.name} assessment!
+
+${assessment.description}
+
+This assessment will take approximately ${assessment.expected_duration} minutes and is designed for Level ${assessment.assessment_level} exploration.
+
+I'll begin by asking you some questions to understand your readiness and current perspective. Let's start with this: What brings you to explore ${assessment.category.toLowerCase()} patterns in your life right now?`
+    }
+
+    // Default welcome message
+    return `Hello! I'm here to guide you through the "${assessment.name}" assessment.
+
+${assessment.description}
+
+This will take approximately ${assessment.expected_duration} minutes. Let's begin - what brings you to explore this topic today?`
   }
 
 
