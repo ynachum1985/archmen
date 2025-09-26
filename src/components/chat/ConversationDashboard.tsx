@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { SimpleCalendarView } from '@/components/calendar/SimpleCalendarView'
+import { ModernCalendarView } from '@/components/calendar/ModernCalendarView'
 import { InlineSettingsView } from '@/components/settings/InlineSettingsView'
 
 
@@ -54,7 +54,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>('live')
-  const [currentView, setCurrentView] = useState<'chat' | 'calendar' | 'settings'>('calendar')
+  const [currentView, setCurrentView] = useState<'tasks' | 'settings'>('tasks')
 
   useEffect(() => {
     loadAssessments()
@@ -551,17 +551,9 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigateToActiveAssessment()}
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
-              >
-                <Brain className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCurrentView('calendar')}
+                onClick={() => setCurrentView('tasks')}
                 className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
-                  currentView === 'calendar' ? 'bg-gray-100 text-gray-900' : ''
+                  currentView === 'tasks' ? 'bg-gray-100 text-gray-900' : ''
                 }`}
               >
                 <Calendar className="h-4 w-4" />
@@ -609,8 +601,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         </div>
 
         {/* Dynamic Content Area */}
-        {currentView === 'calendar' ? (
-          <SimpleCalendarView userId={userId} />
+        {currentView === 'tasks' ? (
+          <ModernCalendarView userId={userId} currentAssessmentId={currentAssessment?.id} />
         ) : currentView === 'settings' ? (
           <InlineSettingsView userId={userId} />
         ) : null}
