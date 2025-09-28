@@ -61,7 +61,10 @@ export async function POST(request: Request) {
 
     // Step 1: Moderate user input for safety using centralized settings
     console.log('=== Content Moderation Check ===')
-    const moderation = new AIModeration()
+    const moderation = new AIModeration(
+      process.env.OPENAI_API_KEY!,
+      process.env.PERSPECTIVE_API_KEY
+    )
     const moderationResult = await moderation.moderateContent(userMessage, {
       userId: user?.id,
       assessmentId,
