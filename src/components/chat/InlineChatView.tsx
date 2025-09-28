@@ -5,8 +5,10 @@ import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Sparkles } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Send, Sparkles, AlertTriangle, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useContentModeration, getModerationMessage, shouldAllowContent, getCategoryWarnings } from '@/hooks/useContentModeration'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -41,12 +43,38 @@ interface InlineChatViewProps {
 export function InlineChatView({ conversation, userId, onConversationUpdate }: InlineChatViewProps) {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
+  const [moderationWarning, setModerationWarning] = useState<string | null>(null)
+  const { moderateContent, isLoading: moderationLoading } = useContentModeration()
 
   const sendMessage = async () => {
     if (!message.trim() || !conversation || !userId || sending) return
 
     setSending(true)
+    setModerationWarning(null)
+
     try {
+      // First, moderate the content
+      const moderationResult = await moderateContent(message.trim(), {
+        userId,
+        assessmentId: conversation.metadata.assessmentId,
+        conversationType: 'chat'
+      })
+
+      // Check if content should be blocked
+      if (!shouldAllowContent(moderationResult)) {
+        const moderationMsg = getModerationMessage(moderationResult)
+        setModerationWarning(moderationMsg.message)
+        setSending(false)
+        return
+      }
+
+      // Show warnings for flagged content but allow it to proceed
+      if (moderationResult.flagged) {
+        const warnings = getCategoryWarnings(moderationResult.categories)
+        if (warnings.length > 0) {
+          setModerationWarning(`Content flagged: ${warnings.join(', ')}. Please ensure your message is respectful and constructive.`)
+        }
+      }
       const supabase = createClient()
       
       // Add user message to conversation
@@ -195,6 +223,16 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       {/* Fixed Message Input - ChatGPT style */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-transparent backdrop-blur-sm border-t border-gray-200/50">
         <div className="max-w-3xl mx-auto p-4">
+          {/* Moderation Warning */}
+          {moderationWarning && (
+            <Alert className="mb-3 border-yellow-200 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                {moderationWarning}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="relative">
             <Textarea
               value={message}
@@ -202,15 +240,19 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
               onKeyPress={handleKeyPress}
               placeholder="Message ArchMen..."
               className="w-full min-h-[3rem] max-h-[8rem] resize-none bg-white/90 backdrop-blur-sm border-gray-300/50 focus:border-blue-400 rounded-xl pr-12 shadow-sm"
-              disabled={sending}
+              disabled={sending || moderationLoading}
             />
             <Button
               onClick={sendMessage}
-              disabled={!message.trim() || sending}
+              disabled={!message.trim() || sending || moderationLoading}
               size="icon"
               className="absolute right-2 bottom-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg h-8 w-8"
             >
-              <Send className="h-4 w-4" />
+              {moderationLoading ? (
+                <Shield className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
