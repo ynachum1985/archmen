@@ -27,27 +27,9 @@ const ModerationSettingsSchema = z.object({
 
 export async function GET() {
   try {
+    // Use service role client for admin operations
     const supabase = createServiceClient()
-
-    // Check if user is admin
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    }
-
-    // Load moderation settings using service role for admin access
-    const serviceSupabase = createServiceClient()
-    const { data: settingsData, error } = await serviceSupabase
+    const { data: settingsData, error } = await supabase
       .from('moderation_settings')
       .select('setting_name, setting_value')
 
@@ -71,29 +53,11 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createClient()
-
-    // Check if user is admin
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    }
-
     const body = await request.json()
     const validatedSettings = ModerationSettingsSchema.parse(body)
 
-    // Update each setting individually using service role
-    const serviceSupabase = createServiceClient()
+    // Use service role client for admin operations
+    const supabase = createServiceClient()
     const updates = [
       { setting_name: 'openai_thresholds', setting_value: validatedSettings.openai_thresholds },
       { setting_name: 'perspective_thresholds', setting_value: validatedSettings.perspective_thresholds },
@@ -103,7 +67,7 @@ export async function PUT(request: NextRequest) {
     ]
 
     for (const update of updates) {
-      const { error } = await serviceSupabase
+      const { error } = await supabase
         .from('moderation_settings')
         .update({
           setting_value: update.setting_value,
