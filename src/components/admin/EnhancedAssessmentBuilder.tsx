@@ -1462,7 +1462,7 @@ Keep the response under 150 words and end with a specific question.`)
                           <div className="text-sm text-orange-800 space-y-1">
                             <div>1. Enter test query: "What questions explore emotional patterns?"</div>
                             <div>2. Click "Test Semantic Search" button</div>
-                            <div>3. Check similarity scores (>0.7 = good)</div>
+                            <div>3. Check similarity scores ({'>'}0.7 = good)</div>
                             <div>4. Verify relevant content is retrieved</div>
                           </div>
                         </div>

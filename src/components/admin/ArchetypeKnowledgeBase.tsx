@@ -588,7 +588,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                       <div className="text-sm text-orange-800 space-y-1">
                         <div>1. Enter test query: "What are the core traits of this archetype?"</div>
                         <div>2. Click "Test" button</div>
-                        <div>3. Check similarity scores (>0.7 = good)</div>
+                        <div>3. Check similarity scores ({'>'}0.7 = good)</div>
                         <div>4. Verify relevant content is retrieved</div>
                       </div>
                     </div>

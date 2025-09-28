@@ -212,10 +212,8 @@ export function AIPersonalityManager() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(personalities || []).map((personality) => (
           <Card key={personality.id} className="relative">
             <CardHeader>
@@ -296,29 +294,29 @@ export function AIPersonalityManager() {
         ))}
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingPersonality} onOpenChange={(open) => !open && setEditingPersonality(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
-          <DialogHeader>
-            <DialogTitle>Edit AI Personality</DialogTitle>
-            <DialogDescription>
-              Modify the AI personality configuration.
-            </DialogDescription>
-          </DialogHeader>
-          <PersonalityForm
-            personality={newPersonality}
-            onChange={setNewPersonality}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingPersonality(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdate} disabled={!newPersonality.name.trim()}>
-              Update Personality
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Edit Dialog */}
+          <Dialog open={!!editingPersonality} onOpenChange={(open) => !open && setEditingPersonality(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+              <DialogHeader>
+                <DialogTitle>Edit AI Personality</DialogTitle>
+                <DialogDescription>
+                  Modify the AI personality configuration.
+                </DialogDescription>
+              </DialogHeader>
+              <PersonalityForm
+                personality={newPersonality}
+                onChange={setNewPersonality}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditingPersonality(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdate} disabled={!newPersonality.name.trim()}>
+                  Update Personality
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="moderation" className="space-y-4">

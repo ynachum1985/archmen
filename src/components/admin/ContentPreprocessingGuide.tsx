@@ -257,7 +257,7 @@ export function ContentPreprocessingGuide({ contentType }: ContentPreprocessingG
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 text-sm">
-                        <div>• Similarity scores > 0.7 for relevant content</div>
+                        <div>• Similarity scores {'>'}0.7 for relevant content</div>
                         <div>• Retrieved chunks match query intent</div>
                         <div>• No irrelevant content in top results</div>
                         <div>• Consistent performance across queries</div>
