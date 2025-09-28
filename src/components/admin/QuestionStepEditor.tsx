@@ -453,7 +453,7 @@ export function QuestionStepEditor({ step, isOpen, onClose, onSave }: QuestionSt
                     value={editingStep.customPrompt || ''}
                     onChange={(e) => setEditingStep(prev => prev ? { ...prev, customPrompt: e.target.value } : null)}
                     placeholder="Enter specific instructions for this question step..."
-                    className="mt-1 min-h-[120px]"
+                    className="mt-1 min-h-[120px] resize-y overflow-auto max-h-64"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Optional: Override default behavior with custom instructions for this specific question

@@ -400,7 +400,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                   onChange={(e) => updateTextContent(index, e.target.value)}
                   placeholder={`Enter content about ${archetypeName}...`}
                   rows={4}
-                  className="resize-none border-gray-200 text-sm flex-1"
+                  className="resize-y border-gray-200 text-sm flex-1 overflow-auto max-h-48"
                 />
                 <Button
                   variant="ghost"
@@ -819,7 +819,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                     }}
                     placeholder={`Enter content about ${archetypeName}...`}
                     rows={4}
-                    className="flex-1 text-sm"
+                    className="flex-1 text-sm resize-y overflow-auto max-h-48"
                   />
                   <Button
                     variant="ghost"

@@ -199,6 +199,7 @@ export function EnhancedMediaCreationStudio({
                   onChange={(e) => setImagePrompt(e.target.value)}
                   placeholder={`Describe the visual representation of ${archetypeName}...`}
                   rows={3}
+                  className="resize-y overflow-auto max-h-32"
                 />
               </div>
 

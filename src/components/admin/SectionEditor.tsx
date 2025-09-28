@@ -243,12 +243,12 @@ export function SectionEditor({ section, isOpen, onSave, onCancel, archetypeName
             <Textarea
               id="section-content"
               value={formData.content}
-              onChange={(e) => 
+              onChange={(e) =>
                 setFormData(prev => ({ ...prev, content: e.target.value }))
               }
               placeholder="Enter section content..."
               rows={8}
-              className="resize-none"
+              className="resize-y overflow-auto max-h-64"
             />
             <p className="text-xs text-gray-500">
               Supports markdown formatting. Use **bold**, *italic*, and other markdown syntax.

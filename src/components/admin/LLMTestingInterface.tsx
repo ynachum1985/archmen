@@ -287,7 +287,7 @@ Keep it under 200 words.`)
                   value={testPrompt}
                   onChange={(e) => setTestPrompt(e.target.value)}
                   placeholder="Enter your test prompt here..."
-                  className="min-h-[300px] resize-y"
+                  className="min-h-[300px] resize-y overflow-auto max-h-96"
                 />
               </CardContent>
             </Card>

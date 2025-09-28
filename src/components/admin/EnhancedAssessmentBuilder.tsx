@@ -862,6 +862,7 @@ Keep the response under 150 words and end with a specific question.`)
                   value={config.description}
                   onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
+                  className="resize-y overflow-auto max-h-32"
                 />
               </div>
               <div>
@@ -871,6 +872,7 @@ Keep the response under 150 words and end with a specific question.`)
                   value={config.purpose}
                   onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
                   rows={3}
+                  className="resize-y overflow-auto max-h-32"
                 />
               </div>
               <div>
@@ -917,6 +919,7 @@ Keep the response under 150 words and end with a specific question.`)
                   onChange={(e) => setConfig(prev => ({ ...prev, assessmentPrompt: e.target.value }))}
                   rows={4}
                   placeholder="Enter the specific prompt instructions for the LLM conducting this assessment..."
+                  className="resize-y overflow-auto max-h-48"
                 />
               </div>
             </div>
@@ -1256,7 +1259,7 @@ Keep the response under 150 words and end with a specific question.`)
                       }}
                       placeholder={content ? "" : "Paste content here..."}
                       rows={6}
-                      className="flex-1"
+                      className="flex-1 resize-y overflow-auto max-h-48"
                     />
                     {textContents.length > 1 && (
                       <Button

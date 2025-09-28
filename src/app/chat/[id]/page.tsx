@@ -260,7 +260,7 @@ export default function ChatPage() {
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
-              className="flex-1 min-h-[3rem] max-h-[8rem] resize-none bg-white/80 backdrop-blur-sm border-gray-200/50 focus:border-blue-300 rounded-lg"
+              className="flex-1 min-h-[3rem] max-h-[8rem] resize-y bg-white/80 backdrop-blur-sm border-gray-200/50 focus:border-gray-400 focus:outline-none rounded-lg overflow-auto"
               disabled={sending}
             />
             <Button

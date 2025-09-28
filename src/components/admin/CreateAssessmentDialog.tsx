@@ -192,7 +192,7 @@ export function CreateAssessmentDialog({ onAssessmentCreated, trigger }: CreateA
               value={formData.intro_text}
               onChange={(e) => setFormData(prev => ({ ...prev, intro_text: e.target.value }))}
               placeholder="Text shown to users before starting the assessment..."
-              className="bg-slate-700 border-slate-600 text-white"
+              className="bg-slate-700 border-slate-600 text-white resize-y overflow-auto max-h-32"
               rows={3}
             />
           </div>

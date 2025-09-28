@@ -262,7 +262,7 @@ export function ArchetypeCardEditor({
                   value={cardData.description}
                   onChange={(e) => setCardData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="A brief, inspiring description of this archetype..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-32"
                   rows={3}
                 />
               </div>
@@ -274,7 +274,7 @@ export function ArchetypeCardEditor({
                   value={cardData.assessmentContext}
                   onChange={(e) => setCardData(prev => ({ ...prev, assessmentContext: e.target.value }))}
                   placeholder="Explain how this archetype manifests in the specific assessment context..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-48"
                   rows={4}
                 />
               </div>
@@ -294,12 +294,12 @@ export function ArchetypeCardEditor({
                 <Textarea
                   id="currentInfluence"
                   value={cardData.insights.currentInfluence}
-                  onChange={(e) => setCardData(prev => ({ 
-                    ...prev, 
-                    insights: { ...prev.insights, currentInfluence: e.target.value } 
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    insights: { ...prev.insights, currentInfluence: e.target.value }
                   }))}
                   placeholder="How this archetype is currently influencing the user's life..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-32"
                   rows={2}
                 />
               </div>
@@ -309,12 +309,12 @@ export function ArchetypeCardEditor({
                 <Textarea
                   id="growthOpportunity"
                   value={cardData.insights.growthOpportunity}
-                  onChange={(e) => setCardData(prev => ({ 
-                    ...prev, 
-                    insights: { ...prev.insights, growthOpportunity: e.target.value } 
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    insights: { ...prev.insights, growthOpportunity: e.target.value }
                   }))}
                   placeholder="What growth opportunities this archetype presents..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-32"
                   rows={2}
                 />
               </div>
@@ -324,12 +324,12 @@ export function ArchetypeCardEditor({
                 <Textarea
                   id="integrationTip"
                   value={cardData.insights.integrationTip}
-                  onChange={(e) => setCardData(prev => ({ 
-                    ...prev, 
-                    insights: { ...prev.insights, integrationTip: e.target.value } 
+                  onChange={(e) => setCardData(prev => ({
+                    ...prev,
+                    insights: { ...prev.insights, integrationTip: e.target.value }
                   }))}
                   placeholder="A practical tip for integrating this archetype..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-32"
                   rows={2}
                 />
               </div>
@@ -358,7 +358,7 @@ export function ArchetypeCardEditor({
                     content: { ...prev.content, overview: e.target.value }
                   }))}
                   placeholder="A comprehensive overview of this archetype..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-64"
                   rows={4}
                 />
               </div>
@@ -373,7 +373,7 @@ export function ArchetypeCardEditor({
                     content: { ...prev.content, theoretical: e.target.value }
                   }))}
                   placeholder="Deep theoretical context and background information..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-64"
                   rows={4}
                 />
               </div>
@@ -388,7 +388,7 @@ export function ArchetypeCardEditor({
                     content: { ...prev.content, embodiment: e.target.value }
                   }))}
                   placeholder="Specific practices to help users embody this archetype..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-64"
                   rows={4}
                 />
               </div>
@@ -403,7 +403,7 @@ export function ArchetypeCardEditor({
                     content: { ...prev.content, integration: e.target.value }
                   }))}
                   placeholder="Practices to integrate this archetype into daily life..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-64"
                   rows={4}
                 />
               </div>
@@ -418,7 +418,7 @@ export function ArchetypeCardEditor({
                     content: { ...prev.content, shadowWork: e.target.value }
                   }))}
                   placeholder="Working with the shadow aspects of this archetype..."
-                  className="mt-1 border-0 bg-white"
+                  className="mt-1 border-0 bg-white resize-y overflow-auto max-h-64"
                   rows={4}
                 />
               </div>

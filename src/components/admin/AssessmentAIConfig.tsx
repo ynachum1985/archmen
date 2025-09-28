@@ -220,7 +220,7 @@ Draw from the complete database of 55 archetypes and their linguistic patterns. 
                   <Textarea
                     value={config.systemPrompt}
                     onChange={(e) => setConfig({...config, systemPrompt: e.target.value})}
-                    className="min-h-[200px] mt-2"
+                    className="min-h-[200px] mt-2 resize-y overflow-auto max-h-96"
                     placeholder="Define the AI's core behavior and approach..."
                   />
                 </div>
@@ -341,7 +341,7 @@ Draw from the complete database of 55 archetypes and their linguistic patterns. 
                   <Label>Custom Analysis Instructions</Label>
                   <Textarea
                     placeholder="Additional analysis instructions specific to this assessment..."
-                    className="min-h-[100px]"
+                    className="min-h-[100px] resize-y overflow-auto max-h-64"
                   />
                 </div>
 

@@ -524,7 +524,7 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
                                 <textarea
                                   value={block.content.text || ''}
                                   onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                                  className="w-full p-3 border border-gray-300 rounded-md resize-vertical"
+                                  className="w-full p-3 border border-gray-300 rounded-md resize-y overflow-auto max-h-48 focus:outline-none focus:border-gray-400"
                                   rows={6}
                                   placeholder="Enter your content here..."
                                 />
@@ -544,7 +544,7 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
                                   <textarea
                                     value={block.content.description || ''}
                                     onChange={(e) => updateBlock(block.id, { description: e.target.value })}
-                                    className="w-full p-3 border border-gray-300 rounded-md resize-vertical"
+                                    className="w-full p-3 border border-gray-300 rounded-md resize-y overflow-auto max-h-32 focus:outline-none focus:border-gray-400"
                                     rows={3}
                                     placeholder="Enter description..."
                                   />
