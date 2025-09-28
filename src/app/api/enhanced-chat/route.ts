@@ -59,47 +59,20 @@ export async function POST(request: Request) {
     const userMessage = messages[messages.length - 1]?.content || ''
     const conversationHistory = messages.slice(0, -1)
 
-    // Step 1: Get assessment moderation settings if available
-    let assessmentModerationSettings = null
-    if (assessmentId) {
-      try {
-        const { data: assessment } = await supabase
-          .from('enhanced_assessments')
-          .select('moderation_level, custom_moderation_settings')
-          .eq('id', assessmentId)
-          .single()
+    // Step 1: Moderate user input for safety using centralized settings
+    console.log('=== Content Moderation Check ===')
+    const moderation = new AIModeration()
+    const moderationResult = await moderation.moderateContent(userMessage, {
+      userId: user?.id,
+      assessmentId,
+      conversationType: assessmentId ? 'assessment' : 'chat'
+    })
 
-        if (assessment) {
-          assessmentModerationSettings = {
-            level: assessment.moderation_level || 'moderate',
-            settings: assessment.custom_moderation_settings
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching assessment moderation settings:', error)
-      }
-    }
-
-    // Step 2: Moderate user input for safety (if enabled)
-    const shouldModerateInput = assessmentModerationSettings?.settings?.enableUserInputModeration ?? true
-    let moderationResult = { flagged: false, action: 'allow' as const, confidence: 0 }
-
-    if (shouldModerateInput && assessmentModerationSettings?.level !== 'disabled') {
-      console.log('=== Content Moderation Check ===')
-      const moderation = new AIModeration()
-      moderationResult = await moderation.moderateContent(userMessage, {
-        userId: user?.id,
-        assessmentId,
-        conversationType: assessmentId ? 'assessment' : 'chat',
-        moderationLevel: assessmentModerationSettings?.level
-      })
-
-      console.log('Moderation result:', {
-        flagged: moderationResult.flagged,
-        action: moderationResult.action,
-        confidence: moderationResult.confidence
-      })
-    }
+    console.log('Moderation result:', {
+      flagged: moderationResult.flagged,
+      action: moderationResult.action,
+      confidence: moderationResult.confidence
+    })
 
     console.log('Moderation result:', {
       flagged: moderationResult.flagged,
@@ -123,7 +96,7 @@ export async function POST(request: Request) {
       console.log('Content flagged for human review but allowing to continue')
     }
 
-    // Step 3: Load AI personality if specified
+    // Step 2: Load AI personality if specified
     let systemPrompt = ''
     let personalityConfig = null
 
@@ -284,27 +257,20 @@ export async function POST(request: Request) {
       )
     }
 
-    // Step 4: Moderate AI response for safety (if enabled)
+    // Step 3: Moderate AI response for safety using centralized settings
     const aiResponse = result.content || result.response
-    const shouldModerateResponse = assessmentModerationSettings?.settings?.enableAIResponseModeration ?? true
-    let aiModerationResult = { flagged: false, action: 'allow' as const, confidence: 0 }
+    console.log('=== AI Response Moderation Check ===')
+    const aiModerationResult = await moderation.moderateContent(aiResponse, {
+      userId: user?.id,
+      assessmentId,
+      conversationType: assessmentId ? 'assessment' : 'chat'
+    })
 
-    if (shouldModerateResponse && assessmentModerationSettings?.level !== 'disabled') {
-      console.log('=== AI Response Moderation Check ===')
-      const moderation = new AIModeration()
-      aiModerationResult = await moderation.moderateContent(aiResponse, {
-        userId: user?.id,
-        assessmentId,
-        conversationType: assessmentId ? 'assessment' : 'chat',
-        moderationLevel: assessmentModerationSettings?.level
-      })
-
-      console.log('AI response moderation result:', {
-        flagged: aiModerationResult.flagged,
-        action: aiModerationResult.action,
-        confidence: aiModerationResult.confidence
-      })
-    }
+    console.log('AI response moderation result:', {
+      flagged: aiModerationResult.flagged,
+      action: aiModerationResult.action,
+      confidence: aiModerationResult.confidence
+    })
 
     // If AI response is flagged, provide a safe fallback
     let finalResponse = aiResponse

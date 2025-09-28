@@ -27,7 +27,7 @@ const ModerationSettingsSchema = z.object({
 
 export async function GET() {
   try {
-    const supabase = createClient()
+    const supabase = createServiceClient()
 
     // Check if user is admin
     const { data: { user } } = await supabase.auth.getUser()
