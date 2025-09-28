@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const ModerationPatternSchema = z.object({
@@ -31,8 +31,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Load moderation patterns
-    const { data: patterns, error } = await supabase
+    // Load moderation patterns using service role
+    const serviceSupabase = createServiceClient()
+    const { data: patterns, error } = await serviceSupabase
       .from('moderation_patterns')
       .select('*')
       .order('created_at', { ascending: false })
@@ -82,7 +83,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const { data: pattern, error } = await supabase
+    const serviceSupabase = createServiceClient()
+    const { data: pattern, error } = await serviceSupabase
       .from('moderation_patterns')
       .insert({
         ...validatedPattern,
@@ -151,7 +153,8 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const { data: pattern, error } = await supabase
+    const serviceSupabase = createServiceClient()
+    const { data: pattern, error } = await serviceSupabase
       .from('moderation_patterns')
       .update(validatedPattern)
       .eq('id', id)
@@ -204,7 +207,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Pattern ID is required' }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const serviceSupabase = createServiceClient()
+    const { error } = await serviceSupabase
       .from('moderation_patterns')
       .delete()
       .eq('id', id)

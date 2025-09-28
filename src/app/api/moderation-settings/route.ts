@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const ModerationSettingsSchema = z.object({
@@ -45,8 +45,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Load moderation settings
-    const { data: settingsData, error } = await supabase
+    // Load moderation settings using service role for admin access
+    const serviceSupabase = createServiceClient()
+    const { data: settingsData, error } = await serviceSupabase
       .from('moderation_settings')
       .select('setting_name, setting_value')
 
@@ -91,7 +92,8 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const validatedSettings = ModerationSettingsSchema.parse(body)
 
-    // Update each setting individually
+    // Update each setting individually using service role
+    const serviceSupabase = createServiceClient()
     const updates = [
       { setting_name: 'openai_thresholds', setting_value: validatedSettings.openai_thresholds },
       { setting_name: 'perspective_thresholds', setting_value: validatedSettings.perspective_thresholds },
@@ -101,9 +103,9 @@ export async function PUT(request: NextRequest) {
     ]
 
     for (const update of updates) {
-      const { error } = await supabase
+      const { error } = await serviceSupabase
         .from('moderation_settings')
-        .update({ 
+        .update({
           setting_value: update.setting_value,
           updated_at: new Date().toISOString()
         })
