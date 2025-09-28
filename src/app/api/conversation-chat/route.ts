@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
+import { conversationChatSchema, type ConversationChatRequest } from '@/lib/validations/api'
+import { withAPIMiddleware, APIError } from '@/lib/middleware/api-validation'
 
 function getOpenAIClient() {
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable is required')
+    throw new APIError('OpenAI API key not configured', 500, 'OPENAI_KEY_MISSING')
   }
   return new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -29,16 +31,8 @@ interface ConversationMessage {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const { conversationId, message, userId } = await request.json()
-
-    if (!conversationId || !message || !userId) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
+async function handleConversationChat(request: NextRequest, data: ConversationChatRequest) {
+  const { conversationId, message, userId, assessmentId } = data
 
     const supabase = createClient()
 
@@ -50,19 +44,21 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (convError) {
-      return NextResponse.json(
-        { error: 'Conversation not found' },
-        { status: 404 }
-      )
+      throw new APIError('Conversation not found', 404, 'CONVERSATION_NOT_FOUND')
     }
 
     const messages: ConversationMessage[] = conversation.messages || []
     const conversationPhase = conversation.metadata?.phase || 'assessment'
 
     // Get available archetypes for analysis
-    const { data: archetypes } = await supabase
+    const { data: archetypes, error: archetypesError } = await supabase
       .from('enhanced_archetypes')
       .select('id, name, description, core_traits')
+
+    if (archetypesError) {
+      console.error('Error fetching archetypes:', archetypesError)
+      // Continue without archetypes rather than failing
+    }
 
     // Prepare conversation context for AI
     const conversationHistory = messages.map(msg => ({
@@ -122,14 +118,6 @@ export async function POST(request: NextRequest) {
       content: aiResponse,
       metadata: responseMetadata
     })
-
-  } catch (error) {
-    console.error('Error in conversation chat:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
 }
 
 function createSystemPrompt(phase: string, archetypes: any[]): string {
@@ -292,3 +280,6 @@ async function determineSuggestedActions(
 
   return actions
 }
+
+// Export the POST handler with middleware
+export const POST = withAPIMiddleware(conversationChatSchema, handleConversationChat)
