@@ -65,27 +65,19 @@ export default function ModerationSettings() {
 
   const loadSettings = async () => {
     try {
-      const supabase = createClient()
-      
-      // Load moderation settings
-      const { data: settingsData } = await supabase
-        .from('moderation_settings')
-        .select('*')
+      // Load moderation settings via API
+      const settingsResponse = await fetch('/api/moderation-settings')
+      if (settingsResponse.ok) {
+        const { settings } = await settingsResponse.json()
+        setSettings(settings)
+      }
 
-      // Load moderation patterns
-      const { data: patternsData } = await supabase
-        .from('moderation_patterns')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      // Convert settings array to object
-      const settingsObj: any = {}
-      settingsData?.forEach(setting => {
-        settingsObj[setting.setting_name] = setting.setting_value
-      })
-
-      setSettings(settingsObj)
-      setPatterns(patternsData || [])
+      // Load moderation patterns via API
+      const patternsResponse = await fetch('/api/moderation-patterns')
+      if (patternsResponse.ok) {
+        const { patterns } = await patternsResponse.json()
+        setPatterns(patterns || [])
+      }
     } catch (error) {
       console.error('Failed to load moderation settings:', error)
     } finally {
@@ -98,23 +90,27 @@ export default function ModerationSettings() {
 
     setSaving(true)
     try {
-      const supabase = createClient()
+      const response = await fetch('/api/moderation-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+      })
 
-      // Update each setting
-      for (const [key, value] of Object.entries(settings)) {
-        await supabase
-          .from('moderation_settings')
-          .upsert({
-            setting_name: key,
-            setting_value: value,
-            updated_at: new Date().toISOString()
-          })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to save settings')
       }
 
+      const result = await response.json()
       alert('Settings saved successfully!')
+
+      // Reload settings to ensure UI is in sync
+      await loadSettings()
     } catch (error) {
       console.error('Failed to save settings:', error)
-      alert('Failed to save settings')
+      alert(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
@@ -124,19 +120,24 @@ export default function ModerationSettings() {
     if (!newPattern.pattern_name || !newPattern.pattern_regex) return
 
     try {
-      const supabase = createClient()
-      
-      const { data, error } = await supabase
-        .from('moderation_patterns')
-        .insert([{
+      const response = await fetch('/api/moderation-patterns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           ...newPattern,
           is_active: true
-        }])
-        .select()
+        })
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to add pattern')
+      }
 
-      setPatterns([...patterns, data[0]])
+      const { pattern } = await response.json()
+      setPatterns([...patterns, pattern])
       setNewPattern({
         pattern_name: '',
         pattern_regex: '',
@@ -144,25 +145,34 @@ export default function ModerationSettings() {
         severity: 'medium',
         description: ''
       })
+      alert('Pattern added successfully!')
     } catch (error) {
       console.error('Failed to add pattern:', error)
+      alert(`Failed to add pattern: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
   const togglePattern = async (id: string, isActive: boolean) => {
     try {
-      const supabase = createClient()
-      
-      await supabase
-        .from('moderation_patterns')
-        .update({ is_active: isActive })
-        .eq('id', id)
+      const response = await fetch('/api/moderation-patterns', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id, is_active: isActive })
+      })
 
-      setPatterns(patterns.map(p => 
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to toggle pattern')
+      }
+
+      setPatterns(patterns.map(p =>
         p.id === id ? { ...p, is_active: isActive } : p
       ))
     } catch (error) {
       console.error('Failed to toggle pattern:', error)
+      alert(`Failed to toggle pattern: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -170,16 +180,20 @@ export default function ModerationSettings() {
     if (!confirm('Are you sure you want to delete this pattern?')) return
 
     try {
-      const supabase = createClient()
-      
-      await supabase
-        .from('moderation_patterns')
-        .delete()
-        .eq('id', id)
+      const response = await fetch(`/api/moderation-patterns?id=${id}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete pattern')
+      }
 
       setPatterns(patterns.filter(p => p.id !== id))
+      alert('Pattern deleted successfully!')
     } catch (error) {
       console.error('Failed to delete pattern:', error)
+      alert(`Failed to delete pattern: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
