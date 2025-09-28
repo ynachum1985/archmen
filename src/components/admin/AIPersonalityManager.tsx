@@ -10,9 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X, Sparkles } from 'lucide-react'
+import { Plus, Edit, Trash2, Brain, MessageCircle, Target, X, Sparkles, Shield } from 'lucide-react'
 import { AIPersonality, NewAIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
+import ModerationDashboard from './ModerationDashboard'
+import ModerationSettings from './ModerationSettings'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function AIPersonalityManager() {
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
@@ -152,11 +155,35 @@ export function AIPersonalityManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">AI Personalities</h2>
-          <p className="text-gray-600 mt-1">Configure AI personalities for different assessment approaches with RAG capabilities</p>
+          <h2 className="text-2xl font-bold text-gray-900">AI Management & Safety</h2>
+          <p className="text-gray-600 mt-1">Configure AI personalities, content moderation, and safety settings</p>
         </div>
         <div className="flex gap-2">
-          {/* Bulk generate embeddings button removed - now handled individually per personality */}
+          <EmbeddingSettingsDialog />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Personality
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="personalities" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="personalities" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            AI Personalities
+          </TabsTrigger>
+          <TabsTrigger value="moderation" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Content Moderation
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            Moderation Settings
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="personalities" className="space-y-4">
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
@@ -292,6 +319,16 @@ export function AIPersonalityManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="moderation" className="space-y-4">
+          <ModerationDashboard />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <ModerationSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

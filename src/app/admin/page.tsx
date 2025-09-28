@@ -29,7 +29,6 @@ import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
 import { UserManagement } from "@/components/admin/UserManagement"
-import ModerationDashboard from "@/components/admin/ModerationDashboard"
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
@@ -415,7 +414,7 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-gray-50 p-1">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
             <TabsTrigger value="assessments" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Assessments
@@ -434,11 +433,7 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="ai-personality" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
-              AI Personality
-            </TabsTrigger>
-            <TabsTrigger value="moderation" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Moderation
+              AI & Safety
             </TabsTrigger>
           </TabsList>
 
@@ -640,14 +635,9 @@ export default function AdminPage() {
             <UserManagement />
           </TabsContent>
 
-          {/* AI Personality Tab */}
+          {/* AI Personality & Safety Tab */}
           <TabsContent value="ai-personality" className="mt-6">
             <AIPersonalityManager />
-          </TabsContent>
-
-          {/* Moderation Tab */}
-          <TabsContent value="moderation" className="mt-6">
-            <ModerationDashboard />
           </TabsContent>
 
           {/* Analytics Tab */}
