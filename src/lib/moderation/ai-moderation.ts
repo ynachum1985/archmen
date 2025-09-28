@@ -77,20 +77,19 @@ const TOXIC_PATTERNS = {
   ]
 }
 
-// Severity thresholds
+// Severity thresholds by moderation level
 const THRESHOLDS = {
-  openai: {
-    block: 0.8,      // Immediate block
-    flag: 0.5,       // Flag for review
-    allow: 0.3       // Allow with monitoring
+  strict: {
+    openai: { block: 0.6, flag: 0.3, allow: 0.1 },
+    perspective: { toxicity: 0.5, severe_toxicity: 0.3, identity_attack: 0.4, insult: 0.4, profanity: 0.6, threat: 0.2 }
   },
-  perspective: {
-    toxicity: 0.7,
-    severe_toxicity: 0.5,
-    identity_attack: 0.6,
-    insult: 0.6,
-    profanity: 0.8,
-    threat: 0.4
+  moderate: {
+    openai: { block: 0.8, flag: 0.5, allow: 0.3 },
+    perspective: { toxicity: 0.7, severe_toxicity: 0.5, identity_attack: 0.6, insult: 0.6, profanity: 0.8, threat: 0.4 }
+  },
+  lenient: {
+    openai: { block: 0.9, flag: 0.7, allow: 0.5 },
+    perspective: { toxicity: 0.85, severe_toxicity: 0.7, identity_attack: 0.8, insult: 0.8, profanity: 0.9, threat: 0.6 }
   }
 }
 
@@ -110,6 +109,7 @@ export class AIModeration {
     userId?: string
     assessmentId?: string
     conversationType?: 'assessment' | 'chat' | 'feedback'
+    moderationLevel?: 'strict' | 'moderate' | 'lenient' | 'disabled'
   }): Promise<ModerationResult> {
     try {
       // Run all moderation checks in parallel
@@ -266,6 +266,9 @@ export class AIModeration {
     content: string,
     context?: any
   ): ModerationResult {
+    // Get moderation level from context, default to 'moderate'
+    const moderationLevel = context?.moderationLevel || 'moderate'
+    const thresholds = THRESHOLDS[moderationLevel as keyof typeof THRESHOLDS] || THRESHOLDS.moderate
     let flagged = false
     let action: 'allow' | 'flag' | 'block' | 'human_review' = 'allow'
     let confidence = 1.0
@@ -297,18 +300,30 @@ export class AIModeration {
       reasoning.push('OpenAI moderation flagged content')
     }
 
-    // Check Perspective API scores
+    // Check Perspective API scores using level-specific thresholds
     if (perspectiveResult) {
-      if (perspectiveResult.toxicity > THRESHOLDS.perspective.toxicity) {
+      if (perspectiveResult.toxicity > thresholds.perspective.toxicity) {
         flagged = true
         action = action === 'allow' ? 'flag' : action
-        reasoning.push(`High toxicity score: ${perspectiveResult.toxicity.toFixed(2)}`)
+        reasoning.push(`High toxicity score: ${perspectiveResult.toxicity.toFixed(2)} (threshold: ${thresholds.perspective.toxicity})`)
       }
-      
-      if (perspectiveResult.threat > THRESHOLDS.perspective.threat) {
+
+      if (perspectiveResult.threat > thresholds.perspective.threat) {
         flagged = true
         action = 'block'
-        reasoning.push(`Threat detected: ${perspectiveResult.threat.toFixed(2)}`)
+        reasoning.push(`Threat detected: ${perspectiveResult.threat.toFixed(2)} (threshold: ${thresholds.perspective.threat})`)
+      }
+
+      if (perspectiveResult.severe_toxicity > thresholds.perspective.severe_toxicity) {
+        flagged = true
+        action = 'block'
+        reasoning.push(`Severe toxicity detected: ${perspectiveResult.severe_toxicity.toFixed(2)}`)
+      }
+
+      if (perspectiveResult.identity_attack > thresholds.perspective.identity_attack) {
+        flagged = true
+        action = action === 'allow' ? 'flag' : action
+        reasoning.push(`Identity attack detected: ${perspectiveResult.identity_attack.toFixed(2)}`)
       }
     }
 

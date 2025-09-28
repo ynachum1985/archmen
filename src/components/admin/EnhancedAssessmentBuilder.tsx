@@ -78,6 +78,16 @@ interface EnhancedAssessmentConfig {
   // AI Personality
   selectedPersonalityId?: string
 
+  // Content Moderation Configuration
+  moderationLevel?: 'strict' | 'moderate' | 'lenient' | 'disabled'
+  customModerationSettings?: {
+    enableUserInputModeration: boolean
+    enableAIResponseModeration: boolean
+    blockThreshold: number
+    flagThreshold: number
+    customPatterns: string[]
+  }
+
   // Live Assessment LLM Configuration
   liveProvider?: LLMProvider
   liveModel?: string
@@ -168,6 +178,16 @@ QUESTIONING STRATEGY:
 
   // AI Personality
   selectedPersonalityId: undefined,
+
+  // Content Moderation Configuration
+  moderationLevel: 'moderate',
+  customModerationSettings: {
+    enableUserInputModeration: true,
+    enableAIResponseModeration: true,
+    blockThreshold: 0.8,
+    flagThreshold: 0.5,
+    customPatterns: []
+  },
 
   // Live Assessment LLM Configuration
   liveProvider: 'openai',
@@ -1070,6 +1090,84 @@ Keep the response under 150 words and end with a specific question.`)
                   )}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Content Moderation Configuration */}
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Content Moderation</Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Configure safety and content moderation for this assessment
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">Moderation Level</Label>
+                  <Select
+                    value={config.moderationLevel || 'moderate'}
+                    onValueChange={(value: 'strict' | 'moderate' | 'lenient' | 'disabled') =>
+                      setConfig(prev => ({ ...prev, moderationLevel: value }))
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select moderation level" />
+                    </SelectTrigger>
+                    <SelectContent className="animate-none">
+                      <SelectItem value="strict">Strict - Maximum safety</SelectItem>
+                      <SelectItem value="moderate">Moderate - Balanced approach</SelectItem>
+                      <SelectItem value="lenient">Lenient - Minimal filtering</SelectItem>
+                      <SelectItem value="disabled">Disabled - No moderation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">Moderation Options</Label>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="userInputModeration"
+                        checked={config.customModerationSettings?.enableUserInputModeration ?? true}
+                        onChange={(e) => setConfig(prev => ({
+                          ...prev,
+                          customModerationSettings: {
+                            ...prev.customModerationSettings,
+                            enableUserInputModeration: e.target.checked,
+                            enableAIResponseModeration: prev.customModerationSettings?.enableAIResponseModeration ?? true,
+                            blockThreshold: prev.customModerationSettings?.blockThreshold ?? 0.8,
+                            flagThreshold: prev.customModerationSettings?.flagThreshold ?? 0.5,
+                            customPatterns: prev.customModerationSettings?.customPatterns ?? []
+                          }
+                        }))}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor="userInputModeration" className="text-xs">Moderate user input</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="aiResponseModeration"
+                        checked={config.customModerationSettings?.enableAIResponseModeration ?? true}
+                        onChange={(e) => setConfig(prev => ({
+                          ...prev,
+                          customModerationSettings: {
+                            ...prev.customModerationSettings,
+                            enableUserInputModeration: prev.customModerationSettings?.enableUserInputModeration ?? true,
+                            enableAIResponseModeration: e.target.checked,
+                            blockThreshold: prev.customModerationSettings?.blockThreshold ?? 0.8,
+                            flagThreshold: prev.customModerationSettings?.flagThreshold ?? 0.5,
+                            customPatterns: prev.customModerationSettings?.customPatterns ?? []
+                          }
+                        }))}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor="aiResponseModeration" className="text-xs">Moderate AI responses</Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Live Assessment LLM Configuration */}
