@@ -28,6 +28,8 @@ import { Input } from "@/components/ui/input"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
+import { ArchetypeKnowledgeBase } from "@/components/admin/ArchetypeKnowledgeBase"
+import { AssessmentGatewayBuilder } from "@/components/admin/AssessmentGatewayBuilderSimple"
 import { UserManagement } from "@/components/admin/UserManagement"
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
@@ -548,21 +550,11 @@ export default function AdminPage() {
 
               {/* Knowledge Base Sub-tab */}
               <TabsContent value="knowledge-base" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Archetype Knowledge Base</CardTitle>
-                    <CardDescription>Manage archetype documentation, media, and knowledge resources</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-12">
-                      <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Knowledge Base Coming Soon</h3>
-                      <p className="text-gray-600">
-                        Unified knowledge base for archetype documentation, media generation, and RAG functionality will be available soon.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ArchetypeKnowledgeBase
+                  archetypeId="general"
+                  archetypeName="General Knowledge Base"
+                  showOnlyKnowledgeBase={true}
+                />
               </TabsContent>
 
               {/* Assessment Gateways Sub-tab */}
@@ -570,16 +562,20 @@ export default function AdminPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Assessment Gateways</CardTitle>
-                    <CardDescription>Configure assessment access controls and progression requirements</CardDescription>
+                    <CardDescription>Configure general assessment access controls and progression requirements</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-12">
-                      <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Assessment Gateways Coming Soon</h3>
-                      <p className="text-gray-600">
-                        Configurable gateways with level tagging and progression requirements will be available soon.
-                      </p>
-                    </div>
+                    <AssessmentGatewayBuilder
+                      assessmentId="general"
+                      assessmentLevel={1}
+                      assessmentName="General Gateways"
+                      onGatewaysChange={(gateways) => {
+                        console.log('General gateways updated:', gateways)
+                      }}
+                      onQuizPromptsChange={(prompts) => {
+                        console.log('General quiz prompts updated:', prompts)
+                      }}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>
