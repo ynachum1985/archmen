@@ -445,7 +445,7 @@ export default function AdminPage() {
                   <FileText className="h-4 w-4" />
                   Assessments
                 </TabsTrigger>
-                <TabsTrigger value="setup" className="flex items-center gap-2">
+                <TabsTrigger value="builder" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
                   Setup
                 </TabsTrigger>
@@ -543,7 +543,7 @@ export default function AdminPage() {
               </TabsContent>
 
               {/* Setup Sub-tab (Assessment Builder) */}
-              <TabsContent value="setup" className="mt-0">
+              <TabsContent value="builder" className="mt-0">
                 <EnhancedAssessmentBuilder
                   onSave={handleSaveEnhancedAssessment}
                   onTest={handleTestEnhancedAssessment}
