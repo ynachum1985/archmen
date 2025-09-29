@@ -413,12 +413,8 @@ export default function AdminPage() {
           <p className="text-gray-600 mt-2">Manage assessments, archetypes, and linguistic patterns</p>
         </div>
 
-        <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
-            <TabsTrigger value="assessments" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Assessments
-            </TabsTrigger>
+        <Tabs defaultValue="setup" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
             <TabsTrigger value="setup" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Setup
