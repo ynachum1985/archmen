@@ -438,24 +438,39 @@ export default function AdminPage() {
           {/* Setup Tab - Contains Assessments, Setup, Knowledge Base, Gateways */}
           <TabsContent value="setup" className="mt-6">
             <Tabs defaultValue="assessments" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 mb-6">
-                <TabsTrigger value="assessments" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Assessments
-                </TabsTrigger>
-                <TabsTrigger value="builder" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Builder
-                </TabsTrigger>
-                <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
-                  <Database className="h-4 w-4" />
-                  Knowledge Base
-                </TabsTrigger>
-                <TabsTrigger value="assessment-gateways" className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Assessment Gateways
-                </TabsTrigger>
-              </TabsList>
+              {/* Minimal Sub-tabs Navigation */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="flex space-x-8" aria-label="Setup sections">
+                  <TabsTrigger
+                    value="assessments"
+                    className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Assessments
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="builder"
+                    className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Builder
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="knowledge-base"
+                    className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent"
+                  >
+                    <Database className="h-4 w-4 mr-2" />
+                    Knowledge Base
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="assessment-gateways"
+                    className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent"
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Assessment Gateways
+                  </TabsTrigger>
+                </nav>
+              </div>
 
               {/* Assessments Sub-tab */}
               <TabsContent value="assessments" className="mt-0">
