@@ -445,7 +445,7 @@ export default function AdminPage() {
                 </TabsTrigger>
                 <TabsTrigger value="builder" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  Setup
+                  Builder
                 </TabsTrigger>
                 <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
                   <Database className="h-4 w-4" />
