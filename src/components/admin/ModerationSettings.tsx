@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { AlertTriangle, Shield, Settings, Eye, Plus, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { ModerationInitializer } from './ModerationInitializer'
 
 interface ModerationSettings {
   openai_thresholds: {
@@ -219,13 +220,7 @@ export default function ModerationSettings() {
   }
 
   if (!settings) {
-    return (
-      <div className="text-center p-8">
-        <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium mb-2">Settings Not Found</h3>
-        <p className="text-muted-foreground">Unable to load moderation settings.</p>
-      </div>
-    )
+    return <ModerationInitializer />
   }
 
   return (

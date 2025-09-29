@@ -414,38 +414,48 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
             <TabsTrigger value="assessments" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Assessments
             </TabsTrigger>
-            <TabsTrigger value="builder" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Builder
-            </TabsTrigger>
-            <TabsTrigger value="archetypes" className="flex items-center gap-2">
+            <TabsTrigger value="setup" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Archetypes
+              Setup
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              User Management
+            <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Knowledge Base
             </TabsTrigger>
-            <TabsTrigger value="ai-personality" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              AI & Safety
+            <TabsTrigger value="assessment-gateways" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Assessment Gateways
             </TabsTrigger>
           </TabsList>
 
-          {/* Assessments Tab - Overview of existing assessments */}
+          {/* Assessments Tab - Combined overview and builder */}
           <TabsContent value="assessments" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-end">
-                <Button className="bg-emerald-500 hover:bg-emerald-600">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Assessment
-                </Button>
-              </div>
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 mb-6">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Assessment Overview
+                </TabsTrigger>
+                <TabsTrigger value="builder" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Assessment Builder
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Assessment Overview Sub-tab */}
+              <TabsContent value="overview" className="mt-0">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-end">
+                    <Button className="bg-emerald-500 hover:bg-emerald-600">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Assessment
+                    </Button>
+                  </div>
 
               {/* All Assessments Grid */}
               {loadingAssessments ? (
@@ -517,19 +527,39 @@ export default function AdminPage() {
                   )}
                 </div>
               )}
-            </div>
+                </div>
+              </TabsContent>
+
+              {/* Assessment Builder Sub-tab */}
+              <TabsContent value="builder" className="mt-0">
+                <EnhancedAssessmentBuilder
+                  onSave={handleSaveEnhancedAssessment}
+                  onTest={handleTestEnhancedAssessment}
+                />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          {/* Builder Tab - Assessment creation form */}
-          <TabsContent value="builder" className="mt-6">
-            <EnhancedAssessmentBuilder
-              onSave={handleSaveEnhancedAssessment}
-              onTest={handleTestEnhancedAssessment}
-            />
-          </TabsContent>
+          {/* Setup Tab - Archetypes, User Management, AI & Safety */}
+          <TabsContent value="setup" className="mt-6">
+            <Tabs defaultValue="archetypes" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 mb-6">
+                <TabsTrigger value="archetypes" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Archetypes
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  User Management
+                </TabsTrigger>
+                <TabsTrigger value="ai-safety" className="flex items-center gap-2">
+                  <Brain className="h-4 w-4" />
+                  AI & Safety
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Archetypes Tab */}
-          <TabsContent value="archetypes" className="mt-6">
+              {/* Archetypes Sub-tab */}
+              <TabsContent value="archetypes" className="mt-0">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -627,17 +657,57 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
-            </div>
+                </div>
+              </TabsContent>
+
+              {/* User Management Sub-tab */}
+              <TabsContent value="users" className="mt-0">
+                <UserManagement />
+              </TabsContent>
+
+              {/* AI & Safety Sub-tab */}
+              <TabsContent value="ai-safety" className="mt-0">
+                <AIPersonalityManager />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          {/* User Management Tab */}
-          <TabsContent value="users" className="mt-6">
-            <UserManagement />
+          {/* Knowledge Base Tab */}
+          <TabsContent value="knowledge-base" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Archetype Knowledge Base</CardTitle>
+                <CardDescription>Manage archetype documentation, media, and knowledge resources</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Knowledge Base Coming Soon</h3>
+                  <p className="text-gray-600">
+                    Unified knowledge base for archetype documentation, media generation, and RAG functionality will be available soon.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* AI Personality & Safety Tab */}
-          <TabsContent value="ai-personality" className="mt-6">
-            <AIPersonalityManager />
+          {/* Assessment Gateways Tab */}
+          <TabsContent value="assessment-gateways" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Assessment Gateways</CardTitle>
+                <CardDescription>Configure assessment access controls and progression requirements</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Assessment Gateways Coming Soon</h3>
+                  <p className="text-gray-600">
+                    Configurable gateways with level tagging and progression requirements will be available soon.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Analytics Tab */}

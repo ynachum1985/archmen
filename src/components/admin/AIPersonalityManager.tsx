@@ -15,6 +15,7 @@ import { AIPersonality, NewAIPersonality, aiPersonalityService } from '@/lib/ser
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import ModerationDashboard from './ModerationDashboard'
 import ModerationSettings from './ModerationSettings'
+import { ModerationInitializer } from './ModerationInitializer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function AIPersonalityManager() {
