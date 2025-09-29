@@ -435,15 +435,15 @@ export default function AdminPage() {
 
           {/* Assessments Tab - Combined overview and builder */}
           <TabsContent value="assessments" className="mt-6">
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs defaultValue="assessments" className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 mb-6">
-                <TabsTrigger value="overview" className="flex items-center gap-2">
+                <TabsTrigger value="assessments" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Overview
+                  Assessments
                 </TabsTrigger>
-                <TabsTrigger value="builder" className="flex items-center gap-2">
+                <TabsTrigger value="setup" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  Builder
+                  Setup
                 </TabsTrigger>
                 <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
                   <Database className="h-4 w-4" />
@@ -455,8 +455,8 @@ export default function AdminPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Overview Sub-tab */}
-              <TabsContent value="overview" className="mt-0">
+              {/* Assessments Sub-tab */}
+              <TabsContent value="assessments" className="mt-0">
                 <div className="space-y-6">
                   <div className="flex items-center justify-end">
                     <Button className="bg-emerald-500 hover:bg-emerald-600">
@@ -538,8 +538,8 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              {/* Builder Sub-tab (Assessment Builder) */}
-              <TabsContent value="builder" className="mt-0">
+              {/* Setup Sub-tab (Assessment Builder) */}
+              <TabsContent value="setup" className="mt-0">
                 <EnhancedAssessmentBuilder
                   onSave={handleSaveEnhancedAssessment}
                   onTest={handleTestEnhancedAssessment}
