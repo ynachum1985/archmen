@@ -838,15 +838,8 @@ Keep the response under 150 words and end with a specific question.`)
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <Tabs defaultValue="setup" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="setup">Setup</TabsTrigger>
-          <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
-          <TabsTrigger value="gateways">Assessment Gateways</TabsTrigger>
-        </TabsList>
-
-        {/* Setup Tab */}
-        <TabsContent value="setup" className="space-y-6">
+      {/* Assessment Builder Content - No more nested tabs */}
+      <div className="space-y-6">
           {/* Assessment Configuration - Moved to Top */}
           <div className="space-y-4">
             <div>
@@ -1191,10 +1184,9 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
             </div>
 
-        </TabsContent>
-
-        {/* Knowledge Base Tab */}
-        <TabsContent value="knowledge" className="space-y-6">
+        {/* Knowledge Base Section - Removed from tabs */}
+        <div className="space-y-6 mt-8">
+          <h3 className="text-lg font-medium">Knowledge Base</h3>
           <div className="space-y-6">
 
             {/* Content Upload Section */}
@@ -1535,10 +1527,11 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
             </div>
           </div>
-        </TabsContent>
+        </div>
 
-        {/* Assessment Gateways Tab */}
-        <TabsContent value="gateways" className="space-y-6">
+        {/* Assessment Gateways Section - Removed from tabs */}
+        <div className="space-y-6 mt-8">
+          <h3 className="text-lg font-medium">Assessment Gateways</h3>
           <Card>
             <CardHeader>
               <CardTitle>Assessment Gateways</CardTitle>
@@ -1575,10 +1568,9 @@ Keep the response under 150 words and end with a specific question.`)
               />
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-
-      </Tabs>
+      </div>
 
       {/* Testing Chat Modal */}
       {showTestingChat && (
