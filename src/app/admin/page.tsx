@@ -413,23 +413,11 @@ export default function AdminPage() {
           <p className="text-gray-600 mt-2">Manage assessments, archetypes, and linguistic patterns</p>
         </div>
 
-        <Tabs defaultValue="assessments" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 bg-gray-50 p-1">
-            <TabsTrigger value="assessments" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Assessments
-            </TabsTrigger>
+        <Tabs defaultValue="setup" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
             <TabsTrigger value="setup" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Setup
-            </TabsTrigger>
-            <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Knowledge Base
-            </TabsTrigger>
-            <TabsTrigger value="gateways" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Gateways
             </TabsTrigger>
             <TabsTrigger value="archetypes" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -445,8 +433,30 @@ export default function AdminPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Assessments Tab - Overview of existing assessments */}
-          <TabsContent value="assessments" className="mt-6">
+          {/* Setup Tab - Contains Assessments, Setup, Knowledge Base, Gateways */}
+          <TabsContent value="setup" className="mt-6">
+            <Tabs defaultValue="assessments" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 mb-6">
+                <TabsTrigger value="assessments" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Assessments
+                </TabsTrigger>
+                <TabsTrigger value="setup" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Setup
+                </TabsTrigger>
+                <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
+                  <Database className="h-4 w-4" />
+                  Knowledge Base
+                </TabsTrigger>
+                <TabsTrigger value="gateways" className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Gateways
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Assessments Sub-tab */}
+              <TabsContent value="assessments" className="mt-0">
                 <div className="space-y-6">
                   <div className="flex items-center justify-end">
                     <Button className="bg-emerald-500 hover:bg-emerald-600">
@@ -455,123 +465,125 @@ export default function AdminPage() {
                     </Button>
                   </div>
 
-              {/* All Assessments Grid */}
-              {loadingAssessments ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                  <span className="ml-3 text-gray-600">Loading assessments...</span>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {assessmentCategories.length === 0 ? (
-                    <div className="col-span-full text-center py-12">
-                      <p className="text-gray-500">No assessments found. Create your first assessment using the Builder tab.</p>
+                  {/* All Assessments Grid */}
+                  {loadingAssessments ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                      <span className="ml-3 text-gray-600">Loading assessments...</span>
                     </div>
                   ) : (
-                    assessmentCategories.map((category) => (
-                  <Card
-                    key={category.id}
-                    className={`cursor-pointer hover:shadow-md transition-shadow ${
-                      category.isMain ? 'border-2 border-emerald-200 bg-emerald-50' : ''
-                    }`}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className={`text-lg ${category.isMain ? 'text-emerald-800' : ''}`}>
-                          {category.name}
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          {category.isMain && (
-                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
-                              Main
-                            </Badge>
-                          )}
-                          <Badge variant="secondary">{category.status}</Badge>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {assessmentCategories.length === 0 ? (
+                        <div className="col-span-full text-center py-12">
+                          <p className="text-gray-500">No assessments found. Create your first assessment using the Builder tab.</p>
                         </div>
-                      </div>
-                      <CardDescription className={`text-sm ${category.isMain ? 'text-emerald-600' : ''}`}>
-                        {category.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <div>Target Archetypes: {category.archetypeCount}</div>
-                        <div>Questions: {category.questionCount}</div>
-                        <div>Completion Rate: {category.completionRate}%</div>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            // Convert mock data to proper assessment config and open edit dialog
-                            const assessmentConfig = convertToAssessmentConfig(category)
-                            if (assessmentConfig) {
-                              setEditingAssessment(assessmentConfig)
-                              setShowEditAssessmentDialog(true)
-                            } else {
-                              console.error('Failed to convert assessment config for:', category)
-                              alert('Error loading assessment for editing. Please try again.')
-                            }
-                          }}
-                        >
-                          Edit Assessment
-                        </Button>
-                      </div>
-                      </CardContent>
-                    </Card>
-                    ))
+                      ) : (
+                        assessmentCategories.map((category) => (
+                      <Card
+                        key={category.id}
+                        className={`cursor-pointer hover:shadow-md transition-shadow ${
+                          category.isMain ? 'border-2 border-emerald-200 bg-emerald-50' : ''
+                        }`}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className={`text-lg ${category.isMain ? 'text-emerald-800' : ''}`}>
+                              {category.name}
+                            </CardTitle>
+                            <div className="flex items-center gap-2">
+                              {category.isMain && (
+                                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
+                                  Main
+                                </Badge>
+                              )}
+                              <Badge variant="secondary">{category.status}</Badge>
+                            </div>
+                          </div>
+                          <CardDescription className={`text-sm ${category.isMain ? 'text-emerald-600' : ''}`}>
+                            {category.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div>Target Archetypes: {category.archetypeCount}</div>
+                            <div>Questions: {category.questionCount}</div>
+                            <div>Completion Rate: {category.completionRate}%</div>
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => {
+                                // Convert mock data to proper assessment config and open edit dialog
+                                const assessmentConfig = convertToAssessmentConfig(category)
+                                if (assessmentConfig) {
+                                  setEditingAssessment(assessmentConfig)
+                                  setShowEditAssessmentDialog(true)
+                                } else {
+                                  console.error('Failed to convert assessment config for:', category)
+                                  alert('Error loading assessment for editing. Please try again.')
+                                }
+                              }}
+                            >
+                              Edit Assessment
+                            </Button>
+                          </div>
+                          </CardContent>
+                        </Card>
+                        ))
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          </TabsContent>
+              </TabsContent>
 
-          {/* Setup Tab - Assessment Builder */}
-          <TabsContent value="setup" className="mt-6">
-            <EnhancedAssessmentBuilder
-              onSave={handleSaveEnhancedAssessment}
-              onTest={handleTestEnhancedAssessment}
-            />
-          </TabsContent>
+              {/* Setup Sub-tab (Assessment Builder) */}
+              <TabsContent value="setup" className="mt-0">
+                <EnhancedAssessmentBuilder
+                  onSave={handleSaveEnhancedAssessment}
+                  onTest={handleTestEnhancedAssessment}
+                />
+              </TabsContent>
 
-          {/* Knowledge Base Tab */}
-          <TabsContent value="knowledge-base" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Archetype Knowledge Base</CardTitle>
-                <CardDescription>Manage archetype documentation, media, and knowledge resources</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Knowledge Base Coming Soon</h3>
-                  <p className="text-gray-600">
-                    Unified knowledge base for archetype documentation, media generation, and RAG functionality will be available soon.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              {/* Knowledge Base Sub-tab */}
+              <TabsContent value="knowledge-base" className="mt-0">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Archetype Knowledge Base</CardTitle>
+                    <CardDescription>Manage archetype documentation, media, and knowledge resources</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-12">
+                      <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Knowledge Base Coming Soon</h3>
+                      <p className="text-gray-600">
+                        Unified knowledge base for archetype documentation, media generation, and RAG functionality will be available soon.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          {/* Gateways Tab */}
-          <TabsContent value="gateways" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Assessment Gateways</CardTitle>
-                <CardDescription>Configure assessment access controls and progression requirements</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Assessment Gateways Coming Soon</h3>
-                  <p className="text-gray-600">
-                    Configurable gateways with level tagging and progression requirements will be available soon.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Gateways Sub-tab */}
+              <TabsContent value="gateways" className="mt-0">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Assessment Gateways</CardTitle>
+                    <CardDescription>Configure assessment access controls and progression requirements</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-12">
+                      <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Assessment Gateways Coming Soon</h3>
+                      <p className="text-gray-600">
+                        Configurable gateways with level tagging and progression requirements will be available soon.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* Archetypes Tab */}
