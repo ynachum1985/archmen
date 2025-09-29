@@ -413,8 +413,12 @@ export default function AdminPage() {
           <p className="text-gray-600 mt-2">Manage assessments, archetypes, and linguistic patterns</p>
         </div>
 
-        <Tabs defaultValue="setup" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-50 p-1">
+        <Tabs defaultValue="assessments" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-50 p-1">
+            <TabsTrigger value="assessments" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Assessments
+            </TabsTrigger>
             <TabsTrigger value="setup" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Setup
@@ -449,9 +453,9 @@ export default function AdminPage() {
                   <Database className="h-4 w-4" />
                   Knowledge Base
                 </TabsTrigger>
-                <TabsTrigger value="gateways" className="flex items-center gap-2">
+                <TabsTrigger value="assessment-gateways" className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
-                  Gateways
+                  Assessment Gateways
                 </TabsTrigger>
               </TabsList>
 
@@ -565,8 +569,8 @@ export default function AdminPage() {
                 </Card>
               </TabsContent>
 
-              {/* Gateways Sub-tab */}
-              <TabsContent value="gateways" className="mt-0">
+              {/* Assessment Gateways Sub-tab */}
+              <TabsContent value="assessment-gateways" className="mt-0">
                 <Card>
                   <CardHeader>
                     <CardTitle>Assessment Gateways</CardTitle>
