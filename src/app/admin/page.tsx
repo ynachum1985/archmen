@@ -442,28 +442,28 @@ export default function AdminPage() {
               <TabsList className="h-auto p-0 bg-transparent border-b border-gray-200 rounded-none w-full justify-start mb-6">
                 <TabsTrigger
                   value="assessments"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8"
+                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8 focus:outline-none focus:ring-0"
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Assessments
                 </TabsTrigger>
                 <TabsTrigger
                   value="builder"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8"
+                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8 focus:outline-none focus:ring-0"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Builder
                 </TabsTrigger>
                 <TabsTrigger
                   value="knowledge-base"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8"
+                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8 focus:outline-none focus:ring-0"
                 >
                   <Database className="h-4 w-4 mr-2" />
                   Knowledge Base
                 </TabsTrigger>
                 <TabsTrigger
                   value="assessment-gateways"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent bg-transparent rounded-none"
+                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none focus:outline-none focus:ring-0"
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   Assessment Gateways
