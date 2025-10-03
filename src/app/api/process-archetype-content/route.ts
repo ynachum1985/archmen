@@ -127,14 +127,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Either textContent or fileContent is required' }, { status: 400 })
     }
 
-    // Try service client first, fallback to regular client if service role key not available
+    // Check if service role key is available
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    console.log('Service role key available:', hasServiceKey)
+
     let supabase
-    try {
-      supabase = createServiceClient()
-      // Test if service client works by making a simple query
-      await supabase.from('enhanced_archetypes').select('id').limit(1)
-    } catch (serviceError) {
-      console.log('Service client not available, using regular client')
+    if (hasServiceKey) {
+      try {
+        supabase = createServiceClient()
+        // Test if service client works by making a simple query
+        const { data, error } = await supabase.from('enhanced_archetypes').select('id').limit(1)
+        if (error) {
+          console.error('Service client test failed:', error)
+          throw error
+        }
+        console.log('Service client working successfully')
+      } catch (serviceError) {
+        console.error('Service client failed, falling back to regular client:', serviceError)
+        supabase = await createClient()
+
+        // Check if user is authenticated when using regular client
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+        }
+      }
+    } else {
+      console.log('No service role key, using regular client')
       supabase = await createClient()
 
       // Check if user is authenticated when using regular client
