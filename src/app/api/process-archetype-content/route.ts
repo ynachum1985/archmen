@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
             chunk_index: chunk.index,
             chunk_size: chunk.size,
             chunk_overlap: chunk.overlap,
-            embedding: JSON.stringify(embedding), // Convert to JSON string for Supabase
+            embedding: embedding, // Vector type expects array of numbers, not JSON string
             source_url: sourceUrl || null,
             metadata: {
               originalLength: contentToProcess.length,
