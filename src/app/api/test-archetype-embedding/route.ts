@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
 export async function POST(request: NextRequest) {
@@ -18,13 +18,8 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    const supabase = await createClient()
-
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
+    // Use service client for admin operations (archetype embedding testing)
+    const supabase = createServiceClient()
 
     // Get the embedding model from the archetype settings or use default
     const { data: settings } = await supabase

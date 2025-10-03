@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
@@ -13,13 +13,8 @@ export async function GET(
       return NextResponse.json({ error: 'Archetype ID is required' }, { status: 400 })
     }
 
-    const supabase = await createClient()
-
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
+    // Use service client for admin operations (archetype content retrieval)
+    const supabase = createServiceClient()
 
     // Verify archetype exists
     const { data: archetype, error: archetypeError } = await supabase
