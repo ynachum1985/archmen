@@ -3,6 +3,7 @@
 <!-- Production deployment: January 3, 2025 - Clean UI Version -->
 
 <!-- Deployment trigger: 2025-01-15T16:18:00Z - All TypeScript errors resolved -->
+<!-- Environment variables updated: 2025-01-15T16:30:00Z - Supabase env vars refreshed -->
 
 A sophisticated Next.js application that uses AI to analyze relationship patterns and provide personalized insights based on Jungian archetypes.
 
