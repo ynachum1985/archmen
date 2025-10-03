@@ -17,6 +17,9 @@ import {
   Save,
   Eye,
   Plus,
+  Minus,
+  Upload,
+  Search,
   Zap,
   DollarSign,
   Clock,
@@ -1144,6 +1147,274 @@ Keep the response under 150 words and end with a specific question.`)
                 </div>
               )}
             </div>
+
+            {/* Knowledge Base Section */}
+            {config.name && (
+              <div className="border-t pt-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-medium">Knowledge Base</h3>
+                    <p className="text-sm text-gray-600">Add content that the AI can reference when conducting this assessment</p>
+                  </div>
+
+                  {/* File Upload Section */}
+                  <div className="space-y-3">
+                    {uploadedFiles.map((fileGroup, groupIndex) => (
+                      <div key={groupIndex} className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            multiple
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || [])
+                              const updatedFiles = [...uploadedFiles]
+                              updatedFiles[groupIndex] = files
+                              setUploadedFiles(updatedFiles)
+                            }}
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updatedFiles = uploadedFiles.filter((_, i) => i !== groupIndex)
+                            setUploadedFiles(updatedFiles.length === 0 ? [[]] : updatedFiles)
+                          }}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUploadedFiles([...uploadedFiles, []])}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add File Upload
+                    </Button>
+                  </div>
+
+                  {/* Text Content Section */}
+                  <div className="space-y-3">
+                    {textContents.map((content, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <Textarea
+                          value={content}
+                          onChange={(e) => {
+                            const updatedContents = [...textContents]
+                            updatedContents[index] = e.target.value
+                            setTextContents(updatedContents)
+                          }}
+                          placeholder={`Enter content about ${config.name}...`}
+                          rows={4}
+                          className="resize-y border-gray-200 text-sm flex-1 overflow-auto max-h-48"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updatedContents = textContents.filter((_, i) => i !== index)
+                            setTextContents(updatedContents.length === 0 ? [''] : updatedContents)
+                          }}
+                          className="text-gray-400 hover:text-gray-600 mt-1"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setTextContents([...textContents, ''])}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Text Content
+                    </Button>
+                  </div>
+
+                  {/* Reference URLs Section */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Reference URLs</Label>
+                    {referenceUrls.map((url, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          value={url}
+                          onChange={(e) => {
+                            const updatedUrls = [...referenceUrls]
+                            updatedUrls[index] = e.target.value
+                            setReferenceUrls(updatedUrls)
+                          }}
+                          placeholder="https://example.com/article-about-assessment"
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updatedUrls = referenceUrls.filter((_, i) => i !== index)
+                            setReferenceUrls(updatedUrls.length === 0 ? [''] : updatedUrls)
+                          }}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setReferenceUrls([...referenceUrls, ''])}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Reference URL
+                    </Button>
+                  </div>
+
+                  {/* Embedding Settings */}
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900">Embedding Settings</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label htmlFor="chunkSize" className="text-xs">Chunk Size</Label>
+                        <Input
+                          id="chunkSize"
+                          type="number"
+                          value={chunkSize}
+                          onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
+                          className="mt-1 h-8 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="chunkOverlap" className="text-xs">Chunk Overlap</Label>
+                        <Input
+                          id="chunkOverlap"
+                          type="number"
+                          value={chunkOverlap}
+                          onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
+                          className="mt-1 h-8 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="embeddingModel" className="text-xs">Embedding Model</Label>
+                        <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
+                          <SelectTrigger className="mt-1 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small (1536d)</SelectItem>
+                            <SelectItem value="mistral-embed">Mistral: mistral-embed (1024d) - Best cost/accuracy</SelectItem>
+                            <SelectItem value="voyage-large-2">Voyage: voyage-large-2 (1536d)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="topK" className="text-xs">Top K Results</Label>
+                        <Input
+                          id="topK"
+                          type="number"
+                          value={topK}
+                          onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+                          className="mt-1 h-8 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <Label htmlFor="similarityThreshold" className="text-xs">Similarity Threshold</Label>
+                        <Input
+                          id="similarityThreshold"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1"
+                          value={similarityThreshold}
+                          onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
+                          className="mt-1 h-8 text-xs w-32"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Process Content Button */}
+                  <div className="flex justify-between items-center">
+                    <Button
+                      onClick={handleProcessContent}
+                      disabled={isProcessingContent}
+                      className="bg-emerald-500 hover:bg-emerald-600"
+                    >
+                      {isProcessingContent ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Process & Embed Content
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Test Embedding Quality */}
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={testQuery}
+                        onChange={(e) => setTestQuery(e.target.value)}
+                        placeholder="Ask something about this assessment..."
+                        className="w-64"
+                      />
+                      <Button
+                        onClick={handleTestEmbedding}
+                        disabled={isTestingEmbedding || !testQuery.trim()}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {isTestingEmbedding ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                        ) : (
+                          <>
+                            <Search className="h-4 w-4 mr-1" />
+                            Test
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Test Results */}
+                  {embeddingTestResults && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Embedding Test Results</h4>
+                      {embeddingTestResults.length > 0 ? (
+                        <div className="space-y-2">
+                          {embeddingTestResults.map((result, index) => (
+                            <div key={index} className="bg-white p-3 rounded border">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="text-xs text-blue-600 font-medium">
+                                  Similarity: {(result.similarity * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700">{result.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-blue-700">No relevant content found. Try adjusting your query or adding more content.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Assessment Status Management */}
             <div className="border-t pt-6">
