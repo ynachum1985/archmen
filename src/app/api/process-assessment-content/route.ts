@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -102,6 +97,7 @@ async function generateVoyageEmbedding(text: string, model: string): Promise<num
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createServiceClient()
     const body = await request.json()
     const {
       assessmentId,
