@@ -13,8 +13,16 @@ export async function GET(
       return NextResponse.json({ error: 'Archetype ID is required' }, { status: 400 })
     }
 
-    // Use service client for admin operations (archetype content retrieval)
-    const supabase = createServiceClient()
+    // Try service client first, fallback to regular client if service role key not available
+    let supabase
+    try {
+      supabase = createServiceClient()
+      // Test if service client works by making a simple query
+      await supabase.from('enhanced_archetypes').select('id').limit(1)
+    } catch (serviceError) {
+      console.log('Service client not available, using regular client')
+      supabase = await createClient()
+    }
 
     // Verify archetype exists
     const { data: archetype, error: archetypeError } = await supabase
