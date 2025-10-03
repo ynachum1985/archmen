@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { APP_CONFIG } from '@/config/app.config'
+import { ragChatService } from '@/lib/services/rag-chat.service'
 
 // Initialize OpenAI client (handle missing API key gracefully during build)
 const openai = process.env.OPENAI_API_KEY 
@@ -21,38 +22,52 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient()
-    const { messages } = await request.json()
-    
+    const { messages, assessmentId, conversationId } = await request.json()
+
     // Check if user is authenticated (optional for demo)
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     // Log if user is authenticated (for analytics)
     if (user) {
-      console.log('Authenticated chat request from user:', user.id)
+      console.log('RAG-enhanced chat request from user:', user.id)
     }
 
-    // Create the AI completion with archetype-specific context
-    const completion = await openai.chat.completions.create({
-      model: APP_CONFIG.ai.model,
-      messages: [
+    // Use RAG-enhanced chat service for intelligent responses
+    const ragResponse = await ragChatService.generateResponse(
+      [
         {
           role: 'system',
           content: APP_CONFIG.ai.systemPrompt
         },
         ...messages
       ],
-      temperature: APP_CONFIG.ai.temperature,
-      max_tokens: APP_CONFIG.ai.maxTokens,
+      {
+        conversationId,
+        assessmentId,
+        userId: user?.id,
+        maxContextChunks: 6,
+        similarityThreshold: 0.75,
+        includeArchetypes: true,
+        includeAssessments: true
+      }
+    )
+
+    return NextResponse.json({
+      content: ragResponse.content,
+      metadata: {
+        ragContext: {
+          totalChunks: ragResponse.context.totalChunks,
+          archetypeChunks: ragResponse.context.archetypeContent.length,
+          assessmentChunks: ragResponse.context.assessmentContent.length
+        },
+        usage: ragResponse.usage
+      }
     })
-
-    const responseContent = completion.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response.'
-
-    return NextResponse.json({ content: responseContent })
   } catch (error) {
-    console.error('Chat API error:', error)
+    console.error('RAG Chat API error:', error)
     return NextResponse.json(
       { error: 'Failed to process chat request' },
       { status: 500 }
     )
   }
-} 
+}

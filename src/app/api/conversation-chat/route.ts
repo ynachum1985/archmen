@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { conversationChatSchema, type ConversationChatRequest } from '@/lib/validations/api'
 import { withAPIMiddleware, APIError } from '@/lib/middleware/api-validation'
+import { ragChatService, type RAGContext } from '@/lib/services/rag-chat.service'
 
 function getOpenAIClient() {
   if (!process.env.OPENAI_API_KEY) {
@@ -75,19 +76,25 @@ async function handleConversationChat(request: NextRequest, data: ConversationCh
     // Create AI prompt based on conversation phase
     const systemPrompt = createSystemPrompt(conversationPhase, archetypes || [])
 
-    // Get AI response
-    const openai = getOpenAIClient()
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
+    // Get RAG-enhanced response using the new service
+    const ragResponse = await ragChatService.generateResponse(
+      [
         { role: 'system', content: systemPrompt },
         ...conversationHistory
       ],
-      temperature: 0.7,
-      max_tokens: 1000,
-    })
+      {
+        conversationId,
+        assessmentId,
+        userId,
+        maxContextChunks: 8,
+        similarityThreshold: 0.7,
+        includeArchetypes: true,
+        includeAssessments: true
+      }
+    )
 
-    const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your message.'
+    const aiResponse = ragResponse.content
+    const ragContext = ragResponse.context
 
     // Analyze message for archetype patterns
     const archetypeConfidence = await analyzeArchetypePatterns(
@@ -103,15 +110,27 @@ async function handleConversationChat(request: NextRequest, data: ConversationCh
       archetypeConfidence
     )
 
-    // Prepare response metadata
-    const responseMetadata: any = {}
-    
+    // Prepare response metadata with RAG context
+    const responseMetadata: any = {
+      ragContext: {
+        totalChunks: ragContext.totalChunks,
+        archetypeChunks: ragContext.archetypeContent.length,
+        assessmentChunks: ragContext.assessmentContent.length,
+        searchQuery: ragContext.searchQuery
+      }
+    }
+
     if (Object.keys(archetypeConfidence).length > 0) {
       responseMetadata.archetypeConfidence = archetypeConfidence
     }
-    
+
     if (suggestedActions.length > 0) {
       responseMetadata.suggestedActions = suggestedActions
+    }
+
+    // Add RAG context details for debugging (remove in production)
+    if (process.env.NODE_ENV === 'development') {
+      responseMetadata.ragContextDetails = ragContext
     }
 
     return NextResponse.json({

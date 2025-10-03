@@ -4,6 +4,7 @@ import { enhancedAIService } from '@/lib/services/enhanced-ai.service'
 import { MultiLLMService } from '@/lib/services/multi-llm.service'
 import { AIModeration } from '@/lib/moderation/ai-moderation'
 import { aiPersonalityService } from '@/lib/services/ai-personality.service'
+import { ragChatService } from '@/lib/services/rag-chat.service'
 
 export async function POST(request: Request) {
   try {
@@ -155,22 +156,22 @@ export async function POST(request: Request) {
         )
       }
 
-      // Get assessment content for RAG if available
-      let contextContent = ''
-      if (assessmentId) {
-        try {
-          const { data: chunks } = await supabase
-            .from('assessment_content_chunks')
-            .select('chunk_text, metadata')
-            .eq('assessment_id', assessmentId)
-            .limit(5)
-
-          if (chunks && chunks.length > 0) {
-            contextContent = chunks.map(chunk => chunk.chunk_text).join('\n\n')
-          }
-        } catch (error) {
-          console.error('Error fetching assessment content:', error)
-        }
+      // Get RAG-enhanced context using the comprehensive service
+      let ragContext = null
+      try {
+        ragContext = await ragChatService.getRelevantContext(userMessage, {
+          conversationId,
+          assessmentId,
+          userId: user?.id,
+          maxContextChunks: 8,
+          similarityThreshold: 0.7,
+          includeArchetypes: true,
+          includeAssessments: true
+        })
+        console.log(`RAG context retrieved: ${ragContext.totalChunks} chunks (${ragContext.archetypeContent.length} archetype, ${ragContext.assessmentContent.length} assessment)`)
+      } catch (error) {
+        console.error('Error fetching RAG context:', error)
+        ragContext = { archetypeContent: [], assessmentContent: [], totalChunks: 0, searchQuery: userMessage }
       }
 
       // Get assessment configuration to use proper prompt
@@ -219,11 +220,16 @@ export async function POST(request: Request) {
         finalSystemPrompt += `\n\nEscalation Triggers (refer to professional help if mentioned):\n${personalityConfig.escalation_triggers.map(trigger => `- ${trigger}`).join('\n')}`
       }
 
+      // Create enhanced system prompt with RAG context
+      const enhancedSystemPrompt = ragContext && ragContext.totalChunks > 0
+        ? ragChatService.createEnhancedSystemPrompt(finalSystemPrompt, ragContext)
+        : finalSystemPrompt
+
       const contextualMessages = [
         ...messages.slice(0, -1), // Previous conversation
         {
           role: 'system',
-          content: contextContent ? `${finalSystemPrompt}\n\nRelevant context:\n${contextContent}` : finalSystemPrompt
+          content: enhancedSystemPrompt
         },
         {
           role: 'user',
@@ -306,6 +312,12 @@ export async function POST(request: Request) {
       model: model,
       usage: result.usage,
       cost: result.cost,
+      ragContext: ragContext ? {
+        totalChunks: ragContext.totalChunks,
+        archetypeChunks: ragContext.archetypeContent.length,
+        assessmentChunks: ragContext.assessmentContent.length,
+        searchQuery: ragContext.searchQuery
+      } : null,
       moderation: {
         userInput: {
           flagged: moderationResult.flagged,

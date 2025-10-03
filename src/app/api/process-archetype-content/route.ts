@@ -63,14 +63,30 @@ function preprocessText(text: string): string {
 
 // OpenAI embedding generation
 async function generateOpenAIEmbedding(text: string, model: string) {
-  const openai = getOpenAI()
+  try {
+    const openai = getOpenAI()
 
-  const response = await openai.embeddings.create({
-    model: model,
-    input: text
-  })
+    if (!text || text.trim().length === 0) {
+      throw new Error('Text content is empty')
+    }
 
-  return response.data[0].embedding
+    console.log(`Generating embedding for text (${text.length} chars) with model: ${model}`)
+
+    const response = await openai.embeddings.create({
+      model: model.startsWith('text-embedding') ? model : 'text-embedding-3-small',
+      input: text
+    })
+
+    if (!response.data || !response.data[0] || !response.data[0].embedding) {
+      throw new Error('Invalid embedding response from OpenAI')
+    }
+
+    console.log(`Successfully generated embedding with ${response.data[0].embedding.length} dimensions`)
+    return response.data[0].embedding
+  } catch (error) {
+    console.error('OpenAI embedding error:', error)
+    throw new Error(`OpenAI embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }
 
 // Mistral embedding generation (placeholder - implement with actual Mistral API)
@@ -140,7 +156,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Content cannot be empty' }, { status: 400 })
     }
 
-    // Save or update embedding settings
+    // Save or update embedding settings with proper conflict resolution
     const { error: settingsError } = await supabase
       .from('archetype_embedding_settings')
       .upsert({
@@ -151,11 +167,22 @@ export async function POST(request: NextRequest) {
         context_window: settings.contextWindow || 4000,
         semantic_search_enabled: settings.semanticSearchEnabled ?? true,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'archetype_id'
       })
 
     if (settingsError) {
       console.error('Error saving embedding settings:', settingsError)
-      return NextResponse.json({ error: 'Failed to save embedding settings' }, { status: 500 })
+      console.error('Settings data:', {
+        archetype_id: finalArchetypeId,
+        chunk_size: settings.chunkSize,
+        chunk_overlap: settings.chunkOverlap,
+        embedding_model: settings.embeddingModel
+      })
+      return NextResponse.json({
+        error: 'Failed to save embedding settings',
+        details: settingsError.message
+      }, { status: 500 })
     }
 
     // Delete existing chunks for this archetype to replace them
@@ -239,9 +266,29 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in process archetype content API:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+
+    // Provide more specific error information
+    let errorMessage = 'Internal server error'
+    let errorDetails = 'Unknown error'
+
+    if (error instanceof Error) {
+      errorDetails = error.message
+
+      // Check for specific error types
+      if (error.message.includes('OpenAI')) {
+        errorMessage = 'OpenAI API error - check your API key configuration'
+      } else if (error.message.includes('embedding')) {
+        errorMessage = 'Embedding generation failed'
+      } else if (error.message.includes('database') || error.message.includes('supabase')) {
+        errorMessage = 'Database error'
+      }
+    }
+
+    return NextResponse.json({
+      error: errorMessage,
+      details: errorDetails,
+      timestamp: new Date().toISOString()
     }, { status: 500 })
   }
 }
