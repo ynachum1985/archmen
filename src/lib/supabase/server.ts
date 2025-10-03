@@ -3,7 +3,14 @@ import { cookies } from 'next/headers'
 import type { Database } from '@/lib/types/database'
 
 export async function createClient() {
-  const cookieStore = await cookies()
+  let cookieStore
+  try {
+    cookieStore = await cookies()
+  } catch (error) {
+    // Handle case where cookies() is called outside request scope
+    console.warn('Cookies called outside request scope, using empty cookie store')
+    cookieStore = null
+  }
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,11 +18,11 @@ export async function createClient() {
     {
       cookies: {
         get(name: string) {
-          return cookieStore.get(name)?.value
+          return cookieStore?.get(name)?.value || ''
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value, ...options })
+            cookieStore?.set({ name, value, ...options })
           } catch {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
@@ -24,7 +31,7 @@ export async function createClient() {
         },
         remove(name: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value: '', ...options })
+            cookieStore?.set({ name, value: '', ...options })
           } catch {
             // The `delete` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
@@ -51,4 +58,13 @@ export function createServiceClient() {
       },
     }
   )
-} 
+}
+
+// Simple client for API routes that don't need user authentication
+export function createSimpleClient() {
+  const { createClient } = require('@supabase/supabase-js')
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
