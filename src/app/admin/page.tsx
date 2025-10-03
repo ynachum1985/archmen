@@ -127,6 +127,7 @@ export default function AdminPage() {
 
   // Shared state for Builder workflow - links Builder, Knowledge Base, and Assessment Gateways tabs
   const [currentBuilderAssessment, setCurrentBuilderAssessment] = useState<any>(null)
+  const [activeSetupTab, setActiveSetupTab] = useState('assessments')
 
   // Convert assessment data from Supabase to EnhancedAssessmentConfig format
   const convertToAssessmentConfig = (assessment: any) => {
@@ -440,7 +441,7 @@ export default function AdminPage() {
 
           {/* Setup Tab - Contains Assessments, Setup, Knowledge Base, Gateways */}
           <TabsContent value="setup" className="mt-6">
-            <Tabs defaultValue="assessments" className="w-full">
+            <Tabs value={activeSetupTab} onValueChange={setActiveSetupTab} className="w-full">
               {/* Minimal Sub-tabs Navigation */}
               <TabsList className="h-auto p-0 bg-transparent border-b border-gray-200 rounded-none w-full justify-start mb-6">
                 <TabsTrigger
@@ -477,7 +478,14 @@ export default function AdminPage() {
               <TabsContent value="assessments" className="mt-0">
                 <div className="space-y-6">
                   <div className="flex items-center justify-end">
-                    <Button className="bg-emerald-500 hover:bg-emerald-600">
+                    <Button
+                      onClick={() => {
+                        // Clear any existing builder state and start fresh
+                        setCurrentBuilderAssessment(null)
+                        setActiveSetupTab('builder')
+                      }}
+                      className="bg-emerald-500 hover:bg-emerald-600"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       New Assessment
                     </Button>
@@ -569,6 +577,10 @@ export default function AdminPage() {
                     // Update shared state when assessment changes (for Knowledge Base and Gateways tabs)
                     setCurrentBuilderAssessment(config)
                   }}
+                  onNext={() => {
+                    // Navigate to Knowledge Base tab
+                    setActiveSetupTab('knowledge-base')
+                  }}
                 />
               </TabsContent>
 
@@ -590,6 +602,33 @@ export default function AdminPage() {
                       archetypeName={currentBuilderAssessment.name}
                       showOnlyKnowledgeBase={true}
                     />
+
+                    {/* Next Step Navigation */}
+                    <div className="border-t pt-6 mt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-medium">Next Step</h3>
+                          <p className="text-sm text-gray-600">
+                            Continue to configure assessment gateways and finalize your assessment.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Button
+                            onClick={() => setActiveSetupTab('builder')}
+                            variant="outline"
+                          >
+                            ← Back to Builder
+                          </Button>
+                          <Button
+                            onClick={() => setActiveSetupTab('assessment-gateways')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                          >
+                            Next: Assessment Gateways →
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
@@ -639,6 +678,43 @@ export default function AdminPage() {
                           }))
                         }}
                       />
+                    </CardContent>
+
+                    {/* Final Save Navigation */}
+                    <CardContent className="border-t pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-medium">Finalize Assessment</h3>
+                          <p className="text-sm text-gray-600">
+                            Save your completed assessment. It will be available in the Assessments tab.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Button
+                            onClick={() => setActiveSetupTab('knowledge-base')}
+                            variant="outline"
+                          >
+                            ← Back to Knowledge Base
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              // Final save with live status
+                              const finalAssessment = {
+                                ...currentBuilderAssessment,
+                                status: 'live',
+                                is_active: true
+                              }
+                              handleSaveEnhancedAssessment(finalAssessment)
+                              setActiveSetupTab('assessments') // Go back to assessments list
+                              setCurrentBuilderAssessment(null) // Clear builder state
+                            }}
+                            className="bg-green-600 hover:bg-green-700 text-white px-8"
+                          >
+                            Save Assessment
+                          </Button>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 ) : (

@@ -122,6 +122,7 @@ interface EnhancedAssessmentBuilderProps {
   onSave: (config: EnhancedAssessmentConfig) => void
   onTest?: (config: EnhancedAssessmentConfig) => void
   onAssessmentChange?: (config: EnhancedAssessmentConfig) => void
+  onNext?: () => void // Navigate to Knowledge Base tab
 }
 
 const defaultConfig: EnhancedAssessmentConfig = {
@@ -245,7 +246,8 @@ The AI should freely choose from all available archetypes based on the evidence 
 export function EnhancedAssessmentBuilder({
   assessment,
   onSave,
-  onAssessmentChange
+  onAssessmentChange,
+  onNext
 }: EnhancedAssessmentBuilderProps) {
   // Merge assessment with defaults to ensure all required fields exist
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(() => {
@@ -400,8 +402,44 @@ Keep the response under 150 words and end with a specific question.`)
       if (onAssessmentChange) {
         onAssessmentChange(newConfig)
       }
+      // Auto-save as draft when changes are made
+      handleAutoSave(newConfig)
       return newConfig
     })
+  }
+
+  // Auto-save function (saves as draft without user interaction)
+  const handleAutoSave = async (configToSave: EnhancedAssessmentConfig) => {
+    try {
+      const assessmentToSave = {
+        ...configToSave,
+        status: 'draft', // Always save as draft during building
+        is_active: false
+      }
+
+      const response = await fetch('/api/sync-assessments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(assessmentToSave),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.assessment && result.assessment.id) {
+          // Update config with ID from database
+          setConfig(prev => ({
+            ...prev,
+            id: result.assessment.id
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error)
+      // Don't show error to user for auto-save failures
+    }
   }
 
   // Update config when live provider/model changes
@@ -1438,43 +1476,29 @@ Keep the response under 150 words and end with a specific question.`)
               </div>
             )}
 
-            {/* Assessment Status Management */}
+            {/* Next Step Navigation */}
             <div className="border-t pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium">Assessment Status</h3>
+                  <h3 className="text-lg font-medium">Next Step</h3>
+                  <p className="text-sm text-gray-600">
+                    Your assessment is automatically saved as a draft. Continue to add knowledge base content.
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Button
-                    onClick={handleSave}
-                    variant="outline"
-                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                  >
-                    Save Draft
-                  </Button>
-
-                  <Select
-                    value={config.status || 'draft'}
-                    onValueChange={(newStatus: 'draft' | 'live' | 'archived') => {
-                      setConfig(prev => ({
-                        ...prev,
-                        status: newStatus,
-                        is_active: newStatus === 'live'
-                      }))
-                      handleSave()
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="live">Live</SelectItem>
-                      <SelectItem value="archived">Archive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Button
+                  onClick={() => {
+                    // Ensure final save before moving to next step
+                    handleAutoSave(config)
+                    if (onNext) {
+                      onNext()
+                    }
+                  }}
+                  disabled={!config.name.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                >
+                  Next: Knowledge Base →
+                </Button>
               </div>
             </div>
 
