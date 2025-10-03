@@ -1412,6 +1412,14 @@ Keep the response under 150 words and end with a specific question.`)
                       )}
                     </div>
                   )}
+
+                  {/* Existing Content Display */}
+                  <div className="mt-6">
+                    <AssessmentContentDisplay
+                      assessmentId={config.id?.toString() || config.name}
+                      assessmentName={config.name}
+                    />
+                  </div>
                 </div>
               </div>
             )}
