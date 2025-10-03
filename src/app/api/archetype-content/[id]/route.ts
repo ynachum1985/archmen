@@ -13,29 +13,9 @@ export async function GET(
       return NextResponse.json({ error: 'Archetype ID is required' }, { status: 400 })
     }
 
-    // Check if service role key is available
-    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
-    console.log('Service role key available:', hasServiceKey)
-
-    let supabase
-    if (hasServiceKey) {
-      try {
-        supabase = createServiceClient()
-        // Test if service client works by making a simple query
-        const { data, error } = await supabase.from('enhanced_archetypes').select('id').limit(1)
-        if (error) {
-          console.error('Service client test failed:', error)
-          throw error
-        }
-        console.log('Service client working successfully')
-      } catch (serviceError) {
-        console.error('Service client failed, falling back to regular client:', serviceError)
-        supabase = await createClient()
-      }
-    } else {
-      console.log('No service role key, using regular client')
-      supabase = await createClient()
-    }
+    // TEMPORARY: Use regular client for debugging until service role key works
+    console.log('Using regular client for archetype content retrieval')
+    const supabase = await createClient()
 
     // Verify archetype exists
     const { data: archetype, error: archetypeError } = await supabase
