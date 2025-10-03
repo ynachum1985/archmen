@@ -129,6 +129,11 @@ export async function POST(request: NextRequest) {
 
     // TEMPORARY: Use regular client for debugging until service role key works
     console.log('Using regular client for archetype content processing')
+    console.log('Environment check:')
+    console.log('NEXT_PUBLIC_SUPABASE_URL:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    console.log('SUPABASE_SERVICE_ROLE_KEY:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
     const supabase = await createClient()
 
     // Check if user is authenticated
