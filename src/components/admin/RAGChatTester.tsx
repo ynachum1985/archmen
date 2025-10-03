@@ -48,35 +48,17 @@ export function RAGChatTester() {
 
   const testEndpoints = [
     {
-      key: 'basic',
-      name: 'Basic Chat',
-      endpoint: '/api/chat',
-      description: 'Basic chat with RAG enhancement',
-      payload: (msg: string) => ({
-        messages: [{ role: 'user', content: msg }]
-      })
-    },
-    {
-      key: 'conversation',
-      name: 'Conversation Chat',
-      endpoint: '/api/conversation-chat',
-      description: 'Assessment conversation with RAG',
-      payload: (msg: string) => ({
-        message: msg,
-        conversationId: '550e8400-e29b-41d4-a716-446655440000',
-        assessmentId: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb', // Monogamy vs Polyamory
-        userId: '550e8400-e29b-41d4-a716-446655440001'
-      })
-    },
-    {
       key: 'enhanced',
-      name: 'Enhanced Chat',
+      name: 'Enhanced Chat (Unified)',
       endpoint: '/api/enhanced-chat',
-      description: 'Enhanced chat with RAG + moderation',
+      description: 'Unified chat API with RAG, moderation, and all features',
       payload: (msg: string) => ({
         messages: [{ role: 'user', content: msg }],
         conversationId: '550e8400-e29b-41d4-a716-446655440000',
-        assessmentId: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb'
+        assessmentId: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb',
+        provider: 'openai',
+        model: 'gpt-4-turbo-preview',
+        temperature: 0.7
       })
     }
   ]
@@ -214,8 +196,8 @@ export function RAGChatTester() {
         </div>
 
         {/* Results */}
-        <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="enhanced" className="w-full">
+          <TabsList className="grid w-full grid-cols-1">
             {testEndpoints.map((endpoint) => (
               <TabsTrigger key={endpoint.key} value={endpoint.key} className="flex items-center gap-2">
                 {loading[endpoint.key] ? (

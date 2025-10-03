@@ -116,7 +116,7 @@ describe('InlineChatView', () => {
     fireEvent.click(sendButton)
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/conversation-chat', expect.objectContaining({
+      expect(fetch).toHaveBeenCalledWith('/api/enhanced-chat', expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: expect.stringContaining('Test message')

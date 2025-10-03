@@ -123,16 +123,26 @@ export default function ChatPage() {
       
       setMessage('')
 
-      // Get AI response
-      const response = await fetch('/api/conversation-chat', {
+      // Get AI response using enhanced-chat API
+      const response = await fetch('/api/enhanced-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          messages: [
+            ...messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            })),
+            { role: 'user', content: message.trim() }
+          ],
           conversationId,
-          message: message.trim(),
-          userId
+          assessmentId: conversation?.metadata?.assessmentId,
+          userId,
+          provider: 'openai',
+          model: 'gpt-4-turbo-preview',
+          temperature: 0.7
         }),
       })
 

@@ -1,11 +1,9 @@
 /**
- * Test Script for RAG-Enhanced Chat APIs
- * 
- * This script tests all three chat endpoints to ensure RAG functionality is working:
- * 1. /api/chat - Basic chat with RAG
- * 2. /api/conversation-chat - Assessment conversations with RAG
- * 3. /api/enhanced-chat - Enhanced chat with RAG + moderation
- * 
+ * Test Script for RAG-Enhanced Chat API
+ *
+ * This script tests the unified enhanced-chat endpoint with RAG functionality.
+ * All chat functionality has been consolidated into /api/enhanced-chat
+ *
  * Run with: node test-rag-chat.js
  */
 
@@ -35,25 +33,8 @@ const testMessages = [
   }
 ]
 
-// Test data for different endpoints
+// Test data for the unified enhanced-chat endpoint
 const testData = {
-  basicChat: {
-    endpoint: '/api/chat',
-    payload: (message) => ({
-      messages: [
-        { role: 'user', content: message }
-      ]
-    })
-  },
-  conversationChat: {
-    endpoint: '/api/conversation-chat',
-    payload: (message) => ({
-      message: message,
-      conversationId: '550e8400-e29b-41d4-a716-446655440000', // Mock ID
-      assessmentId: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb', // Monogamy vs Polyamory
-      userId: '550e8400-e29b-41d4-a716-446655440001' // Mock user ID
-    })
-  },
   enhancedChat: {
     endpoint: '/api/enhanced-chat',
     payload: (message) => ({
@@ -62,7 +43,10 @@ const testData = {
       ],
       personalityId: null,
       conversationId: '550e8400-e29b-41d4-a716-446655440000',
-      assessmentId: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb'
+      assessmentId: '03b868b0-a914-4d33-9dd7-d9bc431d6dbb',
+      provider: 'openai',
+      model: 'gpt-4-turbo-preview',
+      temperature: 0.7
     })
   }
 }
@@ -141,8 +125,6 @@ async function runAllTests() {
   console.log('=' .repeat(60))
   
   const results = {
-    basicChat: [],
-    conversationChat: [],
     enhancedChat: []
   }
   

@@ -28,14 +28,23 @@ export async function POST(request: Request) {
 
     const {
       messages,
+      message, // Legacy conversation-chat format
       personalityId,
       conversationId,
       assessmentId,
+      userId,
       provider = 'openai',
       model = 'gpt-4-turbo-preview',
       temperature = 0.7,
       maxTokens = 2000
     } = requestBody
+
+    // Handle legacy conversation-chat format
+    let finalMessages = messages
+    if (message && !messages) {
+      // Convert legacy format to new format
+      finalMessages = [{ role: 'user', content: message }]
+    }
 
     console.log('=== Enhanced Chat API Request ===')
     console.log('Provider:', provider, 'Model:', model)
@@ -57,8 +66,8 @@ export async function POST(request: Request) {
     }
 
     // Get the latest user message
-    const userMessage = messages[messages.length - 1]?.content || ''
-    const conversationHistory = messages.slice(0, -1)
+    const userMessage = finalMessages[finalMessages.length - 1]?.content || ''
+    const conversationHistory = finalMessages.slice(0, -1)
 
     // Step 1: Moderate user input for safety using centralized settings
     console.log('=== Content Moderation Check ===')
@@ -226,7 +235,7 @@ export async function POST(request: Request) {
         : finalSystemPrompt
 
       const contextualMessages = [
-        ...messages.slice(0, -1), // Previous conversation
+        ...conversationHistory, // Previous conversation
         {
           role: 'system',
           content: enhancedSystemPrompt

@@ -58,12 +58,12 @@ export function AssessmentTestingChat({ config, onClose }: AssessmentTestingChat
   const generateInitialQuestion = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/enhanced-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [],
-          systemPrompt: `${config.assessmentPrompt}
+          messages: [
+            { role: 'system', content: `${config.assessmentPrompt}
 
 You are conducting an assessment with the following configuration:
 - Min Questions: ${config.minQuestions}
@@ -71,7 +71,11 @@ You are conducting an assessment with the following configuration:
 - Evidence Threshold: ${config.evidenceThreshold}
 - Adaptation Sensitivity: ${config.adaptationSensitivity}
 
-Start the conversation with an engaging opening question that aligns with the assessment purpose. Be natural and conversational.`
+Start the conversation with an engaging opening question that aligns with the assessment purpose. Be natural and conversational.` }
+          ],
+          provider: 'openai',
+          model: 'gpt-4-turbo-preview',
+          temperature: 0.7
         })
       })
 
@@ -123,21 +127,26 @@ Start the conversation with an engaging opening question that aligns with the as
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/enhanced-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: updatedMessages.map(m => ({
-            role: m.role === 'ai' ? 'assistant' : 'user',
-            content: m.content
-          })),
-          systemPrompt: `${config.assessmentPrompt}
+          messages: [
+            { role: 'system', content: `${config.assessmentPrompt}
 
 Current question count: ${questionCount}
 Min questions: ${config.minQuestions}
 Max questions: ${config.maxQuestions}
 
-Continue the assessment conversation. Ask follow-up questions based on their response. If you've reached the minimum questions and have sufficient evidence, you can conclude the assessment.`
+Continue the assessment conversation. Ask follow-up questions based on their response. If you've reached the minimum questions and have sufficient evidence, you can conclude the assessment.` },
+            ...updatedMessages.map(m => ({
+              role: m.role === 'ai' ? 'assistant' : 'user',
+              content: m.content
+            }))
+          ],
+          provider: 'openai',
+          model: 'gpt-4-turbo-preview',
+          temperature: 0.7
         })
       })
 
