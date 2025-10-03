@@ -121,6 +121,7 @@ interface EnhancedAssessmentBuilderProps {
   assessment?: EnhancedAssessmentConfig
   onSave: (config: EnhancedAssessmentConfig) => void
   onTest?: (config: EnhancedAssessmentConfig) => void
+  onAssessmentChange?: (config: EnhancedAssessmentConfig) => void
 }
 
 const defaultConfig: EnhancedAssessmentConfig = {
@@ -243,7 +244,8 @@ The AI should freely choose from all available archetypes based on the evidence 
 
 export function EnhancedAssessmentBuilder({
   assessment,
-  onSave
+  onSave,
+  onAssessmentChange
 }: EnhancedAssessmentBuilderProps) {
   // Merge assessment with defaults to ensure all required fields exist
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(() => {
@@ -390,9 +392,21 @@ Keep the response under 150 words and end with a specific question.`)
     setLiveModel(config.liveModel || 'gpt-4-turbo-preview')
   }, [config.liveProvider, config.liveModel])
 
+  // Helper function to update config and notify parent
+  const updateConfig = (updater: (prev: EnhancedAssessmentConfig) => EnhancedAssessmentConfig) => {
+    setConfig(prev => {
+      const newConfig = updater(prev)
+      // Notify parent component of changes (for Knowledge Base and Gateways tabs)
+      if (onAssessmentChange) {
+        onAssessmentChange(newConfig)
+      }
+      return newConfig
+    })
+  }
+
   // Update config when live provider/model changes
   useEffect(() => {
-    setConfig(prev => ({
+    updateConfig(prev => ({
       ...prev,
       liveProvider,
       liveModel
@@ -851,7 +865,7 @@ Keep the response under 150 words and end with a specific question.`)
               <Input
                 id="assessmentTitle"
                 value={config.name}
-                onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value, category: e.target.value }))}
+                onChange={(e) => updateConfig(prev => ({ ...prev, name: e.target.value, category: e.target.value }))}
               />
             </div>
 
@@ -861,7 +875,7 @@ Keep the response under 150 words and end with a specific question.`)
                 <Textarea
                   id="description"
                   value={config.description}
-                  onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => updateConfig(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
                   className="resize-y overflow-auto max-h-32"
                 />
@@ -880,7 +894,7 @@ Keep the response under 150 words and end with a specific question.`)
                 <Label htmlFor="assessmentLevel">Assessment Level</Label>
                 <Select
                   value={(config.assessment_level || 1).toString()}
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, assessment_level: parseInt(value) }))}
+                  onValueChange={(value) => updateConfig(prev => ({ ...prev, assessment_level: parseInt(value) }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select level" />

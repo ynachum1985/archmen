@@ -125,6 +125,9 @@ export default function AdminPage() {
   const [editingAssessment, setEditingAssessment] = useState<any>(null)
   const [showEditAssessmentDialog, setShowEditAssessmentDialog] = useState(false)
 
+  // Shared state for Builder workflow - links Builder, Knowledge Base, and Assessment Gateways tabs
+  const [currentBuilderAssessment, setCurrentBuilderAssessment] = useState<any>(null)
+
   // Convert assessment data from Supabase to EnhancedAssessmentConfig format
   const convertToAssessmentConfig = (assessment: any) => {
     // Safety check for undefined assessment
@@ -556,41 +559,100 @@ export default function AdminPage() {
               {/* Setup Sub-tab (Assessment Builder) */}
               <TabsContent value="builder" className="mt-0">
                 <EnhancedAssessmentBuilder
-                  onSave={handleSaveEnhancedAssessment}
+                  onSave={(config) => {
+                    // Update shared state for other tabs
+                    setCurrentBuilderAssessment(config)
+                    handleSaveEnhancedAssessment(config)
+                  }}
                   onTest={handleTestEnhancedAssessment}
+                  onAssessmentChange={(config) => {
+                    // Update shared state when assessment changes (for Knowledge Base and Gateways tabs)
+                    setCurrentBuilderAssessment(config)
+                  }}
                 />
               </TabsContent>
 
               {/* Knowledge Base Sub-tab */}
               <TabsContent value="knowledge-base" className="mt-0">
-                <ArchetypeKnowledgeBase
-                  archetypeId="general"
-                  archetypeName="General Knowledge Base"
-                  showOnlyKnowledgeBase={true}
-                />
+                {currentBuilderAssessment && currentBuilderAssessment.name ? (
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h3 className="text-lg font-medium text-blue-900 mb-2">
+                        Knowledge Base for: {currentBuilderAssessment.name}
+                      </h3>
+                      <p className="text-sm text-blue-700">
+                        Add content that the AI can reference when conducting this assessment.
+                        This content will be embedded and used for contextual responses.
+                      </p>
+                    </div>
+                    <ArchetypeKnowledgeBase
+                      archetypeId={currentBuilderAssessment.id?.toString() || currentBuilderAssessment.name}
+                      archetypeName={currentBuilderAssessment.name}
+                      showOnlyKnowledgeBase={true}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <Database className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Assessment Selected</h3>
+                    <p className="text-gray-600 mb-4">
+                      Create or configure an assessment in the Builder tab first, then return here to add knowledge base content.
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      The Knowledge Base tab is linked to the assessment you're building in the Builder tab.
+                    </p>
+                  </div>
+                )}
               </TabsContent>
 
               {/* Assessment Gateways Sub-tab */}
               <TabsContent value="assessment-gateways" className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Assessment Gateways</CardTitle>
-                    <CardDescription>Configure general assessment access controls and progression requirements</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AssessmentGatewayBuilder
-                      assessmentId="general"
-                      assessmentLevel={1}
-                      assessmentName="General Gateways"
-                      onGatewaysChange={(gateways) => {
-                        console.log('General gateways updated:', gateways)
-                      }}
-                      onQuizPromptsChange={(prompts) => {
-                        console.log('General quiz prompts updated:', prompts)
-                      }}
-                    />
-                  </CardContent>
-                </Card>
+                {currentBuilderAssessment && currentBuilderAssessment.name ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Assessment Gateways for: {currentBuilderAssessment.name}</CardTitle>
+                      <CardDescription>
+                        Configure access controls and progression requirements for this specific assessment.
+                        Level {currentBuilderAssessment.assessment_level || 1} assessment.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <AssessmentGatewayBuilder
+                        assessmentId={currentBuilderAssessment.id?.toString() || currentBuilderAssessment.name}
+                        assessmentLevel={currentBuilderAssessment.assessment_level || 1}
+                        assessmentName={currentBuilderAssessment.name}
+                        onGatewaysChange={(gateways) => {
+                          console.log(`Gateways updated for ${currentBuilderAssessment.name}:`, gateways)
+                          // Update the current assessment with gateway configuration
+                          setCurrentBuilderAssessment(prev => ({
+                            ...prev,
+                            gateway_configuration: gateways
+                          }))
+                        }}
+                        onQuizPromptsChange={(prompts) => {
+                          console.log(`Quiz prompts updated for ${currentBuilderAssessment.name}:`, prompts)
+                          // Update the current assessment with quiz prompts
+                          setCurrentBuilderAssessment(prev => ({
+                            ...prev,
+                            quiz_set_questions_prompt: prompts.setQuestions,
+                            quiz_experience_analysis_prompt: prompts.experienceAnalysis
+                          }))
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <Shield className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Assessment Selected</h3>
+                    <p className="text-gray-600 mb-4">
+                      Create or configure an assessment in the Builder tab first, then return here to set up gateways.
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      The Assessment Gateways tab is linked to the assessment you're building in the Builder tab.
+                    </p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </TabsContent>
