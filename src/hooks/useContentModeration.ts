@@ -40,6 +40,7 @@ export function useContentModeration(): UseModerationReturn {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           content,
           context

@@ -200,6 +200,7 @@ export function useQuickFeedback() {
       const response = await fetch('/api/feedback/quick', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           type,
           context,

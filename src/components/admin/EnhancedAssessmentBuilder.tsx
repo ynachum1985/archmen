@@ -542,6 +542,7 @@ Keep the response under 150 words and end with a specific question.`)
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           assessmentId: config.id || config.name,
           assessmentName: config.name,
