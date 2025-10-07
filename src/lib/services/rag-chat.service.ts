@@ -42,19 +42,26 @@ export interface RAGChatOptions {
 }
 
 export class RAGChatService {
-  private openai: OpenAI
-  private supabase: ReturnType<typeof createClient>
+  private openai: OpenAI | null = null
+  private supabase: ReturnType<typeof createClient> | null = null
 
-  constructor() {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured')
+  private getOpenAI() {
+    if (!this.openai) {
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OpenAI API key not configured')
+      }
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      })
     }
-    
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
-    
-    this.supabase = createClient()
+    return this.openai
+  }
+
+  private async getSupabase() {
+    if (!this.supabase) {
+      this.supabase = await createClient()
+    }
+    return this.supabase
   }
 
   /**
@@ -62,7 +69,7 @@ export class RAGChatService {
    */
   private async generateQueryEmbedding(query: string, model: string = 'text-embedding-3-small'): Promise<number[]> {
     try {
-      const response = await this.openai.embeddings.create({
+      const response = await this.getOpenAI().embeddings.create({
         model: model.startsWith('text-embedding') ? model : 'text-embedding-3-small',
         input: query.substring(0, 8000), // Limit input length
       })
@@ -82,7 +89,8 @@ export class RAGChatService {
     options: RAGChatOptions
   ): Promise<RAGContext['archetypeContent']> {
     try {
-      const { data: chunks, error } = await this.supabase.rpc('search_all_archetype_content', {
+      const supabase = await this.getSupabase()
+      const { data: chunks, error } = await supabase.rpc('search_all_archetype_content', {
         query_embedding: queryEmbedding,
         match_threshold: options.similarityThreshold || 0.7,
         match_count: Math.floor((options.maxContextChunks || 10) / 2)
@@ -95,7 +103,7 @@ export class RAGChatService {
 
       // Get archetype names for the chunks
       const archetypeIds = [...new Set(chunks?.map((chunk: any) => chunk.archetype_id) || [])]
-      const { data: archetypes } = await this.supabase
+      const { data: archetypes } = await supabase
         .from('enhanced_archetypes')
         .select('id, name')
         .in('id', archetypeIds)
@@ -122,9 +130,10 @@ export class RAGChatService {
     options: RAGChatOptions
   ): Promise<RAGContext['assessmentContent']> {
     try {
+      const supabase = await this.getSupabase()
       // If we have a specific assessment, search within it first
       if (options.assessmentId) {
-        const { data: chunks, error } = await this.supabase.rpc('search_assessment_content', {
+        const { data: chunks, error } = await supabase.rpc('search_assessment_content', {
           query_embedding: queryEmbedding,
           assessment_id_param: options.assessmentId,
           match_threshold: options.similarityThreshold || 0.7,
@@ -132,7 +141,7 @@ export class RAGChatService {
         })
 
         if (!error && chunks?.length > 0) {
-          const { data: assessment } = await this.supabase
+          const { data: assessment } = await supabase
             .from('enhanced_assessments')
             .select('name')
             .eq('id', options.assessmentId)
@@ -148,7 +157,7 @@ export class RAGChatService {
       }
 
       // Search across all assessment content
-      const { data: allChunks, error: allError } = await this.supabase
+      const { data: allChunks, error: allError } = await supabase
         .from('assessment_content_chunks')
         .select(`
           chunk_text,
@@ -183,7 +192,7 @@ export class RAGChatService {
 
       // Get assessment names
       const assessmentIds = [...new Set(results.map(r => r.assessment_id))]
-      const { data: assessments } = await this.supabase
+      const { data: assessments } = await supabase
         .from('enhanced_assessments')
         .select('id, name')
         .in('id', assessmentIds)
@@ -326,7 +335,7 @@ export class RAGChatService {
       ]
 
       // Generate response
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.getOpenAI().chat.completions.create({
         model: 'gpt-4',
         messages: chatMessages,
         temperature: 0.7,
@@ -352,5 +361,19 @@ export class RAGChatService {
   }
 }
 
-// Export singleton instance
-export const ragChatService = new RAGChatService()
+// Lazy initialization to avoid build-time client creation
+let ragChatServiceInstance: RAGChatService | null = null
+
+export const ragChatService = {
+  getInstance: () => {
+    if (!ragChatServiceInstance) {
+      ragChatServiceInstance = new RAGChatService()
+    }
+    return ragChatServiceInstance
+  },
+  // Proxy methods for backward compatibility
+  getRelevantContext: (message: string, options?: RAGChatOptions) =>
+    ragChatService.getInstance().getRelevantContext(message, options),
+  generateRAGEnhancedResponse: (messages: ChatMessage[], options?: RAGChatOptions) =>
+    ragChatService.getInstance().generateRAGEnhancedResponse(messages, options)
+}

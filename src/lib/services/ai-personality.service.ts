@@ -43,10 +43,17 @@ export interface NewAIPersonality {
 }
 
 export class AIPersonalityService {
-  private supabase = createClient()
+  private supabase: ReturnType<typeof createClient> | null = null
+
+  private getSupabase() {
+    if (!this.supabase) {
+      this.supabase = createClient()
+    }
+    return this.supabase
+  }
 
   async getAllPersonalities(): Promise<AIPersonality[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('ai_personalities')
       .select('*')
       .order('name')
@@ -77,7 +84,7 @@ export class AIPersonalityService {
   }
 
   async getActivePersonalities(): Promise<AIPersonality[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('ai_personalities')
       .select('*')
       .eq('is_active', true)
@@ -109,7 +116,7 @@ export class AIPersonalityService {
   }
 
   async getPersonalityById(id: string): Promise<AIPersonality | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('ai_personalities')
       .select('*')
       .eq('id', id)
@@ -133,7 +140,7 @@ export class AIPersonalityService {
   }
 
   async createPersonality(personality: NewAIPersonality): Promise<AIPersonality> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('ai_personalities')
       .insert({
         ...personality,
@@ -170,7 +177,7 @@ export class AIPersonalityService {
   }
 
   async updatePersonality(id: string, updates: Partial<NewAIPersonality>): Promise<AIPersonality> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('ai_personalities')
       .update({
         ...updates,
@@ -206,7 +213,7 @@ export class AIPersonalityService {
   }
 
   async deletePersonality(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabase()
       .from('ai_personalities')
       .delete()
       .eq('id', id)
@@ -219,7 +226,7 @@ export class AIPersonalityService {
 
   async initializeDefaultPersonalities(): Promise<void> {
     // Check if personalities already exist
-    const { data: existing } = await this.supabase
+    const { data: existing } = await this.getSupabase()
       .from('ai_personalities')
       .select('id')
       .limit(1)
@@ -370,4 +377,26 @@ Help people understand their cognitive patterns while maintaining a supportive a
   }
 }
 
-export const aiPersonalityService = new AIPersonalityService()
+// Lazy initialization to avoid build-time Supabase client creation
+let aiPersonalityServiceInstance: AIPersonalityService | null = null
+
+export const aiPersonalityService = {
+  getInstance: () => {
+    if (!aiPersonalityServiceInstance) {
+      aiPersonalityServiceInstance = new AIPersonalityService()
+    }
+    return aiPersonalityServiceInstance
+  },
+  // Proxy methods for backward compatibility
+  getAllPersonalities: () => aiPersonalityService.getInstance().getAllPersonalities(),
+  getActivePersonalities: () => aiPersonalityService.getInstance().getActivePersonalities(),
+  getPersonalityById: (id: string) => aiPersonalityService.getInstance().getPersonalityById(id),
+  createPersonality: (personality: NewAIPersonality) => aiPersonalityService.getInstance().createPersonality(personality),
+  updatePersonality: (id: string, updates: Partial<NewAIPersonality>) => aiPersonalityService.getInstance().updatePersonality(id, updates),
+  deletePersonality: (id: string) => aiPersonalityService.getInstance().deletePersonality(id),
+  initializeDefaultPersonalities: () => aiPersonalityService.getInstance().initializeDefaultPersonalities(),
+  getPersonality: (id: string) => aiPersonalityService.getInstance().getPersonalityById(id),
+  parsePersonalityInput: (input: string) => aiPersonalityService.getInstance().parsePersonalityInput(input),
+  createPersonalityFromCombinedInput: (personality: NewAIPersonality, combinedInput?: string) =>
+    aiPersonalityService.getInstance().createPersonalityFromCombinedInput(personality, combinedInput)
+}

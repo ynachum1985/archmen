@@ -11,6 +11,14 @@ export async function POST(request: Request) {
     console.log('=== Enhanced Chat API Started ===')
     console.log('Creating Supabase client...')
     const supabase = await createClient()
+
+    // Handle build-time scenario where Supabase client might be null
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase client not available during build time' },
+        { status: 500 }
+      )
+    }
     console.log('Supabase client created successfully')
 
     console.log('Parsing request body...')
