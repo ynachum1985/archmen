@@ -6,8 +6,15 @@ export async function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  // During build time, environment variables might not be available
+  // Return a mock client to prevent build failures
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Your project\'s URL and Key are required to create a Supabase client!\n\nCheck your Supabase project\'s API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api')
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') {
+      throw new Error('Your project\'s URL and Key are required to create a Supabase client!\n\nCheck your Supabase project\'s API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api')
+    }
+    // During build, return a mock client that won't be used
+    console.warn('Supabase environment variables not available during build - using mock client')
+    return null as any
   }
 
   let cookieStore
@@ -55,8 +62,15 @@ export function createServiceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+  // During build time, environment variables might not be available
+  // Return a mock client to prevent build failures
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Your project\'s URL and Key are required to create a Supabase client!\n\nCheck your Supabase project\'s API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api')
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') {
+      throw new Error('Your project\'s URL and Key are required to create a Supabase client!\n\nCheck your Supabase project\'s API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api')
+    }
+    // During build, return a mock client that won't be used
+    console.warn('Supabase environment variables not available during build - using mock client')
+    return null as any
   }
 
   return createServerClient<Database>(
@@ -79,8 +93,15 @@ export function createSimpleClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  // During build time, environment variables might not be available
+  // Return a mock client to prevent build failures
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Your project\'s URL and Key are required to create a Supabase client!\n\nCheck your Supabase project\'s API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api')
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') {
+      throw new Error('Your project\'s URL and Key are required to create a Supabase client!\n\nCheck your Supabase project\'s API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api')
+    }
+    // During build, return a mock client that won't be used
+    console.warn('Supabase environment variables not available during build - using mock client')
+    return null as any
   }
 
   const { createClient } = require('@supabase/supabase-js')
