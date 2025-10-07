@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
+// Use Edge Runtime for better environment variable access
+export const runtime = 'edge'
+
 // Initialize OpenAI only when needed
 const getOpenAI = () => {
   if (!process.env.OPENAI_API_KEY) {
