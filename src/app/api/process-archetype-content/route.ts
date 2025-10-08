@@ -141,6 +141,14 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient()
 
+    // Handle build-time scenario where Supabase client might be null
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase client not available' },
+        { status: 500 }
+      )
+    }
+
     // For admin operations, we don't need user authentication since we're using service role
     console.log('Using service role - bypassing user authentication')
 
