@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
-// Use Node.js runtime for better compatibility with Supabase and OpenAI
-export const runtime = 'nodejs'
+// Force dynamic rendering to ensure environment variables are available
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // Allow up to 60 seconds for embedding generation
 
 // Initialize OpenAI only when needed
 const getOpenAI = () => {
