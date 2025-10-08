@@ -80,7 +80,9 @@ function preprocessText(text: string): string {
 // OpenAI embedding generation
 async function generateOpenAIEmbedding(text: string, model: string) {
   try {
+    console.log('Attempting to get OpenAI client...')
     const openai = getOpenAI()
+    console.log('OpenAI client obtained successfully')
 
     if (!text || text.trim().length === 0) {
       throw new Error('Text content is empty')
@@ -90,7 +92,8 @@ async function generateOpenAIEmbedding(text: string, model: string) {
 
     const response = await openai.embeddings.create({
       model: model.startsWith('text-embedding') ? model : 'text-embedding-3-small',
-      input: text
+      input: text,
+      timeout: 30000, // 30 second timeout
     })
 
     if (!response.data || !response.data[0] || !response.data[0].embedding) {
@@ -101,6 +104,11 @@ async function generateOpenAIEmbedding(text: string, model: string) {
     return response.data[0].embedding
   } catch (error) {
     console.error('OpenAI embedding error:', error)
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    })
     throw new Error(`OpenAI embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
@@ -123,6 +131,9 @@ export async function POST(request: NextRequest) {
   console.log('=== POST /api/process-archetype-content called ===')
   console.log('Request method:', request.method)
   console.log('Request URL:', request.url)
+  console.log('Environment check:')
+  console.log('- OPENAI_API_KEY:', !!process.env.OPENAI_API_KEY)
+  console.log('- SUPABASE_SERVICE_ROLE_KEY:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
 
   try {
     const body = await request.json()
@@ -233,17 +244,21 @@ export async function POST(request: NextRequest) {
 
     // Chunk the content
     const chunks = chunkText(contentToProcess, settings.chunkSize, settings.chunkOverlap)
-    
+    console.log(`Created ${chunks.length} chunks from content`)
+
     // Process chunks in batches to avoid rate limits
     const batchSize = 5
     const processedChunks = []
 
     for (let i = 0; i < chunks.length; i += batchSize) {
       const batch = chunks.slice(i, i + batchSize)
-      
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(chunks.length / batchSize)} (chunks ${i} to ${i + batch.length - 1})`)
+
       const batchPromises = batch.map(async (chunk) => {
         try {
+          console.log(`Generating embedding for chunk ${chunk.index}...`)
           const embedding = await generateEmbedding(chunk.text, settings.embeddingModel)
+          console.log(`Successfully generated embedding for chunk ${chunk.index}`)
           
           return {
             archetype_id: finalArchetypeId,
