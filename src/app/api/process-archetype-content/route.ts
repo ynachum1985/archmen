@@ -246,13 +246,18 @@ export async function POST(request: NextRequest) {
     const chunks = chunkText(contentToProcess, settings.chunkSize, settings.chunkOverlap)
     console.log(`Created ${chunks.length} chunks from content`)
 
+    // Limit chunks to avoid timeout (Vercel has 10s limit on Hobby plan)
+    const maxChunks = 3 // Process only first 3 chunks to avoid timeout
+    const chunksToProcess = chunks.slice(0, maxChunks)
+    console.log(`Processing ${chunksToProcess.length} chunks (limited from ${chunks.length} to avoid timeout)`)
+
     // Process chunks in batches to avoid rate limits
-    const batchSize = 5
+    const batchSize = 2 // Reduced from 5 to 2 for faster processing
     const processedChunks = []
 
-    for (let i = 0; i < chunks.length; i += batchSize) {
-      const batch = chunks.slice(i, i + batchSize)
-      console.log(`Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(chunks.length / batchSize)} (chunks ${i} to ${i + batch.length - 1})`)
+    for (let i = 0; i < chunksToProcess.length; i += batchSize) {
+      const batch = chunksToProcess.slice(i, i + batchSize)
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(chunksToProcess.length / batchSize)} (chunks ${i} to ${i + batch.length - 1})`)
 
       const batchPromises = batch.map(async (chunk) => {
         try {
@@ -286,10 +291,12 @@ export async function POST(request: NextRequest) {
       processedChunks.push(...batchResults)
 
       // Small delay between batches to respect rate limits
-      if (i + batchSize < chunks.length) {
+      if (i + batchSize < chunksToProcess.length) {
         await new Promise(resolve => setTimeout(resolve, 100))
       }
     }
+
+    console.log(`Successfully processed ${processedChunks.length} chunks`)
 
     // Save all chunks to database
     const { data: savedChunks, error: chunksError } = await supabase
@@ -302,10 +309,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save content chunks' }, { status: 500 })
     }
 
+    const wasLimited = chunks.length > maxChunks
+
     return NextResponse.json({
       success: true,
-      message: `Successfully processed ${chunks.length} chunks for archetype "${archetype.name}"`,
+      message: wasLimited
+        ? `Successfully processed ${chunksToProcess.length} of ${chunks.length} chunks for archetype "${archetype.name}" (limited to avoid timeout)`
+        : `Successfully processed ${chunks.length} chunks for archetype "${archetype.name}"`,
       chunksCreated: savedChunks?.length || 0,
+      totalChunks: chunks.length,
+      processedChunks: chunksToProcess.length,
+      wasLimited,
       archetypeId: finalArchetypeId,
       settings: {
         chunkSize: settings.chunkSize,
