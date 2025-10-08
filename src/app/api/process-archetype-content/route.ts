@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
-// Use Edge Runtime for better environment variable access
-export const runtime = 'edge'
+// Use Node.js runtime for better compatibility with Supabase and OpenAI
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 // Initialize OpenAI only when needed
 const getOpenAI = () => {
