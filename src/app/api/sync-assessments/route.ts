@@ -4,6 +4,15 @@ import { createServiceClient } from '@/lib/supabase/server'
 export async function POST(request: NextRequest) {
   try {
     const supabase = createServiceClient()
+
+    // Handle build-time scenario where Supabase client might be null
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase client not available' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
     const { assessment } = body
 
@@ -112,6 +121,16 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createServiceClient()
+
+    // Handle build-time scenario where Supabase client might be null
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase client not available' },
+        { status: 500 }
+      )
+    }
+
     // Fetch all assessments from enhanced_assessments table
     const { data: assessments, error } = await supabase
       .from('enhanced_assessments')
