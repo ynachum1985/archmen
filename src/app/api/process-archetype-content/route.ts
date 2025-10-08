@@ -6,6 +6,18 @@ import OpenAI from 'openai'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // Allow up to 60 seconds for embedding generation
 
+// Handle CORS preflight requests
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  })
+}
+
 // Initialize OpenAI only when needed
 const getOpenAI = () => {
   if (!process.env.OPENAI_API_KEY) {
@@ -108,8 +120,14 @@ async function generateVoyageEmbedding(text: string, model: string) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('=== POST /api/process-archetype-content called ===')
+  console.log('Request method:', request.method)
+  console.log('Request URL:', request.url)
+
   try {
     const body = await request.json()
+    console.log('Request body received:', { archetypeId: body.archetypeId, hasTextContent: !!body.textContent, hasFileContent: !!body.fileContent })
+
     const {
       archetypeId,
       textContent,
