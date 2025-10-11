@@ -279,17 +279,36 @@ export async function POST(request: NextRequest) {
     console.log('Settings saved successfully')
 
     // Delete existing chunks for this archetype to replace them
-    const { error: deleteError } = await supabase
-      .from('archetype_content_chunks')
-      .delete()
-      .eq('archetype_id', finalArchetypeId)
+    console.log('Attempting to delete existing chunks...')
+    let deleteError
+    try {
+      const result = await supabase
+        .from('archetype_content_chunks')
+        .delete()
+        .eq('archetype_id', finalArchetypeId)
+
+      deleteError = result.error
+      console.log('Delete result:', { error: !!deleteError, count: result.count })
+    } catch (error) {
+      console.error('Exception during delete:', error)
+      return NextResponse.json({
+        error: 'Failed to delete existing content',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 })
+    }
 
     if (deleteError) {
       console.error('Error deleting existing chunks:', deleteError)
-      return NextResponse.json({ error: 'Failed to delete existing content' }, { status: 500 })
+      return NextResponse.json({
+        error: 'Failed to delete existing content',
+        details: deleteError.message
+      }, { status: 500 })
     }
 
+    console.log('Existing chunks deleted successfully')
+
     // Chunk the content
+    console.log('Creating chunks from content...')
     const chunks = chunkText(contentToProcess, settings.chunkSize, settings.chunkOverlap)
     console.log(`Created ${chunks.length} chunks from content`)
 
