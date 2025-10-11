@@ -309,57 +309,81 @@ export async function POST(request: NextRequest) {
 
     // Chunk the content
     console.log('Creating chunks from content...')
-    const chunks = chunkText(contentToProcess, settings.chunkSize, settings.chunkOverlap)
-    console.log(`Created ${chunks.length} chunks from content`)
+    console.log('Content length:', contentToProcess.length, 'Chunk size:', settings.chunkSize, 'Overlap:', settings.chunkOverlap)
 
-    // Limit chunks to avoid timeout (Vercel has 10s limit on Hobby plan)
-    const maxChunks = 3 // Process only first 3 chunks to avoid timeout
+    let chunks
+    try {
+      chunks = chunkText(contentToProcess, settings.chunkSize, settings.chunkOverlap)
+      console.log(`Created ${chunks.length} chunks from content`)
+    } catch (error) {
+      console.error('Error creating chunks:', error)
+      return NextResponse.json({
+        error: 'Failed to create chunks',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 })
+    }
+
+    // With Vercel Pro (60s timeout), we can process more chunks
+    const maxChunks = 20 // Increased from 3 to 20 for Pro plan
     const chunksToProcess = chunks.slice(0, maxChunks)
     console.log(`Processing ${chunksToProcess.length} chunks (limited from ${chunks.length} to avoid timeout)`)
 
     // Process chunks in batches to avoid rate limits
-    const batchSize = 2 // Reduced from 5 to 2 for faster processing
+    const batchSize = 5 // Increased to 5 for Pro plan (60s timeout)
     const processedChunks = []
 
-    for (let i = 0; i < chunksToProcess.length; i += batchSize) {
-      const batch = chunksToProcess.slice(i, i + batchSize)
-      console.log(`Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(chunksToProcess.length / batchSize)} (chunks ${i} to ${i + batch.length - 1})`)
+    console.log(`Starting batch processing: ${chunksToProcess.length} chunks in batches of ${batchSize}`)
 
-      const batchPromises = batch.map(async (chunk) => {
-        try {
-          console.log(`Generating embedding for chunk ${chunk.index}...`)
-          const embedding = await generateEmbedding(chunk.text, settings.embeddingModel)
-          console.log(`Successfully generated embedding for chunk ${chunk.index}`)
-          
-          return {
-            archetype_id: finalArchetypeId,
-            content_type: contentType,
-            chunk_text: chunk.text,
-            chunk_index: chunk.index,
-            chunk_size: chunk.size,
-            chunk_overlap: chunk.overlap,
-            embedding: embedding, // Vector type expects array of numbers, not JSON string
-            source_url: sourceUrl || null,
-            metadata: {
-              originalLength: contentToProcess.length,
-              chunkCount: chunks.length,
-              processedAt: new Date().toISOString(),
-              model: settings.embeddingModel
+    try {
+      for (let i = 0; i < chunksToProcess.length; i += batchSize) {
+        const batch = chunksToProcess.slice(i, i + batchSize)
+        const batchNum = Math.floor(i / batchSize) + 1
+        const totalBatches = Math.ceil(chunksToProcess.length / batchSize)
+        console.log(`Processing batch ${batchNum}/${totalBatches} (chunks ${i} to ${i + batch.length - 1})`)
+
+        const batchPromises = batch.map(async (chunk) => {
+          try {
+            console.log(`Generating embedding for chunk ${chunk.index}...`)
+            const embedding = await generateEmbedding(chunk.text, settings.embeddingModel)
+            console.log(`Successfully generated embedding for chunk ${chunk.index}`)
+
+            return {
+              archetype_id: finalArchetypeId,
+              content_type: contentType,
+              chunk_text: chunk.text,
+              chunk_index: chunk.index,
+              chunk_size: chunk.size,
+              chunk_overlap: chunk.overlap,
+              embedding: embedding, // Vector type expects array of numbers, not JSON string
+              source_url: sourceUrl || null,
+              metadata: {
+                originalLength: contentToProcess.length,
+                chunkCount: chunks.length,
+                processedAt: new Date().toISOString(),
+                model: settings.embeddingModel
+              }
             }
+          } catch (error) {
+            console.error(`Error processing chunk ${chunk.index}:`, error)
+            throw error
           }
-        } catch (error) {
-          console.error(`Error processing chunk ${chunk.index}:`, error)
-          throw error
+        })
+
+        const batchResults = await Promise.all(batchPromises)
+        processedChunks.push(...batchResults)
+        console.log(`Batch ${batchNum}/${totalBatches} complete. Total processed: ${processedChunks.length}`)
+
+        // Small delay between batches to respect rate limits
+        if (i + batchSize < chunksToProcess.length) {
+          await new Promise(resolve => setTimeout(resolve, 100))
         }
-      })
-
-      const batchResults = await Promise.all(batchPromises)
-      processedChunks.push(...batchResults)
-
-      // Small delay between batches to respect rate limits
-      if (i + batchSize < chunksToProcess.length) {
-        await new Promise(resolve => setTimeout(resolve, 100))
       }
+    } catch (error) {
+      console.error('Error during batch processing:', error)
+      return NextResponse.json({
+        error: 'Failed to process chunks',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 })
     }
 
     console.log(`Successfully processed ${processedChunks.length} chunks`)
