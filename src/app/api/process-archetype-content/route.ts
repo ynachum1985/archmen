@@ -30,6 +30,7 @@ const getOpenAI = () => {
 
 // Text chunking function - OPTIMIZED DEFAULTS (see EMBEDDING_CONFIGURATION_ANALYSIS.md)
 function chunkText(text: string, chunkSize: number = 400, overlap: number = 80) {
+  console.log('[chunkText] Starting chunking...', { textLength: text.length, chunkSize, overlap })
   const chunks = []
   let start = 0
   let index = 0
@@ -37,18 +38,25 @@ function chunkText(text: string, chunkSize: number = 400, overlap: number = 80) 
   while (start < text.length) {
     const end = Math.min(start + chunkSize, text.length)
     const chunk = text.slice(start, end)
-    
+
     chunks.push({
       text: chunk,
       index: index,
       size: chunk.length,
       overlap: start > 0 ? overlap : 0
     })
-    
+
     start = end - overlap
     index++
+
+    // Prevent infinite loop
+    if (index > 1000) {
+      console.error('[chunkText] Too many chunks, breaking loop')
+      break
+    }
   }
 
+  console.log('[chunkText] Chunking complete:', chunks.length, 'chunks created')
   return chunks
 }
 
