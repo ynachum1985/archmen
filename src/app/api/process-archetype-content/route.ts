@@ -299,34 +299,29 @@ export async function POST(request: NextRequest) {
 
     console.log('Settings saved successfully')
 
-    // Delete existing chunks for this archetype to replace them
-    console.log('Attempting to delete existing chunks...')
-    let deleteError
+    // Get the current highest chunk index for this archetype
+    console.log('Getting existing chunk count...')
+    let existingChunkCount = 0
     try {
-      const result = await supabase
+      const { data: existingChunks, error: countError } = await supabase
         .from('archetype_content_chunks')
-        .delete()
+        .select('chunk_index')
         .eq('archetype_id', finalArchetypeId)
+        .order('chunk_index', { ascending: false })
+        .limit(1)
 
-      deleteError = result.error
-      console.log('Delete result:', { error: !!deleteError, count: result.count })
+      if (countError) {
+        console.error('Error getting chunk count:', countError)
+      } else if (existingChunks && existingChunks.length > 0) {
+        existingChunkCount = existingChunks[0].chunk_index + 1
+        console.log(`Found ${existingChunkCount} existing chunks`)
+      } else {
+        console.log('No existing chunks found')
+      }
     } catch (error) {
-      console.error('Exception during delete:', error)
-      return NextResponse.json({
-        error: 'Failed to delete existing content',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, { status: 500 })
+      console.error('Exception getting chunk count:', error)
+      // Continue anyway - we'll just start from index 0
     }
-
-    if (deleteError) {
-      console.error('Error deleting existing chunks:', deleteError)
-      return NextResponse.json({
-        error: 'Failed to delete existing content',
-        details: deleteError.message
-      }, { status: 500 })
-    }
-
-    console.log('Existing chunks deleted successfully')
 
     // Chunk the content
     console.log('Creating chunks from content...')
@@ -364,15 +359,17 @@ export async function POST(request: NextRequest) {
 
         const batchPromises = batch.map(async (chunk) => {
           try {
-            console.log(`Generating embedding for chunk ${chunk.index}...`)
+            // Use offset index to append to existing chunks
+            const globalIndex = existingChunkCount + chunk.index
+            console.log(`Generating embedding for chunk ${globalIndex} (local: ${chunk.index})...`)
             const embedding = await generateEmbedding(chunk.text, settings.embeddingModel)
-            console.log(`Successfully generated embedding for chunk ${chunk.index}`)
+            console.log(`Successfully generated embedding for chunk ${globalIndex}`)
 
             return {
               archetype_id: finalArchetypeId,
               content_type: contentType,
               chunk_text: chunk.text,
-              chunk_index: chunk.index,
+              chunk_index: globalIndex, // Use global index to append
               chunk_size: chunk.size,
               chunk_overlap: chunk.overlap,
               embedding: embedding, // Vector type expects array of numbers, not JSON string
@@ -381,7 +378,8 @@ export async function POST(request: NextRequest) {
                 originalLength: contentToProcess.length,
                 chunkCount: chunks.length,
                 processedAt: new Date().toISOString(),
-                model: settings.embeddingModel
+                model: settings.embeddingModel,
+                isAppended: existingChunkCount > 0
               }
             }
           } catch (error) {
@@ -421,16 +419,23 @@ export async function POST(request: NextRequest) {
     }
 
     const wasLimited = chunks.length > maxChunks
+    const wasAppended = existingChunkCount > 0
+    const totalChunksNow = existingChunkCount + (savedChunks?.length || 0)
 
     return NextResponse.json({
       success: true,
-      message: wasLimited
+      message: wasAppended
+        ? `Successfully added ${savedChunks?.length || 0} new chunks to archetype "${archetype.name}" (total: ${totalChunksNow} chunks)`
+        : wasLimited
         ? `Successfully processed ${chunksToProcess.length} of ${chunks.length} chunks for archetype "${archetype.name}" (limited to avoid timeout)`
         : `Successfully processed ${chunks.length} chunks for archetype "${archetype.name}"`,
       chunksCreated: savedChunks?.length || 0,
       totalChunks: chunks.length,
       processedChunks: chunksToProcess.length,
+      existingChunks: existingChunkCount,
+      totalChunksNow: totalChunksNow,
       wasLimited,
+      wasAppended,
       archetypeId: finalArchetypeId,
       settings: {
         chunkSize: settings.chunkSize,
