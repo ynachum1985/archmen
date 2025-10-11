@@ -9,8 +9,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Text chunking function
-function chunkText(text: string, chunkSize: number = 1000, overlap: number = 200) {
+// Text chunking function - OPTIMIZED DEFAULTS (see EMBEDDING_CONFIGURATION_ANALYSIS.md)
+function chunkText(text: string, chunkSize: number = 400, overlap: number = 80) {
   const chunks = []
   let start = 0
   let index = 0
@@ -99,9 +99,9 @@ serve(async (req) => {
 
     console.log(`Found archetype: ${archetype.name}`)
 
-    // Save embedding settings
-    const chunkSize = settings.chunkSize || 1000
-    const chunkOverlap = settings.chunkOverlap || 200
+    // Save embedding settings - OPTIMIZED DEFAULTS
+    const chunkSize = settings.chunkSize || 400  // Optimal: 300-500 tokens
+    const chunkOverlap = settings.chunkOverlap || 80  // 20% overlap
     const embeddingModel = settings.embeddingModel || 'text-embedding-3-small'
 
     await supabase

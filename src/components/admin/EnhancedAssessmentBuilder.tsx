@@ -277,10 +277,10 @@ export function EnhancedAssessmentBuilder({
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
   const [uploadedFiles, setUploadedFiles] = useState<File[][]>([[]])
 
-  // Embedding settings state
-  const [chunkSize, setChunkSize] = useState(1000)
-  const [chunkOverlap, setChunkOverlap] = useState(200)
-  const [embeddingModel, setEmbeddingModel] = useState('mistral-embed')
+  // Embedding settings state - OPTIMIZED VALUES (see EMBEDDING_CONFIGURATION_ANALYSIS.md)
+  const [chunkSize, setChunkSize] = useState(400)  // Optimal: 300-500 tokens
+  const [chunkOverlap, setChunkOverlap] = useState(80)  // 20% overlap (industry standard)
+  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')  // Best performance/cost
   const [topK, setTopK] = useState(10)
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7)
 
