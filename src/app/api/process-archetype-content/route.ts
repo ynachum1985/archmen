@@ -214,28 +214,53 @@ export async function POST(request: NextRequest) {
 
     // Use the provided archetype ID
     const finalArchetypeId = archetype.id
+    console.log('Final archetype ID:', finalArchetypeId)
 
     // Determine content to process
     const contentToProcess = textContent || fileContent || ''
+    console.log('Content to process length:', contentToProcess.length)
 
     if (!contentToProcess.trim()) {
+      console.error('Content is empty after trim')
       return NextResponse.json({ error: 'Content cannot be empty' }, { status: 400 })
     }
 
     // Save or update embedding settings with proper conflict resolution
-    const { error: settingsError } = await supabase
-      .from('archetype_embedding_settings')
-      .upsert({
-        archetype_id: finalArchetypeId,
-        chunk_size: settings.chunkSize,
-        chunk_overlap: settings.chunkOverlap,
-        embedding_model: settings.embeddingModel,
-        context_window: settings.contextWindow || 4000,
-        semantic_search_enabled: settings.semanticSearchEnabled ?? true,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'archetype_id'
-      })
+    console.log('Attempting to save embedding settings...')
+    console.log('Settings to save:', {
+      archetype_id: finalArchetypeId,
+      chunk_size: settings.chunkSize,
+      chunk_overlap: settings.chunkOverlap,
+      embedding_model: settings.embeddingModel,
+      context_window: settings.contextWindow || 4000,
+      semantic_search_enabled: settings.semanticSearchEnabled ?? true
+    })
+
+    let settingsError
+    try {
+      const result = await supabase
+        .from('archetype_embedding_settings')
+        .upsert({
+          archetype_id: finalArchetypeId,
+          chunk_size: settings.chunkSize,
+          chunk_overlap: settings.chunkOverlap,
+          embedding_model: settings.embeddingModel,
+          context_window: settings.contextWindow || 4000,
+          semantic_search_enabled: settings.semanticSearchEnabled ?? true,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'archetype_id'
+        })
+
+      settingsError = result.error
+      console.log('Settings save result:', { error: !!settingsError })
+    } catch (error) {
+      console.error('Exception during settings save:', error)
+      return NextResponse.json({
+        error: 'Failed to save embedding settings',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 })
+    }
 
     if (settingsError) {
       console.error('Error saving embedding settings:', settingsError)
@@ -250,6 +275,8 @@ export async function POST(request: NextRequest) {
         details: settingsError.message
       }, { status: 500 })
     }
+
+    console.log('Settings saved successfully')
 
     // Delete existing chunks for this archetype to replace them
     const { error: deleteError } = await supabase
