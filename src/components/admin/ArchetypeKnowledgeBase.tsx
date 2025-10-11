@@ -115,23 +115,26 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
       setStatusMessage('Generating embeddings...')
 
-      const response = await fetch('/api/process-archetype-content', {
+      // Use Supabase Edge Function instead of Vercel API (no timeout limits!)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/process-archetype-embedding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'apikey': supabaseAnonKey || '',
         },
-        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           archetypeId,
           textContent: combinedContent,
-          sourceUrl: referenceUrls.filter(url => url.trim()).join(', ') || undefined,
-          contentType: 'text',
           settings: {
             chunkSize,
             chunkOverlap,
             embeddingModel,
-            topK,
-            similarityThreshold
+            contextWindow: 4000,
+            semanticSearchEnabled: true
           }
         }),
       })
