@@ -13,27 +13,47 @@ interface ChunkData {
   overlap: number
 }
 
-function chunkText(text: string, chunkSize: number, overlap: number): ChunkData[] {
+// Text chunking function - OPTIMIZED (matches archetype route)
+function chunkText(text: string, chunkSize: number = 400, overlap: number = 80): ChunkData[] {
+  console.log('[chunkText] Starting chunking...', { textLength: text.length, chunkSize, overlap })
+
+  // Validate inputs to prevent infinite loop
+  if (overlap >= chunkSize) {
+    console.error('[chunkText] Invalid parameters: overlap must be less than chunkSize')
+    throw new Error(`Invalid chunking parameters: overlap (${overlap}) must be less than chunkSize (${chunkSize})`)
+  }
+
   const chunks: ChunkData[] = []
-  let index = 0
   let start = 0
+  let index = 0
 
   while (start < text.length) {
     const end = Math.min(start + chunkSize, text.length)
     const chunkText = text.slice(start, end)
-    
+
     chunks.push({
       text: chunkText,
-      index: index++,
+      index: index,
       size: chunkText.length,
       overlap: start > 0 ? overlap : 0
     })
 
-    // Move start position, accounting for overlap
+    // If this is the last chunk, break to avoid infinite loop
+    if (end >= text.length) {
+      break
+    }
+
     start = end - overlap
-    if (start >= text.length) break
+    index++
+
+    // Safety check to prevent infinite loop
+    if (index > 1000) {
+      console.error('[chunkText] Too many chunks, breaking loop')
+      break
+    }
   }
 
+  console.log('[chunkText] Chunking complete:', chunks.length, 'chunks created')
   return chunks
 }
 
@@ -169,54 +189,109 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save embedding settings' }, { status: 500 })
     }
 
+    console.log('Settings saved successfully')
+
+    // Get the current highest chunk index for this assessment (for appending)
+    console.log('Getting existing chunk count...')
+    let existingChunkCount = 0
+    try {
+      const { data: existingChunks, error: countError } = await supabase
+        .from('assessment_content_chunks')
+        .select('chunk_index')
+        .eq('assessment_id', finalAssessmentId)
+        .order('chunk_index', { ascending: false })
+        .limit(1)
+
+      if (countError) {
+        console.error('Error getting chunk count:', countError)
+      } else if (existingChunks && existingChunks.length > 0) {
+        existingChunkCount = existingChunks[0].chunk_index + 1
+        console.log(`Found ${existingChunkCount} existing chunks`)
+      } else {
+        console.log('No existing chunks found')
+      }
+    } catch (error) {
+      console.error('Exception getting chunk count:', error)
+      // Continue anyway - we'll just start from index 0
+    }
+
     // Chunk the content
+    console.log('Creating chunks from content...')
     const chunks = chunkText(contentToProcess, settings.chunkSize, settings.chunkOverlap)
-    
+
     if (chunks.length === 0) {
       return NextResponse.json({ error: 'No chunks generated from content' }, { status: 400 })
     }
+
+    console.log(`Created ${chunks.length} chunks from content`)
+
+    // Limit chunks for Pro plan (60s timeout)
+    const maxChunks = 20
+    const chunksToProcess = chunks.slice(0, maxChunks)
+    console.log(`Processing ${chunksToProcess.length} chunks (limited from ${chunks.length} to avoid timeout)`)
 
     // Process chunks in batches to avoid rate limits
     const batchSize = 5
     const processedChunks = []
 
-    for (let i = 0; i < chunks.length; i += batchSize) {
-      const batch = chunks.slice(i, i + batchSize)
-      
-      const batchPromises = batch.map(async (chunk) => {
-        try {
-          const embedding = await generateEmbedding(chunk.text, settings.embeddingModel)
-          
-          return {
-            assessment_id: finalAssessmentId,
-            content_type: contentType,
-            chunk_text: chunk.text,
-            chunk_index: chunk.index,
-            chunk_size: chunk.size,
-            chunk_overlap: chunk.overlap,
-            embedding: JSON.stringify(embedding), // Convert to JSON string for Supabase
-            source_url: sourceUrl || null,
-            metadata: {
-              originalLength: contentToProcess.length,
-              chunkCount: chunks.length,
-              processedAt: new Date().toISOString(),
-              model: settings.embeddingModel
+    console.log(`Starting batch processing: ${chunksToProcess.length} chunks in batches of ${batchSize}`)
+
+    try {
+      for (let i = 0; i < chunksToProcess.length; i += batchSize) {
+        const batch = chunksToProcess.slice(i, i + batchSize)
+        const batchNum = Math.floor(i / batchSize) + 1
+        const totalBatches = Math.ceil(chunksToProcess.length / batchSize)
+        console.log(`Processing batch ${batchNum}/${totalBatches} (chunks ${i} to ${i + batch.length - 1})`)
+
+        const batchPromises = batch.map(async (chunk) => {
+          try {
+            // Use offset index to append to existing chunks
+            const globalIndex = existingChunkCount + chunk.index
+            console.log(`Generating embedding for chunk ${globalIndex} (local: ${chunk.index})...`)
+            const embedding = await generateEmbedding(chunk.text, settings.embeddingModel)
+            console.log(`Successfully generated embedding for chunk ${globalIndex}`)
+
+            return {
+              assessment_id: finalAssessmentId,
+              content_type: contentType,
+              chunk_text: chunk.text,
+              chunk_index: globalIndex, // Use global index to append
+              chunk_size: chunk.size,
+              chunk_overlap: chunk.overlap,
+              embedding: embedding, // Vector type expects array of numbers
+              source_url: sourceUrl || null,
+              metadata: {
+                originalLength: contentToProcess.length,
+                chunkCount: chunks.length,
+                processedAt: new Date().toISOString(),
+                model: settings.embeddingModel,
+                isAppended: existingChunkCount > 0
+              }
             }
+          } catch (error) {
+            console.error(`Error processing chunk ${chunk.index}:`, error)
+            throw error
           }
-        } catch (error) {
-          console.error(`Error processing chunk ${chunk.index}:`, error)
-          throw error
+        })
+
+        const batchResults = await Promise.all(batchPromises)
+        processedChunks.push(...batchResults)
+        console.log(`Batch ${batchNum}/${totalBatches} complete. Total processed: ${processedChunks.length}`)
+
+        // Small delay between batches to respect rate limits
+        if (i + batchSize < chunksToProcess.length) {
+          await new Promise(resolve => setTimeout(resolve, 100))
         }
-      })
-
-      const batchResults = await Promise.all(batchPromises)
-      processedChunks.push(...batchResults)
-
-      // Small delay between batches to respect rate limits
-      if (i + batchSize < chunks.length) {
-        await new Promise(resolve => setTimeout(resolve, 100))
       }
+    } catch (error) {
+      console.error('Error during batch processing:', error)
+      return NextResponse.json({
+        error: 'Failed to process chunks',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 })
     }
+
+    console.log(`Successfully processed ${processedChunks.length} chunks`)
 
     // Save all chunks to database
     const { data: savedChunks, error: chunksError } = await supabase
@@ -229,12 +304,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save content chunks' }, { status: 500 })
     }
 
+    const wasLimited = chunks.length > maxChunks
+    const wasAppended = existingChunkCount > 0
+    const totalChunksNow = existingChunkCount + (savedChunks?.length || 0)
+
     return NextResponse.json({
       success: true,
-      message: `Successfully processed and embedded ${chunks.length} chunks`,
+      message: wasAppended
+        ? `Successfully added ${savedChunks?.length || 0} new chunks to assessment (total: ${totalChunksNow} chunks)`
+        : wasLimited
+        ? `Successfully processed ${chunksToProcess.length} of ${chunks.length} chunks (limited to avoid timeout)`
+        : `Successfully processed ${chunks.length} chunks`,
+      chunksCreated: savedChunks?.length || 0,
+      totalChunks: chunks.length,
+      processedChunks: chunksToProcess.length,
+      existingChunks: existingChunkCount,
+      totalChunksNow: totalChunksNow,
+      wasLimited,
+      wasAppended,
+      assessmentId: finalAssessmentId,
+      settings: {
+        chunkSize: settings.chunkSize,
+        chunkOverlap: settings.chunkOverlap,
+        embeddingModel: settings.embeddingModel
+      },
       data: {
         assessmentId: finalAssessmentId,
-        chunksProcessed: chunks.length,
+        chunksProcessed: chunksToProcess.length,
         totalCharacters: contentToProcess.length,
         settings: settings,
         chunks: savedChunks?.map(chunk => ({
