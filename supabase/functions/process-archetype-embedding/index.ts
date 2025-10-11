@@ -33,27 +33,46 @@ function chunkText(text: string, chunkSize: number = 400, overlap: number = 80) 
   return chunks
 }
 
-// Generate embedding using OpenAI
+// Generate embedding using OpenAI with timeout
 async function generateEmbedding(text: string, apiKey: string, model: string = 'text-embedding-3-small') {
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: model,
-      input: text,
-    }),
-  })
+  console.log(`Calling OpenAI API for embedding (model: ${model}, text length: ${text.length})`)
 
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`OpenAI API error: ${error}`)
+  // Create abort controller for timeout
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model,
+        input: text,
+      }),
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error(`OpenAI API error (${response.status}):`, error)
+      throw new Error(`OpenAI API error (${response.status}): ${error}`)
+    }
+
+    const data = await response.json()
+    console.log(`Successfully generated embedding (dimension: ${data.data[0].embedding.length})`)
+    return data.data[0].embedding
+  } catch (error) {
+    clearTimeout(timeoutId)
+    if (error.name === 'AbortError') {
+      throw new Error('OpenAI API request timed out after 30 seconds')
+    }
+    throw error
   }
-
-  const data = await response.json()
-  return data.data[0].embedding
 }
 
 serve(async (req) => {
@@ -146,7 +165,13 @@ serve(async (req) => {
 
     // Chunk the content
     const chunks = chunkText(textContent, chunkSize, chunkOverlap)
-    console.log(`Created ${chunks.length} chunks`)
+    console.log(`Created ${chunks.length} chunks from ${textContent.length} characters`)
+
+    // Safety check: Limit to 100 chunks to prevent runaway processing
+    if (chunks.length > 100) {
+      console.warn(`Too many chunks (${chunks.length}), limiting to 100`)
+      chunks.length = 100
+    }
 
     // Process chunks in batches to avoid memory limits
     const BATCH_SIZE = 10  // Process and save 10 chunks at a time
