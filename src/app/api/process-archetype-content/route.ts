@@ -182,15 +182,35 @@ export async function POST(request: NextRequest) {
     console.log('Using service role - bypassing user authentication')
 
     // Verify archetype exists
-    const { data: archetype, error: archetypeError } = await supabase
-      .from('enhanced_archetypes')
-      .select('id, name')
-      .eq('id', archetypeId)
-      .single()
+    console.log('Querying archetype from database...')
+    let archetype, archetypeError
+    try {
+      const result = await supabase
+        .from('enhanced_archetypes')
+        .select('id, name')
+        .eq('id', archetypeId)
+        .single()
+
+      archetype = result.data
+      archetypeError = result.error
+      console.log('Archetype query result:', { found: !!archetype, error: !!archetypeError })
+    } catch (error) {
+      console.error('Exception during archetype query:', error)
+      return NextResponse.json({
+        error: 'Database query failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 })
+    }
 
     if (archetypeError || !archetype) {
-      return NextResponse.json({ error: 'Archetype not found' }, { status: 404 })
+      console.error('Archetype not found or error:', archetypeError)
+      return NextResponse.json({
+        error: 'Archetype not found',
+        details: archetypeError?.message || 'No archetype with this ID'
+      }, { status: 404 })
     }
+
+    console.log(`Found archetype: ${archetype.name}`)
 
     // Use the provided archetype ID
     const finalArchetypeId = archetype.id
