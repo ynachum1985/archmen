@@ -31,6 +31,13 @@ const getOpenAI = () => {
 // Text chunking function - OPTIMIZED DEFAULTS (see EMBEDDING_CONFIGURATION_ANALYSIS.md)
 function chunkText(text: string, chunkSize: number = 400, overlap: number = 80) {
   console.log('[chunkText] Starting chunking...', { textLength: text.length, chunkSize, overlap })
+
+  // Validate inputs to prevent infinite loop
+  if (overlap >= chunkSize) {
+    console.error('[chunkText] Invalid parameters: overlap must be less than chunkSize')
+    throw new Error(`Invalid chunking parameters: overlap (${overlap}) must be less than chunkSize (${chunkSize})`)
+  }
+
   const chunks = []
   let start = 0
   let index = 0
@@ -46,10 +53,16 @@ function chunkText(text: string, chunkSize: number = 400, overlap: number = 80) 
       overlap: start > 0 ? overlap : 0
     })
 
+    // Move to next chunk position
+    // If this is the last chunk, break to avoid infinite loop
+    if (end >= text.length) {
+      break
+    }
+
     start = end - overlap
     index++
 
-    // Prevent infinite loop
+    // Safety check to prevent infinite loop
     if (index > 1000) {
       console.error('[chunkText] Too many chunks, breaking loop')
       break
