@@ -2,7 +2,6 @@
 // This runs on Supabase infrastructure with no timeout limits
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,9 +94,9 @@ serve(async (req) => {
     }
 
     // Get environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!
 
     console.log('Environment check:', {
       hasSupabaseUrl: !!supabaseUrl,
@@ -105,37 +104,40 @@ serve(async (req) => {
       hasOpenAIKey: !!openaiApiKey
     })
 
-    if (!supabaseUrl || !supabaseServiceKey || !openaiApiKey) {
-      return new Response(
-        JSON.stringify({
-          error: 'Missing environment variables',
-          details: {
-            supabaseUrl: !!supabaseUrl,
-            serviceKey: !!supabaseServiceKey,
-            openaiKey: !!openaiApiKey
-          }
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // Helper function for Supabase REST API calls (lighter than client library)
+    const supabaseRequest = async (path: string, options: RequestInit = {}) => {
+      const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+        ...options,
+        headers: {
+          'apikey': supabaseServiceKey,
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation',
+          ...options.headers,
+        },
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Supabase API error: ${error}`)
+      }
+
+      return response.json()
     }
 
-    // Create Supabase client with service role
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    // Verify archetype exists using REST API
+    const archetypes = await supabaseRequest(
+      `enhanced_archetypes?id=eq.${archetypeId}&select=id,name`
+    )
 
-    // Verify archetype exists
-    const { data: archetype, error: archetypeError } = await supabase
-      .from('enhanced_archetypes')
-      .select('id, name')
-      .eq('id', archetypeId)
-      .single()
-
-    if (archetypeError || !archetype) {
+    if (!archetypes || archetypes.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Archetype not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    const archetype = archetypes[0]
     console.log(`Found archetype: ${archetype.name}`)
 
     // Save embedding settings - OPTIMIZED DEFAULTS
@@ -143,25 +145,41 @@ serve(async (req) => {
     const chunkOverlap = settings.chunkOverlap || 80  // 20% overlap
     const embeddingModel = settings.embeddingModel || 'text-embedding-3-small'
 
-    await supabase
-      .from('archetype_embedding_settings')
-      .upsert({
-        archetype_id: archetypeId,
-        chunk_size: chunkSize,
-        chunk_overlap: chunkOverlap,
-        embedding_model: embeddingModel,
-        context_window: settings.contextWindow || 4000,
-        semantic_search_enabled: settings.semanticSearchEnabled ?? true,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'archetype_id'
-      })
+    // Save embedding settings using REST API (upsert)
+    const settingsData = {
+      archetype_id: archetypeId,
+      chunk_size: chunkSize,
+      chunk_overlap: chunkOverlap,
+      embedding_model: embeddingModel,
+      context_window: settings.contextWindow || 4000,
+      semantic_search_enabled: settings.semanticSearchEnabled ?? true,
+      updated_at: new Date().toISOString()
+    }
 
-    // Delete existing chunks
-    await supabase
-      .from('archetype_content_chunks')
-      .delete()
-      .eq('archetype_id', archetypeId)
+    // Try to update first, if no rows affected then insert
+    const updateResponse = await fetch(`${supabaseUrl}/rest/v1/archetype_embedding_settings?archetype_id=eq.${archetypeId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(settingsData)
+    })
+
+    // If update didn't affect any rows, insert
+    if (updateResponse.status === 200 && updateResponse.headers.get('content-range') === '*/0') {
+      await supabaseRequest('archetype_embedding_settings', {
+        method: 'POST',
+        body: JSON.stringify(settingsData)
+      })
+    }
+
+    // Delete existing chunks using REST API
+    await supabaseRequest(`archetype_content_chunks?archetype_id=eq.${archetypeId}`, {
+      method: 'DELETE'
+    })
 
     // Chunk the content
     const chunks = chunkText(textContent, chunkSize, chunkOverlap)
@@ -217,16 +235,11 @@ serve(async (req) => {
         }
       }
 
-      // Save this batch to database
-      const { data: savedChunks, error: chunksError } = await supabase
-        .from('archetype_content_chunks')
-        .insert(processedChunks)
-        .select()
-
-      if (chunksError) {
-        console.error('Error saving batch:', chunksError)
-        throw new Error(`Failed to save batch: ${chunksError.message}`)
-      }
+      // Save this batch to database using REST API
+      const savedChunks = await supabaseRequest('archetype_content_chunks', {
+        method: 'POST',
+        body: JSON.stringify(processedChunks)
+      })
 
       totalSaved += savedChunks.length
       console.log(`Saved batch: ${savedChunks.length} chunks (total: ${totalSaved}/${chunks.length})`)
