@@ -148,54 +148,69 @@ serve(async (req) => {
     const chunks = chunkText(textContent, chunkSize, chunkOverlap)
     console.log(`Created ${chunks.length} chunks`)
 
-    // Process all chunks (no timeout limit!)
-    const processedChunks = []
+    // Process chunks in batches to avoid memory limits
+    const BATCH_SIZE = 10  // Process and save 10 chunks at a time
+    let totalSaved = 0
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]
-      console.log(`Processing chunk ${i + 1}/${chunks.length}`)
+    for (let batchStart = 0; batchStart < chunks.length; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE, chunks.length)
+      const batchChunks = chunks.slice(batchStart, batchEnd)
 
-      try {
-        const embedding = await generateEmbedding(chunk.text, openaiApiKey, embeddingModel)
-        
-        processedChunks.push({
-          archetype_id: archetypeId,
-          content_type: 'text',
-          chunk_text: chunk.text,
-          chunk_index: chunk.index,
-          chunk_size: chunk.size,
-          chunk_overlap: chunk.overlap,
-          embedding: embedding,
-          metadata: {
-            originalLength: textContent.length,
-            chunkCount: chunks.length,
-            processedAt: new Date().toISOString(),
-            model: embeddingModel
-          }
-        })
+      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(chunks.length / BATCH_SIZE)} (chunks ${batchStart + 1}-${batchEnd})`)
 
-        // Small delay to respect rate limits
-        if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100))
+      const processedChunks = []
+
+      for (let i = 0; i < batchChunks.length; i++) {
+        const chunk = batchChunks[i]
+        const globalIdx = batchStart + i
+        console.log(`Processing chunk ${globalIdx + 1}/${chunks.length}`)
+
+        try {
+          const embedding = await generateEmbedding(chunk.text, openaiApiKey, embeddingModel)
+
+          processedChunks.push({
+            archetype_id: archetypeId,
+            content_type: 'text',
+            chunk_text: chunk.text,
+            chunk_index: chunk.index,
+            chunk_size: chunk.size,
+            chunk_overlap: chunk.overlap,
+            embedding: embedding,
+            metadata: {
+              originalLength: textContent.length,
+              chunkCount: chunks.length,
+              processedAt: new Date().toISOString(),
+              model: embeddingModel
+            }
+          })
+
+          // Small delay to respect rate limits
+          await new Promise(resolve => setTimeout(resolve, 50))
+        } catch (error) {
+          console.error(`Error processing chunk ${globalIdx}:`, error)
+          throw error
         }
-      } catch (error) {
-        console.error(`Error processing chunk ${i}:`, error)
-        throw error
       }
+
+      // Save this batch to database
+      const { data: savedChunks, error: chunksError } = await supabase
+        .from('archetype_content_chunks')
+        .insert(processedChunks)
+        .select()
+
+      if (chunksError) {
+        console.error('Error saving batch:', chunksError)
+        throw new Error(`Failed to save batch: ${chunksError.message}`)
+      }
+
+      totalSaved += savedChunks.length
+      console.log(`Saved batch: ${savedChunks.length} chunks (total: ${totalSaved}/${chunks.length})`)
+
+      // Clear processed chunks from memory
+      processedChunks.length = 0
     }
 
-    // Save all chunks to database
-    const { data: savedChunks, error: chunksError } = await supabase
-      .from('archetype_content_chunks')
-      .insert(processedChunks)
-      .select()
-
-    if (chunksError) {
-      console.error('Error saving chunks:', chunksError)
-      throw new Error(`Failed to save chunks: ${chunksError.message}`)
-    }
-
-    console.log(`Successfully saved ${savedChunks.length} chunks`)
+    console.log(`Successfully saved all ${totalSaved} chunks`)
 
     return new Response(
       JSON.stringify({

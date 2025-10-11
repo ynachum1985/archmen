@@ -368,9 +368,9 @@ export default function AdminPage() {
         ))
         console.log('Archetype saved successfully:', savedArchetype.archetype.name)
 
-        // Close the editor
-        setExpandedArchetype(null)
-        setEditingArchetype(null)
+        // Don't close the editor - let it stay open after embedding
+        // setExpandedArchetype(null)
+        // setEditingArchetype(null)
       } else {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to save archetype')
