@@ -191,61 +191,49 @@ serve(async (req) => {
       chunks.length = 100
     }
 
-    // Process chunks in batches to avoid memory limits
-    const BATCH_SIZE = 10  // Process and save 10 chunks at a time
+    // Process chunks ONE AT A TIME to minimize memory usage
     let totalSaved = 0
 
-    for (let batchStart = 0; batchStart < chunks.length; batchStart += BATCH_SIZE) {
-      const batchEnd = Math.min(batchStart + BATCH_SIZE, chunks.length)
-      const batchChunks = chunks.slice(batchStart, batchEnd)
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]
+      console.log(`Processing chunk ${i + 1}/${chunks.length}`)
 
-      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(chunks.length / BATCH_SIZE)} (chunks ${batchStart + 1}-${batchEnd})`)
+      try {
+        // Generate embedding
+        const embedding = await generateEmbedding(chunk.text, openaiApiKey, embeddingModel)
 
-      const processedChunks = []
-
-      for (let i = 0; i < batchChunks.length; i++) {
-        const chunk = batchChunks[i]
-        const globalIdx = batchStart + i
-        console.log(`Processing chunk ${globalIdx + 1}/${chunks.length}`)
-
-        try {
-          const embedding = await generateEmbedding(chunk.text, openaiApiKey, embeddingModel)
-
-          processedChunks.push({
-            archetype_id: archetypeId,
-            content_type: 'text',
-            chunk_text: chunk.text,
-            chunk_index: chunk.index,
-            chunk_size: chunk.size,
-            chunk_overlap: chunk.overlap,
-            embedding: embedding,
-            metadata: {
-              originalLength: textContent.length,
-              chunkCount: chunks.length,
-              processedAt: new Date().toISOString(),
-              model: embeddingModel
-            }
-          })
-
-          // Small delay to respect rate limits
-          await new Promise(resolve => setTimeout(resolve, 50))
-        } catch (error) {
-          console.error(`Error processing chunk ${globalIdx}:`, error)
-          throw error
+        // Save immediately (don't accumulate in memory)
+        const chunkData = {
+          archetype_id: archetypeId,
+          content_type: 'text',
+          chunk_text: chunk.text,
+          chunk_index: chunk.index,
+          chunk_size: chunk.size,
+          chunk_overlap: chunk.overlap,
+          embedding: embedding,
+          metadata: {
+            originalLength: textContent.length,
+            chunkCount: chunks.length,
+            processedAt: new Date().toISOString(),
+            model: embeddingModel
+          }
         }
+
+        // Save this single chunk immediately
+        await supabaseRequest('archetype_content_chunks', {
+          method: 'POST',
+          body: JSON.stringify([chunkData])  // Array with single item
+        })
+
+        totalSaved++
+        console.log(`Saved chunk ${i + 1}/${chunks.length}`)
+
+        // Small delay to respect rate limits
+        await new Promise(resolve => setTimeout(resolve, 100))
+      } catch (error) {
+        console.error(`Error processing chunk ${i}:`, error)
+        throw error
       }
-
-      // Save this batch to database using REST API
-      const savedChunks = await supabaseRequest('archetype_content_chunks', {
-        method: 'POST',
-        body: JSON.stringify(processedChunks)
-      })
-
-      totalSaved += savedChunks.length
-      console.log(`Saved batch: ${savedChunks.length} chunks (total: ${totalSaved}/${chunks.length})`)
-
-      // Clear processed chunks from memory
-      processedChunks.length = 0
     }
 
     console.log(`Successfully saved all ${totalSaved} chunks`)

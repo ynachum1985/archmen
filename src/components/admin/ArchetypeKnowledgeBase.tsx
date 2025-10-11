@@ -152,18 +152,13 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
       setStatusMessage('Generating embeddings...')
 
-      // Use Supabase Edge Function instead of Vercel API (no timeout limits!)
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      // Use Vercel API (works with Pro plan 60-second timeout)
+      console.log('Calling Vercel API:', '/api/process-archetype-content')
 
-      console.log('Calling Edge Function:', `${supabaseUrl}/functions/v1/process-archetype-embedding`)
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/process-archetype-embedding`, {
+      const response = await fetch('/api/process-archetype-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'apikey': supabaseAnonKey || '',
         },
         body: JSON.stringify({
           archetypeId,
