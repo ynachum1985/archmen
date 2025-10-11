@@ -76,9 +76,29 @@ serve(async (req) => {
     }
 
     // Get environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+
+    console.log('Environment check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey,
+      hasOpenAIKey: !!openaiApiKey
+    })
+
+    if (!supabaseUrl || !supabaseServiceKey || !openaiApiKey) {
+      return new Response(
+        JSON.stringify({
+          error: 'Missing environment variables',
+          details: {
+            supabaseUrl: !!supabaseUrl,
+            serviceKey: !!supabaseServiceKey,
+            openaiKey: !!openaiApiKey
+          }
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     // Create Supabase client with service role
     const supabase = createClient(supabaseUrl, supabaseServiceKey)

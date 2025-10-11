@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -15,6 +15,7 @@ import { ArchetypeContentDisplay } from './ArchetypeContentDisplay'
 import { ArchetypeFileUploadService, UploadedFile } from '@/lib/services/archetype-file-upload.service'
 import { LLM_PROVIDERS, type LLMProvider, multiLLMService } from '@/lib/services/multi-llm.service'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { createClient } from '@/lib/supabase/client'
 
 interface ArchetypeKnowledgeBaseProps {
   archetypeId: string
@@ -54,6 +55,10 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
   const [uploadingFiles, setUploadingFiles] = useState(false)
   const [existingFiles, setExistingFiles] = useState<UploadedFile[]>([])
 
+  // Embedded content state
+  const [embeddedChunks, setEmbeddedChunks] = useState<any[]>([])
+  const [loadingChunks, setLoadingChunks] = useState(false)
+
   // Image generation state
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>('openrouter')
   const [selectedModel, setSelectedModel] = useState<string>('openai/dall-e-3')
@@ -68,6 +73,38 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
   useImperativeHandle(ref, () => ({
     handleProcessContent
   }))
+
+  // Fetch embedded content chunks
+  const fetchEmbeddedContent = async (archetypeId: string) => {
+    try {
+      setLoadingChunks(true)
+      const supabase = createClient()
+
+      const { data, error } = await supabase
+        .from('archetype_content_chunks')
+        .select('*')
+        .eq('archetype_id', archetypeId)
+        .order('chunk_index', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching embedded chunks:', error)
+        return
+      }
+
+      setEmbeddedChunks(data || [])
+    } catch (error) {
+      console.error('Error fetching embedded content:', error)
+    } finally {
+      setLoadingChunks(false)
+    }
+  }
+
+  // Load embedded content on mount
+  useEffect(() => {
+    if (archetypeId) {
+      fetchEmbeddedContent(archetypeId)
+    }
+  }, [archetypeId])
 
   const handleProcessContent = async () => {
     // Check if we have either text content or uploaded files
@@ -119,6 +156,8 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+      console.log('Calling Edge Function:', `${supabaseUrl}/functions/v1/process-archetype-embedding`)
+
       const response = await fetch(`${supabaseUrl}/functions/v1/process-archetype-embedding`, {
         method: 'POST',
         headers: {
@@ -139,20 +178,27 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
         }),
       })
 
-      const data = await response.json()
+      console.log('Edge Function response status:', response.status)
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to process content')
+        const errorText = await response.text()
+        console.error('Edge Function error:', errorText)
+        throw new Error(`Failed to process content (${response.status}): ${errorText}`)
       }
+
+      const data = await response.json()
+      console.log('Edge Function success:', data)
 
       setProcessingStatus('success')
       setStatusMessage(data.message || 'Content processed successfully!')
+
+      // Clear input fields
       setTextContents([''])
       setReferenceUrls([''])
       setUploadedFiles([[]])
 
-      // Refresh the content display
-      window.location.reload()
+      // Fetch and display the embedded chunks
+      await fetchEmbeddedContent(archetypeId)
 
     } catch (error) {
       console.error('Error processing content:', error)
