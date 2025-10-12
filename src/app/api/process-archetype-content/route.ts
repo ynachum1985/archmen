@@ -340,7 +340,8 @@ export async function POST(request: NextRequest) {
     }
 
     // With Vercel Pro (60s timeout), we can process more chunks
-    const maxChunks = 20 // Increased from 3 to 20 for Pro plan
+    // Increased to 30 to handle larger documents (linguistic patterns ~25 chunks)
+    const maxChunks = 30 // Increased from 20 to 30 for larger documents
     const chunksToProcess = chunks.slice(0, maxChunks)
     console.log(`Processing ${chunksToProcess.length} chunks (limited from ${chunks.length} to avoid timeout)`)
 
