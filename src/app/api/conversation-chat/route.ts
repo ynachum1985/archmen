@@ -103,6 +103,17 @@ async function handleConversationChat(request: NextRequest, data: ConversationCh
       archetypes || []
     )
 
+    // Update emerging archetypes in real-time
+    if (Object.keys(archetypeConfidence).length > 0) {
+      await updateEmergingArchetypes(
+        supabase,
+        conversationId,
+        archetypeConfidence,
+        archetypes || [],
+        conversationHistory
+      )
+    }
+
     // Determine if we should suggest actions
     const suggestedActions = await determineSuggestedActions(
       aiResponse,
@@ -192,6 +203,144 @@ Focus on:
   }
 
   return basePrompt
+}
+
+async function updateEmergingArchetypes(
+  supabase: any,
+  conversationId: string,
+  archetypeConfidence: ArchetypeConfidence,
+  archetypes: any[],
+  conversationHistory: any[]
+): Promise<void> {
+  try {
+    // Get current emerging archetypes
+    const { data: conversation } = await supabase
+      .from('conversations')
+      .select('emerging_archetypes')
+      .eq('id', conversationId)
+      .single()
+
+    const existingArchetypes = conversation?.emerging_archetypes || []
+
+    // Build updated emerging archetypes array
+    const updatedArchetypes = []
+
+    for (const [archetypeName, confidence] of Object.entries(archetypeConfidence)) {
+      // Find archetype details
+      const archetypeDetails = archetypes.find(a => a.name === archetypeName)
+      if (!archetypeDetails) continue
+
+      // Check if archetype already exists
+      const existingIndex = existingArchetypes.findIndex(
+        (a: any) => a.archetype_name === archetypeName
+      )
+
+      // Get aliases and rank them
+      const rankedAliases = await rankAliases(
+        archetypeDetails,
+        conversationHistory,
+        confidence
+      )
+
+      // Extract evidence quotes from conversation
+      const evidence = extractEvidenceQuotes(conversationHistory, archetypeName)
+
+      if (existingIndex >= 0) {
+        // Update existing archetype
+        const existing = existingArchetypes[existingIndex]
+        updatedArchetypes.push({
+          ...existing,
+          confidence_score: confidence,
+          ranked_aliases: rankedAliases,
+          evidence: [...new Set([...(existing.evidence || []), ...evidence])].slice(0, 5), // Keep top 5 unique
+          detected_at: existing.detected_at // Keep original detection time
+        })
+      } else {
+        // Add new archetype
+        updatedArchetypes.push({
+          archetype_id: archetypeDetails.id,
+          archetype_name: archetypeName,
+          confidence_score: confidence,
+          impact_score: archetypeDetails.impact_score || 5,
+          ranked_aliases: rankedAliases,
+          evidence: evidence,
+          detected_at: new Date().toISOString()
+        })
+      }
+    }
+
+    // Merge with existing archetypes that weren't updated
+    for (const existing of existingArchetypes) {
+      if (!updatedArchetypes.find((a: any) => a.archetype_name === existing.archetype_name)) {
+        updatedArchetypes.push(existing)
+      }
+    }
+
+    // Sort by confidence and keep top 5
+    const sortedArchetypes = updatedArchetypes
+      .sort((a: any, b: any) => b.confidence_score - a.confidence_score)
+      .slice(0, 5)
+
+    // Update conversation
+    await supabase
+      .from('conversations')
+      .update({ emerging_archetypes: sortedArchetypes })
+      .eq('id', conversationId)
+
+  } catch (error) {
+    console.error('Error updating emerging archetypes:', error)
+  }
+}
+
+async function rankAliases(
+  archetype: any,
+  conversationHistory: any[],
+  confidence: number
+): Promise<Array<{ name: string, strength: 'strong' | 'moderate' | 'mild', confidence: number }>> {
+  const aliases = archetype.alternative_names || []
+
+  if (aliases.length === 0) {
+    return []
+  }
+
+  // For now, use a simple ranking based on overall confidence
+  // In the future, this could analyze which specific aliases match the user's language
+  const rankedAliases = aliases.slice(0, 10).map((alias: string, index: number) => {
+    // Distribute confidence scores based on position
+    const aliasConfidence = Math.max(30, confidence - (index * 5))
+
+    let strength: 'strong' | 'moderate' | 'mild'
+    if (aliasConfidence >= 80) {
+      strength = 'strong'
+    } else if (aliasConfidence >= 60) {
+      strength = 'moderate'
+    } else {
+      strength = 'mild'
+    }
+
+    return {
+      name: alias,
+      strength,
+      confidence: aliasConfidence
+    }
+  })
+
+  return rankedAliases
+}
+
+function extractEvidenceQuotes(
+  conversationHistory: any[],
+  archetypeName: string
+): string[] {
+  // Get user messages only
+  const userMessages = conversationHistory
+    .filter(msg => msg.role === 'user')
+    .map(msg => msg.content)
+    .slice(-5) // Last 5 user messages
+
+  // For now, return the most recent user messages as evidence
+  // In the future, this could use AI to identify the most relevant quotes
+  return userMessages.slice(0, 3)
 }
 
 async function analyzeArchetypePatterns(
