@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input"
 
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
+import { AssessmentGatewayBuilder } from "@/components/admin/AssessmentGatewayBuilder"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
 import { ArchetypeKnowledgeBase } from "@/components/admin/ArchetypeKnowledgeBase"
 import { AssessmentGatewayBuilder } from "@/components/admin/AssessmentGatewayBuilderSimple"
@@ -877,22 +878,60 @@ export default function AdminPage() {
             <DialogHeader>
               <DialogTitle>Edit Assessment: {editingAssessment?.name}</DialogTitle>
               <DialogDescription>
-                Modify the assessment configuration and settings. Changes will be reflected in the builder tab.
+                Configure all aspects of this assessment in one place
               </DialogDescription>
             </DialogHeader>
 
             {editingAssessment && editingAssessment.id && (
-              <div className="mt-4">
-                <EnhancedAssessmentBuilder
-                  assessment={editingAssessment}
-                  onSave={(config) => {
-                    handleSaveEnhancedAssessment(config)
-                    setShowEditAssessmentDialog(false)
-                    setEditingAssessment(null)
-                  }}
-                  onTest={handleTestEnhancedAssessment}
-                />
-              </div>
+              <Tabs defaultValue="builder" className="mt-4">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="builder">Builder</TabsTrigger>
+                  <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
+                  <TabsTrigger value="gateways">Gateways</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="builder" className="space-y-4">
+                  <EnhancedAssessmentBuilder
+                    assessment={editingAssessment}
+                    onSave={(config) => {
+                      handleSaveEnhancedAssessment(config)
+                      setShowEditAssessmentDialog(false)
+                      setEditingAssessment(null)
+                    }}
+                    onTest={handleTestEnhancedAssessment}
+                  />
+                </TabsContent>
+
+                <TabsContent value="knowledge" className="space-y-4">
+                  {/* Knowledge Base Component - Similar to Archetype Knowledge Base */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-medium mb-2">Assessment Knowledge Base</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Add content that the AI can reference when conducting this assessment
+                    </p>
+                    {/* TODO: Implement AssessmentKnowledgeBase component */}
+                    <div className="p-8 text-center bg-gray-50 rounded-lg">
+                      <p className="text-gray-500">Knowledge Base component coming soon...</p>
+                      <p className="text-sm text-gray-400 mt-2">This will allow you to upload documents and content for this assessment</p>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="gateways" className="space-y-4">
+                  {/* Gateway Configuration Component */}
+                  <AssessmentGatewayBuilder
+                    assessmentId={editingAssessment.id.toString()}
+                    assessmentLevel={editingAssessment.assessment_level || 1}
+                    assessmentName={editingAssessment.name}
+                    onGatewaysChange={(gateways) => {
+                      console.log('Gateways updated:', gateways)
+                    }}
+                    onQuizPromptsChange={(prompts) => {
+                      console.log('Quiz prompts updated:', prompts)
+                    }}
+                  />
+                </TabsContent>
+              </Tabs>
             )}
 
             {!editingAssessment && showEditAssessmentDialog && (
