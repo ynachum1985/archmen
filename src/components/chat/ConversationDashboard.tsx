@@ -15,8 +15,7 @@ import {
   ChevronUp,
   Brain,
   Calendar,
-  Settings,
-  Sparkles
+  Settings
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
