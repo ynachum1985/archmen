@@ -30,7 +30,6 @@ import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessment
 import { AssessmentGatewayBuilder } from "@/components/admin/AssessmentGatewayBuilder"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
 import { ArchetypeKnowledgeBase } from "@/components/admin/ArchetypeKnowledgeBase"
-import { AssessmentGatewayBuilder } from "@/components/admin/AssessmentGatewayBuilderSimple"
 import { UserManagement } from "@/components/admin/UserManagement"
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
