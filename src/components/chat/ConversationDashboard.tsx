@@ -23,7 +23,7 @@ import Link from 'next/link'
 import { CleanTaskView } from '@/components/calendar/CleanTaskView'
 import { SimpleSettingsView } from '@/components/settings/SimpleSettingsView'
 import { InlineChatView } from '@/components/chat/InlineChatView'
-import { EmergingArchetypesView } from '@/components/archetypes/EmergingArchetypesView'
+import { UserArchetypesCollection } from '@/components/archetypes/UserArchetypesCollection'
 
 
 
@@ -762,9 +762,8 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
             onConversationUpdate={setCurrentConversation}
           />
         ) : currentView === 'archetypes' ? (
-          <EmergingArchetypesView
+          <UserArchetypesCollection
             userId={userId}
-            conversationId={currentConversation?.id}
           />
         ) : currentView === 'tasks' ? (
           <CleanTaskView userId={userId} currentAssessmentId={currentAssessment?.id} />

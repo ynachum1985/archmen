@@ -91,6 +91,32 @@ export function EmergingArchetypesView({ userId, conversationId }: EmergingArche
     return 'text-gray-600'
   }
 
+  const handleAddToCollection = async (archetype: EmergingArchetype) => {
+    try {
+      const supabase = createClient()
+
+      // Call the upsert function to add/update archetype in user's collection
+      const { data, error } = await supabase.rpc('upsert_user_archetype', {
+        p_user_id: userId,
+        p_archetype_id: archetype.archetype_id,
+        p_conversation_id: conversationId,
+        p_assessment_id: null, // Will be set from conversation metadata if available
+        p_confidence_score: archetype.confidence_score,
+        p_primary_alias: archetype.ranked_aliases[0]?.name || archetype.archetype_name,
+        p_ranked_aliases: archetype.ranked_aliases,
+        p_discovery_summary: `Detected through conversation patterns with ${archetype.confidence_score}% confidence`,
+        p_evidence: archetype.evidence
+      })
+
+      if (error) throw error
+
+      alert(`${archetype.archetype_name} added to your collection!`)
+    } catch (error) {
+      console.error('Error adding to collection:', error)
+      alert('Failed to add archetype to collection')
+    }
+  }
+
   const handleAddToHomework = async (archetype: EmergingArchetype) => {
     // TODO: Implement add to homework functionality
     console.log('Add to homework:', archetype)
@@ -232,25 +258,36 @@ export function EmergingArchetypesView({ userId, conversationId }: EmergingArche
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="space-y-2 pt-2">
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
-                      className="flex-1 text-xs"
-                      onClick={() => handleAddToHomework(archetype)}
+                      className="w-full text-xs"
+                      onClick={() => handleAddToCollection(archetype)}
                     >
-                      <BookOpen className="h-3 w-3 mr-1" />
-                      Add to Homework
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Add to My Archetypes
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      onClick={() => handleScheduleWork(archetype)}
-                    >
-                      <Calendar className="h-3 w-3 mr-1" />
-                      Schedule Work
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={() => handleAddToHomework(archetype)}
+                      >
+                        <BookOpen className="h-3 w-3 mr-1" />
+                        Homework
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={() => handleScheduleWork(archetype)}
+                      >
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Schedule
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
