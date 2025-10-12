@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,12 @@ interface ArchetypeContentDisplayProps {
   archetypeName: string
 }
 
-export function ArchetypeContentDisplay({ archetypeId, archetypeName }: ArchetypeContentDisplayProps) {
+export interface ArchetypeContentDisplayRef {
+  refresh: () => Promise<void>
+}
+
+export const ArchetypeContentDisplay = forwardRef<ArchetypeContentDisplayRef, ArchetypeContentDisplayProps>(
+  ({ archetypeId, archetypeName }, ref) => {
   const [chunks, setChunks] = useState<ContentChunk[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +70,11 @@ export function ArchetypeContentDisplay({ archetypeId, archetypeName }: Archetyp
       fetchContentChunks()
     }
   }, [archetypeId])
+
+  // Expose refresh function to parent component
+  useImperativeHandle(ref, () => ({
+    refresh: fetchContentChunks
+  }))
 
   const handleDeleteChunk = async (chunkId: string) => {
     try {
@@ -257,4 +267,6 @@ export function ArchetypeContentDisplay({ archetypeId, archetypeName }: Archetyp
       </Card>
     </Collapsible>
   )
-}
+})
+
+ArchetypeContentDisplay.displayName = 'ArchetypeContentDisplay'

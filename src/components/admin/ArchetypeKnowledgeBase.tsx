@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Upload, FileText, Link, TestTube, Loader2, CheckCircle, AlertCircle, Plus, Minus, File, Image, Palette, Wand2, BookOpen, Info } from 'lucide-react'
 import { EnhancedMediaCreationStudio } from './EnhancedMediaCreationStudio'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArchetypeContentDisplay } from './ArchetypeContentDisplay'
+import { ArchetypeContentDisplay, type ArchetypeContentDisplayRef } from './ArchetypeContentDisplay'
 import { ArchetypeFileUploadService, UploadedFile } from '@/lib/services/archetype-file-upload.service'
 import { LLM_PROVIDERS, type LLMProvider, multiLLMService } from '@/lib/services/multi-llm.service'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -68,6 +68,9 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
   const [availableProviders, setAvailableProviders] = useState<LLMProvider[]>([])
 
   const fileUploadService = new ArchetypeFileUploadService()
+
+  // Ref for ArchetypeContentDisplay to trigger refresh
+  const contentDisplayRef = useRef<ArchetypeContentDisplayRef>(null)
 
   // Expose handleProcessContent to parent component
   useImperativeHandle(ref, () => ({
@@ -194,6 +197,11 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
       // Fetch and display the embedded chunks
       await fetchEmbeddedContent(archetypeId)
+
+      // Refresh the ArchetypeContentDisplay component
+      if (contentDisplayRef.current) {
+        await contentDisplayRef.current.refresh()
+      }
 
     } catch (error) {
       console.error('Error processing content:', error)
@@ -587,6 +595,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
           {/* Embedded Content Display */}
           <ArchetypeContentDisplay
+            ref={contentDisplayRef}
             archetypeId={archetypeId}
             archetypeName={archetypeName}
           />
@@ -975,6 +984,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
             {/* Embedded Content Display */}
             <ArchetypeContentDisplay
+              ref={contentDisplayRef}
               archetypeId={archetypeId}
               archetypeName={archetypeName}
             />
@@ -983,7 +993,8 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
         {/* View Content Tab */}
         <TabsContent value="content">
-          <ArchetypeContentDisplay 
+          <ArchetypeContentDisplay
+            ref={contentDisplayRef}
             archetypeId={archetypeId}
             archetypeName={archetypeName}
           />
