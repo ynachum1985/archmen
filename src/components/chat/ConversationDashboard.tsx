@@ -15,13 +15,15 @@ import {
   ChevronUp,
   Brain,
   Calendar,
-  Settings
+  Settings,
+  Sparkles
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { CleanTaskView } from '@/components/calendar/CleanTaskView'
 import { SimpleSettingsView } from '@/components/settings/SimpleSettingsView'
 import { InlineChatView } from '@/components/chat/InlineChatView'
+import { EmergingArchetypesView } from '@/components/archetypes/EmergingArchetypesView'
 
 
 
@@ -55,7 +57,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [sidebarWidth, setSidebarWidth] = useState(320) // Default width in pixels
   const [isResizing, setIsResizing] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>('live')
-  const [currentView, setCurrentView] = useState<'chat' | 'tasks' | 'settings'>('chat')
+  const [currentView, setCurrentView] = useState<'chat' | 'tasks' | 'settings' | 'archetypes'>('chat')
   const [currentConversation, setCurrentConversation] = useState<any>(null)
 
   useEffect(() => {
@@ -683,8 +685,20 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                 className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
                   currentView === 'chat' ? 'bg-gray-100 text-gray-900' : ''
                 }`}
+                title="Chat"
               >
                 <Brain className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentView('archetypes')}
+                className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
+                  currentView === 'archetypes' ? 'bg-gray-100 text-gray-900' : ''
+                }`}
+                title="Discovered Archetypes"
+              >
+                <Sparkles className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -693,6 +707,7 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                 className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
                   currentView === 'tasks' ? 'bg-gray-100 text-gray-900' : ''
                 }`}
+                title="Homework & Calendar"
               >
                 <Calendar className="h-4 w-4" />
               </Button>
@@ -703,6 +718,7 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                 className={`text-gray-600 hover:text-gray-900 hover:bg-gray-100/60 ${
                   currentView === 'settings' ? 'bg-gray-100 text-gray-900' : ''
                 }`}
+                title="Settings"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -744,6 +760,11 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
             conversation={currentConversation}
             userId={userId}
             onConversationUpdate={setCurrentConversation}
+          />
+        ) : currentView === 'archetypes' ? (
+          <EmergingArchetypesView
+            userId={userId}
+            conversationId={currentConversation?.id}
           />
         ) : currentView === 'tasks' ? (
           <CleanTaskView userId={userId} currentAssessmentId={currentAssessment?.id} />
