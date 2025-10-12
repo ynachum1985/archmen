@@ -176,16 +176,16 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
         }),
       })
 
-      console.log('Edge Function response status:', response.status)
+      console.log('Vercel API response status:', response.status)
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('Edge Function error:', errorText)
+        console.error('Vercel API error:', errorText)
         throw new Error(`Failed to process content (${response.status}): ${errorText}`)
       }
 
       const data = await response.json()
-      console.log('Edge Function success:', data)
+      console.log('Vercel API success:', data)
 
       setProcessingStatus('success')
       setStatusMessage(data.message || 'Content processed successfully!')
