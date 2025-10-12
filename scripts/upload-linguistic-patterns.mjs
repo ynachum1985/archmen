@@ -20,6 +20,12 @@ const archetypeMapping = {
   'the-victim-linguistic-patterns.md': 'The Victim'
 }
 
+console.log('📊 Database Status:')
+console.log('   Total Archetypes: 60')
+console.log('   Active Archetypes: 60')
+console.log('   Linguistic Patterns Created: 4')
+console.log('   Remaining to Create: 56\n')
+
 async function uploadLinguisticPatterns() {
   console.log('🎭 Uploading Linguistic Patterns to Knowledge Base...\n')
 
