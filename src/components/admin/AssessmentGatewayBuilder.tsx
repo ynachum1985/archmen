@@ -441,7 +441,7 @@ Provide a thorough but compassionate assessment of their readiness.`
 
   // Always show the simplified quiz prompts interface
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-6">
       {/* Set Questions Prompt */}
       <div className="space-y-3">
         <Label htmlFor="setQuestionsPrompt" className="text-base font-medium">

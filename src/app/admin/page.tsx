@@ -900,6 +900,7 @@ export default function AdminPage() {
                     }}
                     onTest={handleTestEnhancedAssessment}
                     hideKnowledgeBase={true}
+                    hideNextStep={true}
                   />
                 </TabsContent>
 

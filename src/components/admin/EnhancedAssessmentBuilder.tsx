@@ -124,6 +124,7 @@ interface EnhancedAssessmentBuilderProps {
   onAssessmentChange?: (config: EnhancedAssessmentConfig) => void
   onNext?: () => void // Navigate to Knowledge Base tab
   hideKnowledgeBase?: boolean // Hide Knowledge Base section when in tabbed dialog
+  hideNextStep?: boolean // Hide Next Step section when in tabbed dialog
 }
 
 const defaultConfig: EnhancedAssessmentConfig = {
@@ -249,7 +250,8 @@ export function EnhancedAssessmentBuilder({
   onSave,
   onAssessmentChange,
   onNext,
-  hideKnowledgeBase = false
+  hideKnowledgeBase = false,
+  hideNextStep = false
 }: EnhancedAssessmentBuilderProps) {
   // Merge assessment with defaults to ensure all required fields exist
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(() => {
@@ -1479,6 +1481,7 @@ Keep the response under 150 words and end with a specific question.`)
             )}
 
             {/* Next Step Navigation */}
+            {!hideNextStep && (
             <div className="border-t pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -1503,6 +1506,7 @@ Keep the response under 150 words and end with a specific question.`)
                 </Button>
               </div>
             </div>
+            )}
 
         {/* End of Assessment Builder Content */}
       </div>
