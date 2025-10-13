@@ -123,6 +123,7 @@ interface EnhancedAssessmentBuilderProps {
   onTest?: (config: EnhancedAssessmentConfig) => void
   onAssessmentChange?: (config: EnhancedAssessmentConfig) => void
   onNext?: () => void // Navigate to Knowledge Base tab
+  hideKnowledgeBase?: boolean // Hide Knowledge Base section when in tabbed dialog
 }
 
 const defaultConfig: EnhancedAssessmentConfig = {
@@ -247,7 +248,8 @@ export function EnhancedAssessmentBuilder({
   assessment,
   onSave,
   onAssessmentChange,
-  onNext
+  onNext,
+  hideKnowledgeBase = false
 }: EnhancedAssessmentBuilderProps) {
   // Merge assessment with defaults to ensure all required fields exist
   const [config, setConfig] = useState<EnhancedAssessmentConfig>(() => {
@@ -1201,7 +1203,7 @@ Keep the response under 150 words and end with a specific question.`)
             </div>
 
             {/* Knowledge Base Section */}
-            {config.name && (
+            {config.name && !hideKnowledgeBase && (
               <div className="border-t pt-6">
                 <div className="space-y-4">
                   <div>

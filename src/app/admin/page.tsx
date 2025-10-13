@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input"
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
 import { AssessmentGatewayBuilder } from "@/components/admin/AssessmentGatewayBuilder"
+import { AssessmentKnowledgeBase } from "@/components/admin/AssessmentKnowledgeBase"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
 import { ArchetypeKnowledgeBase } from "@/components/admin/ArchetypeKnowledgeBase"
 import { UserManagement } from "@/components/admin/UserManagement"
@@ -898,22 +899,15 @@ export default function AdminPage() {
                       setEditingAssessment(null)
                     }}
                     onTest={handleTestEnhancedAssessment}
+                    hideKnowledgeBase={true}
                   />
                 </TabsContent>
 
                 <TabsContent value="knowledge" className="space-y-4">
-                  {/* Knowledge Base Component - Similar to Archetype Knowledge Base */}
-                  <div className="border rounded-lg p-4">
-                    <h3 className="text-lg font-medium mb-2">Assessment Knowledge Base</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Add content that the AI can reference when conducting this assessment
-                    </p>
-                    {/* TODO: Implement AssessmentKnowledgeBase component */}
-                    <div className="p-8 text-center bg-gray-50 rounded-lg">
-                      <p className="text-gray-500">Knowledge Base component coming soon...</p>
-                      <p className="text-sm text-gray-400 mt-2">This will allow you to upload documents and content for this assessment</p>
-                    </div>
-                  </div>
+                  <AssessmentKnowledgeBase
+                    assessmentId={editingAssessment.id.toString()}
+                    assessmentName={editingAssessment.name}
+                  />
                 </TabsContent>
 
                 <TabsContent value="gateways" className="space-y-4">
