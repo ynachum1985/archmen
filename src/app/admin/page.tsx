@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
@@ -410,6 +411,24 @@ export default function AdminPage() {
     }
   }
 
+  const handleAssessmentStatusChange = async (assessmentId: string, newStatus: 'draft' | 'live' | 'archived') => {
+    try {
+      const response = await fetch('/api/assessments/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId, status: newStatus })
+      })
+
+      if (!response.ok) throw new Error('Failed to update status')
+
+      // Refresh assessments list
+      await loadAssessments()
+    } catch (error) {
+      console.error('Error updating assessment status:', error)
+      alert('Failed to update assessment status')
+    }
+  }
+
   // Removed bulk generateEmbeddings function - now handled individually per archetype
 
   return (
@@ -523,7 +542,19 @@ export default function AdminPage() {
                                   Main
                                 </Badge>
                               )}
-                              <Badge variant="secondary">{category.status}</Badge>
+                              <Select
+                                value={category.status.toLowerCase()}
+                                onValueChange={(value) => handleAssessmentStatusChange(category.id, value as 'draft' | 'live' | 'archived')}
+                              >
+                                <SelectTrigger className="w-[110px] h-7 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="draft">Draft</SelectItem>
+                                  <SelectItem value="live">Live</SelectItem>
+                                  <SelectItem value="archived">Archived</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                           <CardDescription className={`text-sm ${category.isMain ? 'text-emerald-600' : ''}`}>
