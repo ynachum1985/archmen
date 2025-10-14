@@ -42,83 +42,31 @@ import Link from 'next/link'
 interface EnhancedAssessmentConfig {
   id?: string | number // Add id property for database identification
   name: string
-  description: string
+  description: string // User-facing description (shown to users)
   category: string
-  purpose: string
-  assessmentPrompt: string // Dedicated prompt field for LLM instructions
-  expectedDuration: number
+  assessmentPrompt: string // AI instructions (what the LLM sees)
 
   // Status Management
   status?: 'draft' | 'live' | 'archived'
   is_active?: boolean
 
-  // Level and Gateway Configuration
+  // Level Configuration
   assessment_level: number // 1, 2, or 3
-  gateway_configuration: Record<string, any>
-  has_custom_gateways: boolean
-  general_gateways_enabled: boolean
-
-  // Quiz Configuration
-  quiz_set_questions_prompt?: string
-  quiz_experience_analysis_prompt?: string
-  quiz_enabled?: boolean
-  quiz_passing_score?: number
-  quiz_max_attempts?: number
-
-  // AI Configuration
-  systemPrompt: string
 
   // AI Settings
   minQuestions: number
   maxQuestions: number
-  evidenceThreshold: number
-  adaptationSensitivity: number
-  cycleSettings: {
-    maxCycles: number
-    evidencePerCycle: number
-  }
 
   // Completion Criteria (Option 2: Hybrid)
   minArchetypes?: number  // Minimum archetypes to discover
   minConfidence?: number  // Minimum confidence threshold (0-100)
 
-  // AI Personality
-  selectedPersonalityId?: string
-
-
-
   // Live Assessment LLM Configuration
   liveProvider?: LLMProvider
   liveModel?: string
 
-  // Questioning Examples
-  questionExamples: {
-    openEnded: string[]
-    followUp: string[]
-    clarifying: string[]
-    deepening: string[]
-  }
-  
-  // Response Requirements
-  responseRequirements: {
-    minSentences: number
-    maxSentences: number
-    followUpPrompts: string[]
-  }
-  
-
-
   // Report Generation (AI chooses archetypes freely)
   reportGeneration: string
-
-  // Report and Answers Configuration
-  reportAnswers?: {
-    theoreticalUnderstanding: string
-    embodimentPractices: string
-    integrationPractices: string
-    resourceLinks: string[]
-    archetypeCards: string[]
-  }
 }
 
 interface EnhancedAssessmentBuilderProps {
@@ -134,28 +82,9 @@ interface EnhancedAssessmentBuilderProps {
 const defaultConfig: EnhancedAssessmentConfig = {
   id: undefined, // Will be set when assessment is saved
   name: '',
-  description: '',
+  description: '', // User-facing description
   category: '',
-  purpose: '',
-  assessmentPrompt: '',
-  expectedDuration: 15,
-
-  // Status Management
-  status: 'draft',
-  is_active: false,
-
-  // Level and Gateway Configuration
-  assessment_level: 1,
-  gateway_configuration: {},
-  has_custom_gateways: false,
-  general_gateways_enabled: true,
-
-  // Quiz Configuration
-  quiz_enabled: true,
-  quiz_passing_score: 70,
-  quiz_max_attempts: 3,
-
-  systemPrompt: `You are an expert archetypal analyst with deep knowledge of human psychology and behavioral patterns. Your role is to identify archetypal patterns through natural conversation.
+  assessmentPrompt: `You are an expert archetypal analyst with deep knowledge of human psychology and behavioral patterns. Your role is to identify archetypal patterns through natural conversation.
 
 ANALYSIS APPROACH:
 - Draw from the complete database of 55+ archetypes
@@ -169,60 +98,25 @@ QUESTIONING STRATEGY:
 - Adapt questioning based on emerging patterns
 - Ask 8-15 questions total, stopping when sufficient evidence is gathered`,
 
+  // Status Management
+  status: 'draft',
+  is_active: false,
+
+  // Level Configuration
+  assessment_level: 1,
+
   // AI Settings (Level 1 defaults - will be overridden based on assessment_level)
   minQuestions: 8,
   maxQuestions: 12,
-  evidenceThreshold: 0.7,
-  adaptationSensitivity: 0.5,
-  cycleSettings: {
-    maxCycles: 3,
-    evidencePerCycle: 3
-  },
 
   // Completion Criteria (Level 1 defaults)
   minArchetypes: 2,
   minConfidence: 70,
 
-  // AI Personality
-  selectedPersonalityId: undefined,
-
-
-
   // Live Assessment LLM Configuration
   liveProvider: 'openai',
   liveModel: 'gpt-4-turbo-preview',
 
-  questionExamples: {
-    openEnded: [
-      "Tell me about a time when you felt most authentic and true to yourself. What were you doing, and what made that moment special?",
-      "Describe a challenging situation you've faced recently. How did you approach it, and what drove your decisions?",
-      "When you think about your ideal life, what role do you see yourself playing? What would you be contributing to the world?"
-    ],
-    followUp: [
-      "Can you tell me more about that feeling you described?",
-      "What specifically made you choose that approach?",
-      "How did that experience change your perspective?"
-    ],
-    clarifying: [
-      "When you say [specific word/phrase], what does that mean to you personally?",
-      "Can you give me a specific example of what that looks like in practice?",
-      "How would you distinguish that from [related concept]?"
-    ],
-    deepening: [
-      "What do you think drives that pattern in your life?",
-      "If you could go back to that moment, what would you want to understand better about yourself?",
-      "What fears or hopes do you think might be influencing that choice?"
-    ]
-  },
-  responseRequirements: {
-    minSentences: 2,
-    maxSentences: 8,
-    followUpPrompts: [
-      "I'd love to hear more about that. Can you expand on what you mean?",
-      "That's interesting. Can you give me a specific example?",
-      "Help me understand that better - what did that look like for you?"
-    ]
-  },
   reportGeneration: `Generate a comprehensive archetypal analysis that includes:
 
 1. PRIMARY ARCHETYPE: The dominant archetypal pattern with confidence score
@@ -231,26 +125,7 @@ QUESTIONING STRATEGY:
 4. SHADOW PATTERNS: Potential blind spots or underdeveloped aspects
 5. INTEGRATION RECOMMENDATIONS: Specific suggestions for growth and development
 
-The AI should freely choose from all available archetypes based on the evidence gathered, without being constrained to a predefined list.`,
-  reportAnswers: {
-    theoreticalUnderstanding: `Provide deep theoretical context about the discovered archetype(s):
-- Historical and mythological origins
-- Psychological foundations and core motivations
-- How this archetype manifests in modern life
-- Common patterns and behaviors associated with this archetype`,
-    embodimentPractices: `Suggest specific embodiment practices to help integrate the archetype:
-- Physical practices (movement, posture, breathing)
-- Visualization and meditation techniques
-- Daily rituals and habits
-- Creative expression methods`,
-    integrationPractices: `Recommend integration practices for balanced development:
-- Shadow work exercises
-- Journaling prompts and reflection questions
-- Relationship and communication practices
-- Professional and life application strategies`,
-    resourceLinks: [],
-    archetypeCards: []
-  }
+The AI should freely choose from all available archetypes based on the evidence gathered, without being constrained to a predefined list.`
 }
 
 export function EnhancedAssessmentBuilder({
@@ -722,23 +597,17 @@ Keep the response under 150 words and end with a specific question.`)
             name: assessmentToSave.name,
             description: assessmentToSave.description,
             category: assessmentToSave.category,
-            purpose: assessmentToSave.purpose,
-            systemPrompt: assessmentToSave.systemPrompt,
             assessmentPrompt: assessmentToSave.assessmentPrompt,
             minQuestions: assessmentToSave.minQuestions,
             maxQuestions: assessmentToSave.maxQuestions,
-            evidenceThreshold: assessmentToSave.evidenceThreshold,
-            adaptationSensitivity: assessmentToSave.adaptationSensitivity,
-            expectedDuration: assessmentToSave.expectedDuration,
-            questionExamples: assessmentToSave.questionExamples,
-            responseRequirements: assessmentToSave.responseRequirements,
-            adaptiveLogic: assessmentToSave.cycleSettings,
-            cycleSettings: assessmentToSave.cycleSettings,
-            selectedPersonalityId: assessmentToSave.selectedPersonalityId,
+            minArchetypes: assessmentToSave.minArchetypes,
+            minConfidence: assessmentToSave.minConfidence,
             reportGeneration: assessmentToSave.reportGeneration,
             assessment_level: assessmentToSave.assessment_level,
             status: assessmentToSave.status,
-            is_active: assessmentToSave.is_active
+            is_active: assessmentToSave.is_active,
+            liveProvider: assessmentToSave.liveProvider,
+            liveModel: assessmentToSave.liveModel
           }
         })
       })
@@ -939,25 +808,17 @@ Keep the response under 150 words and end with a specific question.`)
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="description">Assessment Description</Label>
+                <p className="text-xs text-gray-500 mb-1">User-facing description (shown to users)</p>
                 <Textarea
                   id="description"
                   value={config.description}
                   onChange={(e) => updateConfig(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
                   className="resize-y overflow-auto max-h-32"
-                />
-              </div>
-              <div>
-                <Label htmlFor="purpose">Assessment Purpose</Label>
-                <Textarea
-                  id="purpose"
-                  value={config.purpose}
-                  onChange={(e) => setConfig(prev => ({ ...prev, purpose: e.target.value }))}
-                  rows={3}
-                  className="resize-y overflow-auto max-h-32"
+                  placeholder="The primary assessment that appears on the homepage for new users"
                 />
               </div>
               <div>
@@ -996,193 +857,79 @@ Keep the response under 150 words and end with a specific question.`)
                   {config.assessment_level === 3 && "Advanced concepts like polyamory and patriarchy (requires maturity 8+)"}
                 </p>
               </div>
-              <div>
-                <Label htmlFor="assessmentPrompt">Assessment Prompt</Label>
-                <Textarea
-                  id="assessmentPrompt"
-                  value={config.assessmentPrompt}
-                  onChange={(e) => setConfig(prev => ({ ...prev, assessmentPrompt: e.target.value }))}
-                  rows={4}
-                  placeholder="Enter the specific prompt instructions for the LLM conducting this assessment..."
-                  className="resize-y overflow-auto max-h-48"
-                />
-              </div>
             </div>
 
             <div>
-              <Label htmlFor="duration">Duration (min)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={config.expectedDuration}
-                onChange={(e) => setConfig(prev => ({ ...prev, expectedDuration: parseInt(e.target.value) || 15 }))}
-                className="w-32"
+              <Label htmlFor="assessmentPrompt">Assessment Prompt</Label>
+              <p className="text-xs text-gray-500 mb-1">AI instructions (what the LLM sees)</p>
+              <Textarea
+                id="assessmentPrompt"
+                value={config.assessmentPrompt}
+                onChange={(e) => setConfig(prev => ({ ...prev, assessmentPrompt: e.target.value }))}
+                rows={6}
+                placeholder="You are an expert archetypal analyst... Ask open-ended questions... Analyze language patterns..."
+                className="resize-y overflow-auto max-h-64"
               />
             </div>
           </div>
 
 
 
-            {/* Question & Cycle Settings - Compact Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Question Settings */}
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Question Settings</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label htmlFor="minQuestions" className="text-xs">Min Questions</Label>
-                    <Input
-                      id="minQuestions"
-                      type="number"
-                      min="3"
-                      max="20"
-                      value={config.minQuestions}
-                      onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="maxQuestions" className="text-xs">Max Questions</Label>
-                    <Input
-                      id="maxQuestions"
-                      type="number"
-                      min="5"
-                      max="30"
-                      value={config.maxQuestions}
-                      onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="minArchetypes" className="text-xs">Min Archetypes</Label>
-                    <Input
-                      id="minArchetypes"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={config.minArchetypes || 2}
-                      onChange={(e) => setConfig(prev => ({ ...prev, minArchetypes: parseInt(e.target.value) || 2 }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="minConfidence" className="text-xs">Min Confidence (%)</Label>
-                    <Input
-                      id="minConfidence"
-                      type="number"
-                      min="30"
-                      max="100"
-                      step="5"
-                      value={config.minConfidence || 70}
-                      onChange={(e) => setConfig(prev => ({ ...prev, minConfidence: parseInt(e.target.value) || 70 }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="evidenceThreshold" className="text-xs">Evidence Threshold</Label>
-                    <Input
-                      id="evidenceThreshold"
-                      type="number"
-                      min="0.1"
-                      max="1.0"
-                      step="0.1"
-                      value={config.evidenceThreshold}
-                      onChange={(e) => setConfig(prev => ({ ...prev, evidenceThreshold: parseFloat(e.target.value) || 0.7 }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="adaptationSensitivity" className="text-xs">Adaptation Sensitivity</Label>
-                    <Input
-                      id="adaptationSensitivity"
-                      type="number"
-                      min="0.1"
-                      max="1.0"
-                      step="0.1"
-                      value={config.adaptationSensitivity}
-                      onChange={(e) => setConfig(prev => ({ ...prev, adaptationSensitivity: parseFloat(e.target.value) || 0.5 }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
+            {/* Question Settings - Simplified */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Question Settings</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label htmlFor="minQuestions" className="text-xs">Min Questions</Label>
+                  <Input
+                    id="minQuestions"
+                    type="number"
+                    min="3"
+                    max="20"
+                    value={config.minQuestions}
+                    onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
                 </div>
-              </div>
-
-              {/* Cycle Settings */}
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Cycle Settings</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label htmlFor="maxCycles" className="text-xs">Max Cycles</Label>
-                    <Input
-                      id="maxCycles"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={config.cycleSettings.maxCycles}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        cycleSettings: {
-                          ...prev.cycleSettings,
-                          maxCycles: parseInt(e.target.value) || 3
-                        }
-                      }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="evidencePerCycle" className="text-xs">Evidence Per Cycle</Label>
-                    <Input
-                      id="evidencePerCycle"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={config.cycleSettings.evidencePerCycle}
-                      onChange={(e) => setConfig(prev => ({
-                        ...prev,
-                        cycleSettings: {
-                          ...prev.cycleSettings,
-                          evidencePerCycle: parseInt(e.target.value) || 3
-                        }
-                      }))}
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="maxQuestions" className="text-xs">Max Questions</Label>
+                  <Input
+                    id="maxQuestions"
+                    type="number"
+                    min="5"
+                    max="30"
+                    value={config.maxQuestions}
+                    onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="minArchetypes" className="text-xs">Min Archetypes</Label>
+                  <Input
+                    id="minArchetypes"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={config.minArchetypes || 2}
+                    onChange={(e) => setConfig(prev => ({ ...prev, minArchetypes: parseInt(e.target.value) || 2 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="minConfidence" className="text-xs">Min Confidence (%)</Label>
+                  <Input
+                    id="minConfidence"
+                    type="number"
+                    min="30"
+                    max="100"
+                    step="5"
+                    value={config.minConfidence || 70}
+                    onChange={(e) => setConfig(prev => ({ ...prev, minConfidence: parseInt(e.target.value) || 70 }))}
+                    className="mt-1 h-8 text-sm"
+                  />
                 </div>
               </div>
             </div>
-
-
-
-
-
-            {/* AI Personality Selection */}
-            <div>
-              <Label className="text-sm font-medium">AI Personality</Label>
-              <Select
-                value={config.selectedPersonalityId || 'default'}
-                onValueChange={(value) => setConfig(prev => ({ ...prev, selectedPersonalityId: value === 'default' ? undefined : value }))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose AI personality" />
-                </SelectTrigger>
-                <SelectContent className="animate-none">
-                  {isLoadingPersonalities ? (
-                    <SelectItem value="loading" disabled>Loading personalities...</SelectItem>
-                  ) : (
-                    <>
-                      <SelectItem value="default">Default personality</SelectItem>
-                      {personalities.map(personality => (
-                        <SelectItem key={personality.id} value={personality.id}>
-                          {personality.name} - {personality.description}
-                        </SelectItem>
-                      ))}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-
 
             {/* Live Assessment LLM Configuration */}
             <div className="space-y-4">
