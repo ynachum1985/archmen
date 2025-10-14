@@ -78,6 +78,10 @@ interface EnhancedAssessmentConfig {
     evidencePerCycle: number
   }
 
+  // Completion Criteria (Option 2: Hybrid)
+  minArchetypes?: number  // Minimum archetypes to discover
+  minConfidence?: number  // Minimum confidence threshold (0-100)
+
   // AI Personality
   selectedPersonalityId?: string
 
@@ -174,6 +178,10 @@ QUESTIONING STRATEGY:
     maxCycles: 3,
     evidencePerCycle: 3
   },
+
+  // Completion Criteria (Level 1 defaults)
+  minArchetypes: 2,
+  minConfidence: 70,
 
   // AI Personality
   selectedPersonalityId: undefined,
@@ -279,12 +287,12 @@ export function EnhancedAssessmentBuilder({
   const [isProcessingContent, setIsProcessingContent] = useState(false)
   const [textContents, setTextContents] = useState<string[]>([''])
 
-  // Auto-update min/max questions when assessment level changes
+  // Auto-update completion criteria when assessment level changes
   useEffect(() => {
     const levelCriteria = {
-      1: { minQuestions: 8, maxQuestions: 12 },
-      2: { minQuestions: 10, maxQuestions: 15 },
-      3: { minQuestions: 12, maxQuestions: 18 }
+      1: { minQuestions: 8, maxQuestions: 12, minArchetypes: 2, minConfidence: 70 },
+      2: { minQuestions: 10, maxQuestions: 15, minArchetypes: 4, minConfidence: 80 },
+      3: { minQuestions: 12, maxQuestions: 18, minArchetypes: 6, minConfidence: 85 }
     }
 
     const criteria = levelCriteria[config.assessment_level as 1 | 2 | 3]
@@ -292,7 +300,9 @@ export function EnhancedAssessmentBuilder({
       setConfig(prev => ({
         ...prev,
         minQuestions: criteria.minQuestions,
-        maxQuestions: criteria.maxQuestions
+        maxQuestions: criteria.maxQuestions,
+        minArchetypes: criteria.minArchetypes,
+        minConfidence: criteria.minConfidence
       }))
     }
   }, [config.assessment_level])
@@ -985,34 +995,6 @@ Keep the response under 150 words and end with a specific question.`)
                   {config.assessment_level === 2 && "Shadow work and emotional integration (requires maturity 6+)"}
                   {config.assessment_level === 3 && "Advanced concepts like polyamory and patriarchy (requires maturity 8+)"}
                 </p>
-
-                {/* Completion Criteria Info */}
-                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-xs font-medium text-blue-900 mb-1">Completion Criteria (Option 2: Hybrid)</p>
-                  <div className="text-xs text-blue-700 space-y-1">
-                    {config.assessment_level === 1 && (
-                      <>
-                        <p>✓ Minimum 8 questions answered</p>
-                        <p>✓ At least 2 archetypes discovered at 70%+ confidence</p>
-                        <p>• Force stop at 12 questions</p>
-                      </>
-                    )}
-                    {config.assessment_level === 2 && (
-                      <>
-                        <p>✓ Minimum 10 questions answered</p>
-                        <p>✓ At least 4 archetypes discovered at 80%+ confidence</p>
-                        <p>• Force stop at 15 questions</p>
-                      </>
-                    )}
-                    {config.assessment_level === 3 && (
-                      <>
-                        <p>✓ Minimum 12 questions answered</p>
-                        <p>✓ At least 6 archetypes discovered at 85%+ confidence</p>
-                        <p>• Force stop at 18 questions</p>
-                      </>
-                    )}
-                  </div>
-                </div>
               </div>
               <div>
                 <Label htmlFor="assessmentPrompt">Assessment Prompt</Label>
@@ -1068,6 +1050,31 @@ Keep the response under 150 words and end with a specific question.`)
                       max="30"
                       value={config.maxQuestions}
                       onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="minArchetypes" className="text-xs">Min Archetypes</Label>
+                    <Input
+                      id="minArchetypes"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={config.minArchetypes || 2}
+                      onChange={(e) => setConfig(prev => ({ ...prev, minArchetypes: parseInt(e.target.value) || 2 }))}
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="minConfidence" className="text-xs">Min Confidence (%)</Label>
+                    <Input
+                      id="minConfidence"
+                      type="number"
+                      min="30"
+                      max="100"
+                      step="5"
+                      value={config.minConfidence || 70}
+                      onChange={(e) => setConfig(prev => ({ ...prev, minConfidence: parseInt(e.target.value) || 70 }))}
                       className="mt-1 h-7 text-xs"
                     />
                   </div>

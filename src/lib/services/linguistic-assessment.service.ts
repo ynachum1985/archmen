@@ -373,8 +373,11 @@ Return only the question, no additional text.
     sessionId?: string
   ): Promise<boolean> {
     try {
-      // Get assessment level from session (default to level 1)
-      let assessmentLevel = 1
+      // Default criteria (Level 1)
+      let minQuestions = 8
+      let maxQuestions = 12
+      let minArchetypes = 2
+      let minConfidence = 0.70
 
       if (sessionId) {
         const { data: session } = await this.supabase
@@ -386,30 +389,37 @@ Return only the question, no additional text.
         if (session?.assessment_id) {
           const { data: assessment } = await this.supabase
             .from('enhanced_assessments')
-            .select('assessment_level')
+            .select('assessment_level, min_questions, max_questions, min_archetypes, min_confidence')
             .eq('id', session.assessment_id)
             .single()
 
-          if (assessment?.assessment_level) {
-            assessmentLevel = assessment.assessment_level
+          if (assessment) {
+            // Use custom criteria if set, otherwise fall back to level-based defaults
+            const assessmentLevel = assessment.assessment_level || 1
+            const levelCriteria = APP_CONFIG.assessment.levelCriteria[assessmentLevel as 1 | 2 | 3]
+
+            minQuestions = assessment.min_questions || levelCriteria.minQuestions
+            maxQuestions = assessment.max_questions || levelCriteria.maxQuestions
+            minArchetypes = assessment.min_archetypes || levelCriteria.minArchetypes
+            // Convert percentage (70) to decimal (0.70) if needed
+            minConfidence = assessment.min_confidence
+              ? (assessment.min_confidence > 1 ? assessment.min_confidence / 100 : assessment.min_confidence)
+              : levelCriteria.minConfidence
           }
         }
       }
 
-      // Get criteria for this level
-      const criteria = APP_CONFIG.assessment.levelCriteria[assessmentLevel as 1 | 2 | 3]
-
       // Check 1: Minimum questions answered
-      const hasEnoughQuestions = questionCount >= criteria.minQuestions
+      const hasEnoughQuestions = questionCount >= minQuestions
 
       // Check 2: Force stop at max questions
-      const reachedMaxQuestions = questionCount >= criteria.maxQuestions
+      const reachedMaxQuestions = questionCount >= maxQuestions
 
       // Check 3: Count archetypes at required confidence level
       const highConfidenceArchetypes = Object.values(archetypeScores)
-        .filter(score => score >= criteria.minConfidence)
+        .filter(score => score >= minConfidence)
 
-      const hasEnoughArchetypes = highConfidenceArchetypes.length >= criteria.minArchetypes
+      const hasEnoughArchetypes = highConfidenceArchetypes.length >= minArchetypes
 
       // Complete if:
       // - Reached max questions (force stop), OR

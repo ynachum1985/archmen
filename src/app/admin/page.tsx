@@ -28,7 +28,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import ArchetypeEditor from "@/components/ArchetypeEditor"
 import { EnhancedAssessmentBuilder } from "@/components/admin/EnhancedAssessmentBuilder"
-import { AssessmentGatewayBuilder } from "@/components/admin/AssessmentGatewayBuilder"
 import { AssessmentKnowledgeBase } from "@/components/admin/AssessmentKnowledgeBase"
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
 import { ArchetypeKnowledgeBase } from "@/components/admin/ArchetypeKnowledgeBase"
@@ -915,10 +914,9 @@ export default function AdminPage() {
 
             {editingAssessment && editingAssessment.id && (
               <Tabs defaultValue="builder" className="mt-4">
-                <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="builder">Builder</TabsTrigger>
                   <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
-                  <TabsTrigger value="gateways">Gateways</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="builder" className="space-y-4">
@@ -939,21 +937,6 @@ export default function AdminPage() {
                   <AssessmentKnowledgeBase
                     assessmentId={editingAssessment.id.toString()}
                     assessmentName={editingAssessment.name}
-                  />
-                </TabsContent>
-
-                <TabsContent value="gateways" className="space-y-4">
-                  {/* Gateway Configuration Component */}
-                  <AssessmentGatewayBuilder
-                    assessmentId={editingAssessment.id.toString()}
-                    assessmentLevel={editingAssessment.assessment_level || 1}
-                    assessmentName={editingAssessment.name}
-                    onGatewaysChange={(gateways) => {
-                      console.log('Gateways updated:', gateways)
-                    }}
-                    onQuizPromptsChange={(prompts) => {
-                      console.log('Quiz prompts updated:', prompts)
-                    }}
                   />
                 </TabsContent>
               </Tabs>
