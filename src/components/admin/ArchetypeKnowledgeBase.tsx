@@ -513,35 +513,37 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
             </Button>
           </div>
 
-          {/* Embedding Settings */}
-          <div className="space-y-4 pt-4 border-t border-gray-100">
-            <Label className="text-sm font-medium text-gray-700">Embedding Settings</Label>
+          {/* Embedding Settings - Matches Assessment Style */}
+          <div className="pt-4 border-t border-gray-100">
+            <Label className="text-sm font-medium text-gray-700 mb-3 block">Embedding Settings</Label>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-600">Chunk Size</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <Label htmlFor="chunkSize" className="text-xs text-gray-600">Chunk Size</Label>
                 <Input
+                  id="chunkSize"
                   type="number"
                   value={chunkSize}
                   onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
-                  className="border-gray-200 text-sm"
+                  className="mt-1 h-9"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-600">Chunk Overlap</Label>
+              <div>
+                <Label htmlFor="chunkOverlap" className="text-xs text-gray-600">Chunk Overlap</Label>
                 <Input
+                  id="chunkOverlap"
                   type="number"
                   value={chunkOverlap}
                   onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
-                  className="border-gray-200 text-sm"
+                  className="mt-1 h-9"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-600">Embedding Model</Label>
+              <div>
+                <Label htmlFor="embeddingModel" className="text-xs text-gray-600">Embedding Model</Label>
                 <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
-                  <SelectTrigger className="border-gray-200 text-sm">
+                  <SelectTrigger id="embeddingModel" className="mt-1 h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -560,28 +562,16 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-600">Top K Results</Label>
+              <div>
+                <Label htmlFor="topK" className="text-xs text-gray-600">Top K Results</Label>
                 <Input
+                  id="topK"
                   type="number"
                   value={topK}
                   onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
-                  className="border-gray-200 text-sm"
+                  className="mt-1 h-9"
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-600">Similarity Threshold</Label>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                max="1"
-                value={similarityThreshold}
-                onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
-                className="border-gray-200 text-sm"
-              />
             </div>
           </div>
 
