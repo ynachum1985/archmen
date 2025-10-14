@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/database'
 import { archetypeService } from './archetype.service'
 import { type HomepageAssessmentTheme } from './assessment-integration.service'
+import { APP_CONFIG } from '@/config/app.config'
 
 // Initialize OpenAI client
 const openai = process.env.NEXT_PUBLIC_OPENAI_API_KEY
@@ -212,12 +213,16 @@ export class LinguisticAssessmentService {
     // Calculate archetype scores based on linguistic patterns
     const archetypeScores = await this.calculateArchetypeScores(analysis, theme)
 
-    // Determine if assessment is complete (after 5-8 exchanges or high confidence)
-    const isComplete = conversationHistory.length >= 5 && this.hasHighConfidenceScores(archetypeScores)
+    // Determine if assessment is complete using hybrid criteria
+    const isComplete = await this.checkCompletionCriteria(
+      currentQuestionCount,
+      archetypeScores,
+      sessionId
+    )
 
     // Update session progress if authenticated
     if (user && sessionId) {
-      await this.updateSessionProgress(sessionId, conversationHistory.length + 1, archetypeScores, isComplete)
+      await this.updateSessionProgress(sessionId, currentQuestionCount, archetypeScores, isComplete)
     }
 
     return {
@@ -356,6 +361,66 @@ Return only the question, no additional text.
   private hasHighConfidenceScores(scores: Record<string, number>): boolean {
     const sortedScores = Object.values(scores).sort((a, b) => b - a)
     return sortedScores[0] > 0.7 && sortedScores[1] > 0.5
+  }
+
+  /**
+   * Check if assessment meets completion criteria using Option 2: Hybrid approach
+   * Requires BOTH minimum questions AND minimum archetypes at required confidence
+   */
+  private async checkCompletionCriteria(
+    questionCount: number,
+    archetypeScores: Record<string, number>,
+    sessionId?: string
+  ): Promise<boolean> {
+    try {
+      // Get assessment level from session (default to level 1)
+      let assessmentLevel = 1
+
+      if (sessionId) {
+        const { data: session } = await this.supabase
+          .from('assessment_sessions')
+          .select('assessment_id')
+          .eq('id', sessionId)
+          .single()
+
+        if (session?.assessment_id) {
+          const { data: assessment } = await this.supabase
+            .from('enhanced_assessments')
+            .select('assessment_level')
+            .eq('id', session.assessment_id)
+            .single()
+
+          if (assessment?.assessment_level) {
+            assessmentLevel = assessment.assessment_level
+          }
+        }
+      }
+
+      // Get criteria for this level
+      const criteria = APP_CONFIG.assessment.levelCriteria[assessmentLevel as 1 | 2 | 3]
+
+      // Check 1: Minimum questions answered
+      const hasEnoughQuestions = questionCount >= criteria.minQuestions
+
+      // Check 2: Force stop at max questions
+      const reachedMaxQuestions = questionCount >= criteria.maxQuestions
+
+      // Check 3: Count archetypes at required confidence level
+      const highConfidenceArchetypes = Object.values(archetypeScores)
+        .filter(score => score >= criteria.minConfidence)
+
+      const hasEnoughArchetypes = highConfidenceArchetypes.length >= criteria.minArchetypes
+
+      // Complete if:
+      // - Reached max questions (force stop), OR
+      // - Has minimum questions AND minimum archetypes at required confidence
+      return reachedMaxQuestions || (hasEnoughQuestions && hasEnoughArchetypes)
+
+    } catch (error) {
+      console.error('Error checking completion criteria:', error)
+      // Fallback to old logic if error
+      return questionCount >= 8 && this.hasHighConfidenceScores(archetypeScores)
+    }
   }
 
   async generateFinalReport(

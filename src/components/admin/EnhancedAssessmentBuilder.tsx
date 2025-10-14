@@ -165,9 +165,9 @@ QUESTIONING STRATEGY:
 - Adapt questioning based on emerging patterns
 - Ask 8-15 questions total, stopping when sufficient evidence is gathered`,
 
-  // AI Settings
+  // AI Settings (Level 1 defaults - will be overridden based on assessment_level)
   minQuestions: 8,
-  maxQuestions: 15,
+  maxQuestions: 12,
   evidenceThreshold: 0.7,
   adaptationSensitivity: 0.5,
   cycleSettings: {
@@ -278,6 +278,24 @@ export function EnhancedAssessmentBuilder({
 
   const [isProcessingContent, setIsProcessingContent] = useState(false)
   const [textContents, setTextContents] = useState<string[]>([''])
+
+  // Auto-update min/max questions when assessment level changes
+  useEffect(() => {
+    const levelCriteria = {
+      1: { minQuestions: 8, maxQuestions: 12 },
+      2: { minQuestions: 10, maxQuestions: 15 },
+      3: { minQuestions: 12, maxQuestions: 18 }
+    }
+
+    const criteria = levelCriteria[config.assessment_level as 1 | 2 | 3]
+    if (criteria) {
+      setConfig(prev => ({
+        ...prev,
+        minQuestions: criteria.minQuestions,
+        maxQuestions: criteria.maxQuestions
+      }))
+    }
+  }, [config.assessment_level])
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
   const [uploadedFiles, setUploadedFiles] = useState<File[][]>([[]])
 
@@ -967,6 +985,34 @@ Keep the response under 150 words and end with a specific question.`)
                   {config.assessment_level === 2 && "Shadow work and emotional integration (requires maturity 6+)"}
                   {config.assessment_level === 3 && "Advanced concepts like polyamory and patriarchy (requires maturity 8+)"}
                 </p>
+
+                {/* Completion Criteria Info */}
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-xs font-medium text-blue-900 mb-1">Completion Criteria (Option 2: Hybrid)</p>
+                  <div className="text-xs text-blue-700 space-y-1">
+                    {config.assessment_level === 1 && (
+                      <>
+                        <p>✓ Minimum 8 questions answered</p>
+                        <p>✓ At least 2 archetypes discovered at 70%+ confidence</p>
+                        <p>• Force stop at 12 questions</p>
+                      </>
+                    )}
+                    {config.assessment_level === 2 && (
+                      <>
+                        <p>✓ Minimum 10 questions answered</p>
+                        <p>✓ At least 4 archetypes discovered at 80%+ confidence</p>
+                        <p>• Force stop at 15 questions</p>
+                      </>
+                    )}
+                    {config.assessment_level === 3 && (
+                      <>
+                        <p>✓ Minimum 12 questions answered</p>
+                        <p>✓ At least 6 archetypes discovered at 85%+ confidence</p>
+                        <p>• Force stop at 18 questions</p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               <div>
                 <Label htmlFor="assessmentPrompt">Assessment Prompt</Label>

@@ -83,13 +83,38 @@ export const APP_CONFIG = {
 
   // Assessment configuration
   assessment: {
-    minQuestions: 20,
-    maxQuestions: 40,
+    // Global defaults (can be overridden per assessment level)
+    minQuestions: 8,
+    maxQuestions: 15,
     timeoutMinutes: 60,
+
+    // Scoring thresholds for archetype confidence
     scoringThresholds: {
       dominant: 0.7, // 70% or higher makes it dominant
       secondary: 0.5, // 50% or higher makes it secondary
       present: 0.3    // 30% or higher means the archetype is present
+    },
+
+    // Level-based completion criteria (Option 2: Hybrid Completion + Confidence)
+    levelCriteria: {
+      1: {
+        minQuestions: 8,
+        maxQuestions: 12,
+        minArchetypes: 2,
+        minConfidence: 0.70  // 70%
+      },
+      2: {
+        minQuestions: 10,
+        maxQuestions: 15,
+        minArchetypes: 4,
+        minConfidence: 0.80  // 80%
+      },
+      3: {
+        minQuestions: 12,
+        maxQuestions: 18,
+        minArchetypes: 6,
+        minConfidence: 0.85  // 85%
+      }
     }
   },
 
