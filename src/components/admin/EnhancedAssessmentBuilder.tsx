@@ -942,8 +942,11 @@ Keep the response under 150 words and end with a specific question.`)
                       type="number"
                       min="3"
                       max="20"
-                      value={config.minQuestions}
-                      onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
+                      defaultValue={config.minQuestions}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value) || 8
+                        setConfig(prev => ({ ...prev, minQuestions: value }))
+                      }}
                       className="h-8 text-sm"
                     />
                   </div>
@@ -964,8 +967,11 @@ Keep the response under 150 words and end with a specific question.`)
                       type="number"
                       min="5"
                       max="30"
-                      value={config.maxQuestions}
-                      onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
+                      defaultValue={config.maxQuestions}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value) || 15
+                        setConfig(prev => ({ ...prev, maxQuestions: value }))
+                      }}
                       className="h-8 text-sm"
                     />
                   </div>
@@ -986,8 +992,11 @@ Keep the response under 150 words and end with a specific question.`)
                       type="number"
                       min="1"
                       max="10"
-                      value={config.minArchetypes || 2}
-                      onChange={(e) => setConfig(prev => ({ ...prev, minArchetypes: parseInt(e.target.value) || 2 }))}
+                      defaultValue={config.minArchetypes || 2}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value) || 2
+                        setConfig(prev => ({ ...prev, minArchetypes: value }))
+                      }}
                       className="h-8 text-sm"
                     />
                   </div>
@@ -1009,8 +1018,11 @@ Keep the response under 150 words and end with a specific question.`)
                       min="30"
                       max="100"
                       step="5"
-                      value={config.minConfidence || 70}
-                      onChange={(e) => setConfig(prev => ({ ...prev, minConfidence: parseInt(e.target.value) || 70 }))}
+                      defaultValue={config.minConfidence || 70}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value) || 70
+                        setConfig(prev => ({ ...prev, minConfidence: value }))
+                      }}
                       className="h-8 text-sm"
                     />
                   </div>
@@ -1237,8 +1249,8 @@ Keep the response under 150 words and end with a specific question.`)
                           <Input
                             id="chunkSize"
                             type="number"
-                            value={chunkSize}
-                            onChange={(e) => setChunkSize(parseInt(e.target.value) || 400)}
+                            defaultValue={chunkSize}
+                            onBlur={(e) => setChunkSize(parseInt(e.target.value) || 400)}
                             className="h-8 text-xs w-full"
                           />
                         </div>
@@ -1258,8 +1270,8 @@ Keep the response under 150 words and end with a specific question.`)
                           <Input
                             id="chunkOverlap"
                             type="number"
-                            value={chunkOverlap}
-                            onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 80)}
+                            defaultValue={chunkOverlap}
+                            onBlur={(e) => setChunkOverlap(parseInt(e.target.value) || 80)}
                             className="h-8 text-xs w-full"
                           />
                         </div>
@@ -1303,8 +1315,8 @@ Keep the response under 150 words and end with a specific question.`)
                           <Input
                             id="topK"
                             type="number"
-                            value={topK}
-                            onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+                            defaultValue={topK}
+                            onBlur={(e) => setTopK(parseInt(e.target.value) || 10)}
                             className="h-8 text-xs w-full"
                           />
                         </div>
@@ -1330,8 +1342,8 @@ Keep the response under 150 words and end with a specific question.`)
                             step="0.05"
                             min="0"
                             max="1"
-                            value={similarityThreshold}
-                            onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
+                            defaultValue={similarityThreshold}
+                            onBlur={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
                             className="h-8 text-xs"
                           />
                         </div>
@@ -1354,8 +1366,8 @@ Keep the response under 150 words and end with a specific question.`)
                             step="1000"
                             min="1000"
                             max="16000"
-                            value={maxContextTokens}
-                            onChange={(e) => setMaxContextTokens(parseInt(e.target.value) || 4000)}
+                            defaultValue={maxContextTokens}
+                            onBlur={(e) => setMaxContextTokens(parseInt(e.target.value) || 4000)}
                             className="h-8 text-xs"
                           />
                         </div>
