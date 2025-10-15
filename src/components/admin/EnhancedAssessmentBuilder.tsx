@@ -74,7 +74,7 @@ interface EnhancedAssessmentBuilderProps {
   onSave: (config: EnhancedAssessmentConfig) => void
   onTest?: (config: EnhancedAssessmentConfig) => void
   onAssessmentChange?: (config: EnhancedAssessmentConfig) => void
-  onNext?: () => void // Navigate to Knowledge Base tab
+  onSaveComplete?: () => void // Called after successful save
   hideKnowledgeBase?: boolean // Hide Knowledge Base section when in tabbed dialog
   hideNextStep?: boolean // Hide Next Step section when in tabbed dialog
 }
@@ -132,7 +132,7 @@ export function EnhancedAssessmentBuilder({
   assessment,
   onSave,
   onAssessmentChange,
-  onNext,
+  onSaveComplete,
   hideKnowledgeBase = false,
   hideNextStep = false
 }: EnhancedAssessmentBuilderProps) {
@@ -1403,29 +1403,30 @@ Keep the response under 150 words and end with a specific question.`)
                 </div>
             </div>
 
-            {/* Next Step Navigation */}
+            {/* Save Assessment */}
             {!hideNextStep && (
             <div className="border-t pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium">Next Step</h3>
+                  <h3 className="text-lg font-medium">Save Assessment</h3>
                   <p className="text-sm text-gray-600">
-                    Your assessment is automatically saved as a draft. Continue to add knowledge base content.
+                    Save your assessment configuration and knowledge base content. The assessment will appear in the Assessments tab.
                   </p>
                 </div>
 
                 <Button
-                  onClick={() => {
-                    // Ensure final save before moving to next step
-                    handleAutoSave(config)
-                    if (onNext) {
-                      onNext()
+                  onClick={async () => {
+                    // Final save with all data
+                    await handleAutoSave(config)
+                    onSave(config)
+                    if (onSaveComplete) {
+                      onSaveComplete()
                     }
                   }}
                   disabled={!config.name.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8"
                 >
-                  Next: Knowledge Base →
+                  Save Assessment
                 </Button>
               </div>
             </div>

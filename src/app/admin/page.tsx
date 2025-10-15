@@ -471,17 +471,10 @@ export default function AdminPage() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="builder"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8 focus:outline-none focus:ring-0"
+                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none focus:outline-none focus:ring-0"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Builder
-                </TabsTrigger>
-                <TabsTrigger
-                  value="knowledge-base"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none focus:outline-none focus:ring-0"
-                >
-                  <Database className="h-4 w-4 mr-2" />
-                  Knowledge Base
                 </TabsTrigger>
               </TabsList>
 
@@ -600,70 +593,13 @@ export default function AdminPage() {
                     // Update shared state when assessment changes
                     setCurrentBuilderAssessment(config)
                   }}
-                  onNext={() => {
-                    // Navigate to Knowledge Base tab
-                    setActiveSetupTab('knowledge-base')
+                  onSaveComplete={() => {
+                    // After save, refresh assessments list and go to assessments tab
+                    loadAssessments()
+                    setActiveSetupTab('assessments')
+                    setCurrentBuilderAssessment(null)
                   }}
                 />
-              </TabsContent>
-
-              {/* Knowledge Base Sub-tab */}
-              <TabsContent value="knowledge-base" className="mt-0">
-                {currentBuilderAssessment && currentBuilderAssessment.name ? (
-                  <div className="space-y-6">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <h3 className="text-lg font-medium text-blue-900 mb-2">
-                        Knowledge Base for: {currentBuilderAssessment.name}
-                      </h3>
-                      <p className="text-sm text-blue-700">
-                        Add content that the AI can reference when conducting this assessment.
-                        This content will be embedded and used for contextual responses.
-                      </p>
-                    </div>
-                    <AssessmentKnowledgeBase
-                      assessmentId={currentBuilderAssessment.id?.toString() || currentBuilderAssessment.name}
-                      assessmentName={currentBuilderAssessment.name}
-                    />
-
-                    {/* Navigation */}
-                    <div className="border-t pt-6 mt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium">Knowledge Base Complete</h3>
-                          <p className="text-sm text-gray-600">
-                            Your assessment knowledge base is configured. Return to the Builder or Assessments tab to continue.
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <Button
-                            onClick={() => setActiveSetupTab('builder')}
-                            variant="outline"
-                          >
-                            ← Back to Builder
-                          </Button>
-                          <Button
-                            onClick={() => setActiveSetupTab('assessments')}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-                          >
-                            View All Assessments →
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <Database className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Assessment Selected</h3>
-                    <p className="text-gray-600 mb-4">
-                      Create or configure an assessment in the Builder tab first, then return here to add knowledge base content.
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      The Knowledge Base tab is linked to the assessment you're building in the Builder tab.
-                    </p>
-                  </div>
-                )}
               </TabsContent>
             </Tabs>
           </TabsContent>
