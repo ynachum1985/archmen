@@ -40,10 +40,23 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
   const [selectedSource, setSelectedSource] = useState<string>('all')
 
   useEffect(() => {
-    fetchContentChunks()
+    // Only fetch if we have a valid assessment ID or name
+    if (assessmentId && assessmentId.trim()) {
+      fetchContentChunks()
+    } else {
+      setIsLoading(false)
+      setChunks([])
+    }
   }, [assessmentId])
 
   const fetchContentChunks = async () => {
+    // Don't fetch if no valid ID
+    if (!assessmentId || !assessmentId.trim()) {
+      setIsLoading(false)
+      setChunks([])
+      return
+    }
+
     try {
       setIsLoading(true)
       setError(null)
