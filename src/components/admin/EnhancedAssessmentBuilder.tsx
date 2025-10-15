@@ -725,62 +725,7 @@ Keep the response under 150 words and end with a specific question.`)
 
 
 
-  const handleSave = async () => {
-    // Ensure assessment is saved as draft initially so it appears in user dashboard
-    const assessmentToSave = {
-      ...config,
-      status: config.status || 'draft',
-      is_active: config.status === 'live' || config.is_active === true
-    }
 
-    // Save to parent component
-    onSave(assessmentToSave)
-
-    // Also sync to database
-    try {
-      const response = await fetch('/api/sync-assessments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          assessment: {
-            name: assessmentToSave.name,
-            description: assessmentToSave.description,
-            category: assessmentToSave.category,
-            assessmentPrompt: assessmentToSave.assessmentPrompt,
-            minQuestions: assessmentToSave.minQuestions,
-            maxQuestions: assessmentToSave.maxQuestions,
-            minArchetypes: assessmentToSave.minArchetypes,
-            minConfidence: assessmentToSave.minConfidence,
-            reportGeneration: assessmentToSave.reportGeneration,
-            assessment_level: assessmentToSave.assessment_level,
-            status: assessmentToSave.status,
-            is_active: assessmentToSave.is_active,
-            liveProvider: assessmentToSave.liveProvider,
-            liveModel: assessmentToSave.liveModel
-          }
-        })
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        console.log(`Assessment ${result.action} successfully in database`)
-        // Update config with any returned data (like ID for new assessments)
-        if (result.assessment) {
-          setConfig(prev => ({
-            ...prev,
-            id: result.assessment.id,
-            ...result.assessment
-          }))
-        }
-      } else {
-        console.error('Failed to sync assessment to database:', result.error)
-      }
-    } catch (error) {
-      console.error('Error syncing assessment to database:', error)
-    }
-  }
 
   // LLM Testing Functions
   const runSingleLLMTest = async () => {
@@ -1642,7 +1587,7 @@ Keep the response under 150 words and end with a specific question.`)
                 <Button
                   onClick={async () => {
                     // Final save with all data
-                    await handleAutoSave(config)
+                    await handleSave(config, true)
                     onSave(config)
                     if (onSaveComplete) {
                       onSaveComplete()
