@@ -897,60 +897,102 @@ Keep the response under 150 words and end with a specific question.`)
 
 
             {/* Question Settings - Simplified */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Question Settings</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div>
-                  <Label htmlFor="minQuestions" className="text-xs">Min Questions</Label>
-                  <Input
-                    id="minQuestions"
-                    type="number"
-                    min="3"
-                    max="20"
-                    value={config.minQuestions}
-                    onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxQuestions" className="text-xs">Max Questions</Label>
-                  <Input
-                    id="maxQuestions"
-                    type="number"
-                    min="5"
-                    max="30"
-                    value={config.maxQuestions}
-                    onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="minArchetypes" className="text-xs">Min Archetypes</Label>
-                  <Input
-                    id="minArchetypes"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={config.minArchetypes || 2}
-                    onChange={(e) => setConfig(prev => ({ ...prev, minArchetypes: parseInt(e.target.value) || 2 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="minConfidence" className="text-xs">Min Confidence (%)</Label>
-                  <Input
-                    id="minConfidence"
-                    type="number"
-                    min="30"
-                    max="100"
-                    step="5"
-                    value={config.minConfidence || 70}
-                    onChange={(e) => setConfig(prev => ({ ...prev, minConfidence: parseInt(e.target.value) || 70 }))}
-                    className="mt-1 h-8 text-sm"
-                  />
+            <TooltipProvider delayDuration={300} skipDelayDuration={100}>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Question Settings</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <Label htmlFor="minQuestions" className="text-xs">Min Questions</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Minimum number of questions required before assessment can complete. Ensures sufficient data for accurate archetype detection.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="minQuestions"
+                      type="number"
+                      min="3"
+                      max="20"
+                      value={config.minQuestions}
+                      onChange={(e) => setConfig(prev => ({ ...prev, minQuestions: parseInt(e.target.value) || 8 }))}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <Label htmlFor="maxQuestions" className="text-xs">Max Questions</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Maximum number of questions allowed. Assessment will automatically complete when this limit is reached, even if archetype criteria aren't met.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="maxQuestions"
+                      type="number"
+                      min="5"
+                      max="30"
+                      value={config.maxQuestions}
+                      onChange={(e) => setConfig(prev => ({ ...prev, maxQuestions: parseInt(e.target.value) || 15 }))}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <Label htmlFor="minArchetypes" className="text-xs">Min Archetypes</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Minimum number of archetypes that must be discovered at the specified confidence level before assessment can complete. Higher values provide more comprehensive results.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="minArchetypes"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={config.minArchetypes || 2}
+                      onChange={(e) => setConfig(prev => ({ ...prev, minArchetypes: parseInt(e.target.value) || 2 }))}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <Label htmlFor="minConfidence" className="text-xs">Min Confidence (%)</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Minimum confidence threshold (30-100%) required for archetype detection. Higher values ensure more accurate results but may require more questions. Recommended: 70% for Level 1, 80% for Level 2, 85% for Level 3.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="minConfidence"
+                      type="number"
+                      min="30"
+                      max="100"
+                      step="5"
+                      value={config.minConfidence || 70}
+                      onChange={(e) => setConfig(prev => ({ ...prev, minConfidence: parseInt(e.target.value) || 70 }))}
+                      className="h-8 text-sm"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            </TooltipProvider>
 
             {/* Live Assessment LLM Configuration */}
             <div className="space-y-4">
@@ -1016,13 +1058,7 @@ Keep the response under 150 words and end with a specific question.`)
                 )}
               </div>
 
-              {liveProvider && liveModel && (
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    <strong>Live Configuration:</strong> Users will experience assessments using {LLM_PROVIDERS[liveProvider].name} - {liveModel}
-                  </p>
-                </div>
-              )}
+
             </div>
 
             {/* Knowledge Base Section - Always Available */}

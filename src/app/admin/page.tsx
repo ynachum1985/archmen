@@ -746,40 +746,25 @@ export default function AdminPage() {
         }}>
           <DialogContent className="!max-w-none !w-[calc(100vw-1rem)] !max-h-[calc(100vh-1rem)] overflow-y-auto bg-white border border-gray-200 shadow-xl p-6" style={{ width: 'calc(100vw - 1rem)', maxWidth: 'none' }}>
             <DialogHeader>
-              <DialogTitle>Edit Assessment: {editingAssessment?.name}</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Editing: {editingAssessment?.name}</DialogTitle>
               <DialogDescription>
-                Configure all aspects of this assessment in one place
+                Configure assessment settings and knowledge base content
               </DialogDescription>
             </DialogHeader>
 
             {editingAssessment && editingAssessment.id && (
-              <Tabs defaultValue="builder" className="mt-4">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="builder">Builder</TabsTrigger>
-                  <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="builder" className="space-y-4">
-                  <EnhancedAssessmentBuilder
-                    assessment={editingAssessment}
-                    onSave={(config) => {
-                      handleSaveEnhancedAssessment(config)
-                      setShowEditAssessmentDialog(false)
-                      setEditingAssessment(null)
-                    }}
-                    onTest={handleTestEnhancedAssessment}
-                    hideKnowledgeBase={true}
-                    hideNextStep={true}
-                  />
-                </TabsContent>
-
-                <TabsContent value="knowledge" className="space-y-4">
-                  <AssessmentKnowledgeBase
-                    assessmentId={editingAssessment.id.toString()}
-                    assessmentName={editingAssessment.name}
-                  />
-                </TabsContent>
-              </Tabs>
+              <div className="mt-4">
+                <EnhancedAssessmentBuilder
+                  assessment={editingAssessment}
+                  onSave={(config) => {
+                    handleSaveEnhancedAssessment(config)
+                    setShowEditAssessmentDialog(false)
+                    setEditingAssessment(null)
+                  }}
+                  onTest={handleTestEnhancedAssessment}
+                  hideNextStep={true}
+                />
+              </div>
             )}
 
             {!editingAssessment && showEditAssessmentDialog && (
