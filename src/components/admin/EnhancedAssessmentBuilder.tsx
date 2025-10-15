@@ -906,7 +906,7 @@ Keep the response under 150 words and end with a specific question.`)
                       <Label htmlFor="minQuestions" className="text-xs">Min Questions</Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                          <Info className="h-3 w-3 text-gray-400 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
                           <p className="text-xs">Minimum number of questions required before assessment can complete. Ensures sufficient data for accurate archetype detection.</p>
@@ -928,7 +928,7 @@ Keep the response under 150 words and end with a specific question.`)
                       <Label htmlFor="maxQuestions" className="text-xs">Max Questions</Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                          <Info className="h-3 w-3 text-gray-400 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
                           <p className="text-xs">Maximum number of questions allowed. Assessment will automatically complete when this limit is reached, even if archetype criteria aren't met.</p>
@@ -950,7 +950,7 @@ Keep the response under 150 words and end with a specific question.`)
                       <Label htmlFor="minArchetypes" className="text-xs">Min Archetypes</Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                          <Info className="h-3 w-3 text-gray-400 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
                           <p className="text-xs">Minimum number of archetypes that must be discovered at the specified confidence level before assessment can complete. Higher values provide more comprehensive results.</p>
@@ -972,7 +972,7 @@ Keep the response under 150 words and end with a specific question.`)
                       <Label htmlFor="minConfidence" className="text-xs">Min Confidence (%)</Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <InfoIcon className="h-3 w-3 text-gray-400 cursor-help" />
+                          <Info className="h-3 w-3 text-gray-400 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
                           <p className="text-xs">Minimum confidence threshold (30-100%) required for archetype detection. Higher values ensure more accurate results but may require more questions. Recommended: 70% for Level 1, 80% for Level 2, 85% for Level 3.</p>
