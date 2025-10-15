@@ -333,7 +333,24 @@ Keep the response under 150 words and end with a specific question.`)
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(assessmentToSave),
+        body: JSON.stringify({
+          assessment: {
+            name: assessmentToSave.name,
+            description: assessmentToSave.description,
+            category: assessmentToSave.category,
+            assessmentPrompt: assessmentToSave.assessmentPrompt,
+            minQuestions: assessmentToSave.minQuestions,
+            maxQuestions: assessmentToSave.maxQuestions,
+            minArchetypes: assessmentToSave.minArchetypes,
+            minConfidence: assessmentToSave.minConfidence,
+            reportGeneration: assessmentToSave.reportGeneration,
+            assessment_level: assessmentToSave.assessment_level,
+            status: 'draft',
+            is_active: false,
+            liveProvider: assessmentToSave.liveProvider,
+            liveModel: assessmentToSave.liveModel
+          }
+        }),
       })
 
       if (response.ok) {
@@ -345,6 +362,9 @@ Keep the response under 150 words and end with a specific question.`)
             id: result.assessment.id
           }))
         }
+      } else {
+        const errorData = await response.json()
+        console.error('Auto-save failed:', errorData)
       }
     } catch (error) {
       console.error('Auto-save failed:', error)
@@ -1139,7 +1159,7 @@ Keep the response under 150 words and end with a specific question.`)
                   </div>
 
                   {/* Embedding Settings */}
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={300} skipDelayDuration={100}>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                       <h4 className="text-sm font-medium text-gray-900">Embedding Settings</h4>
 

@@ -251,7 +251,7 @@ export function AssessmentKnowledgeBase({
       </div>
 
       {/* Embedding Settings */}
-      <TooltipProvider>
+      <TooltipProvider delayDuration={300} skipDelayDuration={100}>
         <div className="bg-gray-50 p-4 rounded-lg space-y-4">
           <h4 className="text-sm font-medium text-gray-900">Embedding Settings</h4>
 

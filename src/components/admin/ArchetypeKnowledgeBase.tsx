@@ -517,7 +517,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
           </div>
 
           {/* Embedding Settings - Matches Assessment Style */}
-          <TooltipProvider>
+          <TooltipProvider delayDuration={300} skipDelayDuration={100}>
             <div className="pt-4 border-t border-gray-100">
               <Label className="text-sm font-medium text-gray-700 mb-3 block">Embedding Settings</Label>
 
