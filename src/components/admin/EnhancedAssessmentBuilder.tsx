@@ -497,6 +497,11 @@ Keep the response under 150 words and end with a specific question.`)
 
   // Auto-save function (saves as draft without user interaction)
   const handleAutoSave = async (configToSave: EnhancedAssessmentConfig) => {
+    // Only auto-save if we have an ID (existing assessment)
+    // Don't auto-save new assessments to prevent duplicates
+    if (!configToSave.id) {
+      return
+    }
     await handleSave(configToSave, false)
   }
 
@@ -914,7 +919,13 @@ Keep the response under 150 words and end with a specific question.`)
             <span className="text-sm text-red-600">Save failed</span>
           )}
           <Button
-            onClick={() => handleSave(config, true)}
+            onClick={async () => {
+              await handleSave(config, true)
+              onSave(config)
+              if (onSaveComplete) {
+                onSaveComplete()
+              }
+            }}
             disabled={!config.name.trim() || isSaving}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
@@ -1573,34 +1584,7 @@ Keep the response under 150 words and end with a specific question.`)
                 </div>
             </div>
 
-            {/* Save Assessment */}
-            {!hideNextStep && (
-            <div className="border-t pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium">Save Assessment</h3>
-                  <p className="text-sm text-gray-600">
-                    Save your assessment configuration and knowledge base content. The assessment will appear in the Assessments tab.
-                  </p>
-                </div>
 
-                <Button
-                  onClick={async () => {
-                    // Final save with all data
-                    await handleSave(config, true)
-                    onSave(config)
-                    if (onSaveComplete) {
-                      onSaveComplete()
-                    }
-                  }}
-                  disabled={!config.name.trim()}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8"
-                >
-                  Save Assessment
-                </Button>
-              </div>
-            </div>
-            )}
 
         {/* End of Assessment Builder Content */}
       </div>
