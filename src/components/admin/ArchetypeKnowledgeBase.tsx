@@ -384,17 +384,19 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
 
         {/* Content Input */}
         <div className="space-y-6">
-          {/* Document Upload Section */}
+          {/* File Upload Section */}
           <div className="space-y-3">
             {uploadedFiles.map((files, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  type="file"
-                  multiple
-                  accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
-                  onChange={(e) => handleFileUpload(e, index)}
-                  className="cursor-pointer border-gray-200 flex-1"
-                />
+              <div key={index} className="flex items-start gap-2">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.txt,.doc,.docx,.md,.json,.csv"
+                    onChange={(e) => handleFileUpload(e, index)}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -413,38 +415,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
               className="text-gray-600 hover:text-gray-800"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Upload
-            </Button>
-          </div>
-
-          {/* Reference URLs Section */}
-          <div className="space-y-3">
-            {referenceUrls.map((url, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  value={url}
-                  onChange={(e) => updateReferenceUrl(index, e.target.value)}
-                  placeholder="https://example.com/resource"
-                  className="text-sm border-gray-200 flex-1"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeReferenceUrl(index)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={addReferenceUrl}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add URL
+              Add File Upload
             </Button>
           </div>
 
@@ -477,31 +448,29 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
               className="text-gray-600 hover:text-gray-800"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Text
+              Add Text Content
             </Button>
           </div>
 
           {/* Reference URLs Section */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">Reference URLs</Label>
+            <Label className="text-sm font-medium">Reference URLs</Label>
             {referenceUrls.map((url, index) => (
               <div key={index} className="flex items-center gap-2">
                 <Input
                   value={url}
                   onChange={(e) => updateReferenceUrl(index, e.target.value)}
                   placeholder="https://example.com/article-about-archetype"
-                  className="flex-1 border-gray-200 text-sm"
+                  className="flex-1"
                 />
-                {referenceUrls.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeReferenceUrl(index)}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeReferenceUrl(index)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
               </div>
             ))}
 
@@ -512,7 +481,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
               className="text-gray-600 hover:text-gray-800"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Another URL
+              Add Reference URL
             </Button>
           </div>
 
