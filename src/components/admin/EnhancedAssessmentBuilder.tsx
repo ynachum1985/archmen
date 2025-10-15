@@ -1221,8 +1221,8 @@ Keep the response under 150 words and end with a specific question.`)
                       <h4 className="text-sm font-medium text-gray-900">Embedding Settings</h4>
 
                       {/* Row 1: Core Settings */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="min-w-0">
                           <div className="flex items-center gap-1 mb-1">
                             <Label htmlFor="chunkSize" className="text-xs">Chunk Size</Label>
                             <Tooltip>
@@ -1239,11 +1239,11 @@ Keep the response under 150 words and end with a specific question.`)
                             type="number"
                             value={chunkSize}
                             onChange={(e) => setChunkSize(parseInt(e.target.value) || 400)}
-                            className="h-8 text-xs"
+                            className="h-8 text-xs w-full"
                           />
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-1 mb-1">
                             <Label htmlFor="chunkOverlap" className="text-xs">Chunk Overlap</Label>
                             <Tooltip>
@@ -1260,11 +1260,11 @@ Keep the response under 150 words and end with a specific question.`)
                             type="number"
                             value={chunkOverlap}
                             onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 80)}
-                            className="h-8 text-xs"
+                            className="h-8 text-xs w-full"
                           />
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-1 mb-1">
                             <Label htmlFor="embeddingModel" className="text-xs">Embedding Model</Label>
                             <Tooltip>
@@ -1277,10 +1277,10 @@ Keep the response under 150 words and end with a specific question.`)
                             </Tooltip>
                           </div>
                           <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
-                            <SelectTrigger className="h-8 text-xs">
+                            <SelectTrigger className="h-8 text-xs w-full">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-w-[280px]">
                               <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small</SelectItem>
                               <SelectItem value="mistral-embed">Mistral: mistral-embed</SelectItem>
                               <SelectItem value="voyage-large-2">Voyage: voyage-large-2</SelectItem>
@@ -1288,7 +1288,7 @@ Keep the response under 150 words and end with a specific question.`)
                           </Select>
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-1 mb-1">
                             <Label htmlFor="topK" className="text-xs">Top K Results</Label>
                             <Tooltip>
@@ -1305,7 +1305,7 @@ Keep the response under 150 words and end with a specific question.`)
                             type="number"
                             value={topK}
                             onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
-                            className="h-8 text-xs"
+                            className="h-8 text-xs w-full"
                           />
                         </div>
                       </div>
