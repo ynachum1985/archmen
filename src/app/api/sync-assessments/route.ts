@@ -20,6 +20,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assessment data is required' }, { status: 400 })
     }
 
+    // Validate assessment has a name
+    if (!assessment.name || assessment.name.trim() === '') {
+      return NextResponse.json({ error: 'Assessment name is required' }, { status: 400 })
+    }
+
     // Check if assessment already exists
     const { data: existingAssessment, error: checkError } = await supabase
       .from('enhanced_assessments')
@@ -59,7 +64,12 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('Error updating assessment:', error)
-        return NextResponse.json({ error: 'Failed to update assessment' }, { status: 500 })
+        console.error('Assessment data:', assessment)
+        return NextResponse.json({
+          error: 'Failed to update assessment',
+          details: error.message,
+          code: error.code
+        }, { status: 500 })
       }
       result = data
     } else {
@@ -89,7 +99,12 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('Error creating assessment:', error)
-        return NextResponse.json({ error: 'Failed to create assessment' }, { status: 500 })
+        console.error('Assessment data:', assessment)
+        return NextResponse.json({
+          error: 'Failed to create assessment',
+          details: error.message,
+          code: error.code
+        }, { status: 500 })
       }
       result = data
     }
