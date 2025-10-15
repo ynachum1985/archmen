@@ -321,6 +321,11 @@ Keep the response under 150 words and end with a specific question.`)
   // Auto-save function (saves as draft without user interaction)
   const handleAutoSave = async (configToSave: EnhancedAssessmentConfig) => {
     try {
+      // Don't auto-save if there's no name yet
+      if (!configToSave.name || configToSave.name.trim() === '') {
+        return
+      }
+
       const assessmentToSave = {
         ...configToSave,
         status: 'draft', // Always save as draft during building
