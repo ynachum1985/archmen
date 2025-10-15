@@ -179,6 +179,37 @@ export function EnhancedAssessmentBuilder({
       }))
     }
   }, [config.assessment_level])
+
+  // Load embedding settings when assessment is loaded
+  useEffect(() => {
+    const loadEmbeddingSettings = async () => {
+      if (!config.id) return
+
+      try {
+        const response = await fetch(`/api/get-embedding-settings?assessmentId=${config.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.settings) {
+            setChunkSize(data.settings.chunk_size || 400)
+            setChunkOverlap(data.settings.chunk_overlap || 80)
+            setEmbeddingModel(data.settings.embedding_model || 'text-embedding-3-small')
+            setMaxContextTokens(data.settings.context_window || 4000)
+
+            // Load additional settings from JSONB settings field
+            if (data.settings.settings) {
+              setTopK(data.settings.settings.topK || 10)
+              setSimilarityThreshold(data.settings.settings.similarityThreshold || 0.7)
+              setEnableMetadataFiltering(data.settings.settings.enableMetadataFiltering || false)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading embedding settings:', error)
+      }
+    }
+
+    loadEmbeddingSettings()
+  }, [config.id])
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
   const [uploadedFiles, setUploadedFiles] = useState<File[][]>([[]])
 
@@ -335,20 +366,34 @@ Keep the response under 150 words and end with a specific question.`)
     })
   }
 
-  // Auto-save function (saves as draft without user interaction)
-  const handleAutoSave = async (configToSave: EnhancedAssessmentConfig) => {
+  // Save state
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  // Comprehensive save function (saves assessment + embedding settings)
+  const handleSave = async (configToSave: EnhancedAssessmentConfig, showFeedback = false) => {
     try {
-      // Don't auto-save if there's no name yet
+      if (showFeedback) {
+        setIsSaving(true)
+        setSaveStatus('saving')
+      }
+
+      // Don't save if there's no name yet
       if (!configToSave.name || configToSave.name.trim() === '') {
+        if (showFeedback) {
+          setSaveStatus('error')
+          setTimeout(() => setSaveStatus('idle'), 2000)
+        }
         return
       }
 
       const assessmentToSave = {
         ...configToSave,
-        status: 'draft', // Always save as draft during building
-        is_active: false
+        status: configToSave.status || 'draft',
+        is_active: configToSave.is_active ?? false
       }
 
+      // Save assessment
       const response = await fetch('/api/sync-assessments', {
         method: 'POST',
         headers: {
@@ -357,6 +402,7 @@ Keep the response under 150 words and end with a specific question.`)
         credentials: 'include',
         body: JSON.stringify({
           assessment: {
+            id: assessmentToSave.id,
             name: assessmentToSave.name,
             description: assessmentToSave.description,
             category: assessmentToSave.category,
@@ -367,8 +413,8 @@ Keep the response under 150 words and end with a specific question.`)
             minConfidence: assessmentToSave.minConfidence,
             reportGeneration: assessmentToSave.reportGeneration,
             assessment_level: assessmentToSave.assessment_level,
-            status: 'draft',
-            is_active: false,
+            status: assessmentToSave.status,
+            is_active: assessmentToSave.is_active,
             liveProvider: assessmentToSave.liveProvider,
             liveModel: assessmentToSave.liveModel
           }
@@ -377,21 +423,81 @@ Keep the response under 150 words and end with a specific question.`)
 
       if (response.ok) {
         const result = await response.json()
+        let assessmentId = configToSave.id
+
         if (result.assessment && result.assessment.id) {
+          assessmentId = result.assessment.id
           // Update config with ID from database
           setConfig(prev => ({
             ...prev,
             id: result.assessment.id
           }))
         }
+
+        // Save embedding settings if we have an assessment ID
+        if (assessmentId) {
+          await saveEmbeddingSettings(assessmentId)
+        }
+
+        if (showFeedback) {
+          setSaveStatus('saved')
+          setTimeout(() => setSaveStatus('idle'), 2000)
+        }
       } else {
         const errorData = await response.json()
-        console.error('Auto-save failed:', errorData)
+        console.error('Save failed:', errorData)
+        if (showFeedback) {
+          setSaveStatus('error')
+          setTimeout(() => setSaveStatus('idle'), 2000)
+        }
       }
     } catch (error) {
-      console.error('Auto-save failed:', error)
-      // Don't show error to user for auto-save failures
+      console.error('Save failed:', error)
+      if (showFeedback) {
+        setSaveStatus('error')
+        setTimeout(() => setSaveStatus('idle'), 2000)
+      }
+    } finally {
+      if (showFeedback) {
+        setIsSaving(false)
+      }
     }
+  }
+
+  // Save embedding settings to database
+  const saveEmbeddingSettings = async (assessmentId: string | number) => {
+    try {
+      const response = await fetch('/api/save-embedding-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          assessmentId,
+          settings: {
+            chunkSize,
+            chunkOverlap,
+            embeddingModel,
+            topK,
+            similarityThreshold,
+            maxContextTokens,
+            enableMetadataFiltering
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        console.error('Failed to save embedding settings')
+      }
+    } catch (error) {
+      console.error('Error saving embedding settings:', error)
+    }
+  }
+
+  // Auto-save function (saves as draft without user interaction)
+  const handleAutoSave = async (configToSave: EnhancedAssessmentConfig) => {
+    await handleSave(configToSave, false)
   }
 
   // Update config when live provider/model changes
@@ -840,6 +946,53 @@ Keep the response under 150 words and end with a specific question.`)
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Header with Save Button */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {config.id ? 'Edit Assessment' : 'Create Assessment'}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {config.name || 'Untitled Assessment'}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {saveStatus === 'saved' && (
+            <span className="text-sm text-green-600 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Saved
+            </span>
+          )}
+          {saveStatus === 'error' && (
+            <span className="text-sm text-red-600">Save failed</span>
+          )}
+          <Button
+            onClick={() => handleSave(config, true)}
+            disabled={!config.name.trim() || isSaving}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {isSaving ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save Assessment
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
       {/* Assessment Builder Content - No more nested tabs */}
       <div className="space-y-6">
           {/* Assessment Configuration - Moved to Top */}

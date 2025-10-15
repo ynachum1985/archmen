@@ -25,16 +25,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assessment name is required' }, { status: 400 })
     }
 
-    // Check if assessment already exists
-    const { data: existingAssessment, error: checkError } = await supabase
-      .from('enhanced_assessments')
-      .select('id')
-      .eq('name', assessment.name)
-      .single()
+    // Check if assessment already exists (by ID or by name)
+    let existingAssessment = null
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found"
-      console.error('Error checking existing assessment:', checkError)
-      return NextResponse.json({ error: 'Failed to check existing assessment' }, { status: 500 })
+    // First, check by ID if provided
+    if (assessment.id) {
+      const { data, error: idCheckError } = await supabase
+        .from('enhanced_assessments')
+        .select('id')
+        .eq('id', assessment.id)
+        .single()
+
+      if (idCheckError && idCheckError.code !== 'PGRST116') {
+        console.error('Error checking existing assessment by ID:', idCheckError)
+        return NextResponse.json({ error: 'Failed to check existing assessment' }, { status: 500 })
+      }
+      existingAssessment = data
+    }
+
+    // If not found by ID, check by name
+    if (!existingAssessment) {
+      const { data, error: nameCheckError } = await supabase
+        .from('enhanced_assessments')
+        .select('id')
+        .eq('name', assessment.name)
+        .single()
+
+      if (nameCheckError && nameCheckError.code !== 'PGRST116') { // PGRST116 is "not found"
+        console.error('Error checking existing assessment by name:', nameCheckError)
+        return NextResponse.json({ error: 'Failed to check existing assessment' }, { status: 500 })
+      }
+      existingAssessment = data
     }
 
     let result
@@ -43,6 +64,7 @@ export async function POST(request: NextRequest) {
       const { data, error } = await supabase
         .from('enhanced_assessments')
         .update({
+          name: assessment.name,
           description: assessment.description,
           category: assessment.category,
           assessment_prompt: assessment.assessmentPrompt,
