@@ -715,7 +715,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    <Info className="h-4 w-4 text-gray-400" />
+                    <InfoIcon className="h-4 w-4 text-gray-400" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
