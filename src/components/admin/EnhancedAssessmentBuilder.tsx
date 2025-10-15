@@ -149,6 +149,10 @@ export function EnhancedAssessmentBuilder({
       liveModel: assessment.liveModel || defaultConfig.liveModel
     }
   })
+
+  // Track if component has mounted to prevent auto-save on initial load
+  const [hasMounted, setHasMounted] = useState(false)
+  const autoSaveTimeoutRef = useState<NodeJS.Timeout | null>(null)
   const [personalities, setPersonalities] = useState<AIPersonality[]>([])
   const [isLoadingPersonalities, setIsLoadingPersonalities] = useState(true)
   const [showTestingChat, setShowTestingChat] = useState(false)
@@ -269,6 +273,18 @@ export function EnhancedAssessmentBuilder({
     initialize()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Mark component as mounted after initial render
+  useEffect(() => {
+    setHasMounted(true)
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (autoSaveTimeoutRef[0]) {
+        clearTimeout(autoSaveTimeoutRef[0])
+      }
+    }
+  }, [])
+
   // Set default test prompt based on assessment
   useEffect(() => {
     if (config.name && !testPrompt) {
@@ -305,8 +321,16 @@ Keep the response under 150 words and end with a specific question.`)
       if (onAssessmentChange) {
         onAssessmentChange(newConfig)
       }
-      // Auto-save as draft when changes are made
-      handleAutoSave(newConfig)
+      // Auto-save as draft when changes are made (but not on initial mount)
+      if (hasMounted) {
+        // Debounce auto-save to prevent too many requests
+        if (autoSaveTimeoutRef[0]) {
+          clearTimeout(autoSaveTimeoutRef[0])
+        }
+        autoSaveTimeoutRef[0] = setTimeout(() => {
+          handleAutoSave(newConfig)
+        }, 1000) // Wait 1 second after last change
+      }
       return newConfig
     })
   }
