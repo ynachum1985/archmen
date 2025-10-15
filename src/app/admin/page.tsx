@@ -19,8 +19,7 @@ import {
   Brain,
   Sparkles,
   TrendingUp,
-  Database,
-  Shield
+  Database
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
@@ -479,17 +478,10 @@ export default function AdminPage() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="knowledge-base"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8 focus:outline-none focus:ring-0"
+                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none focus:outline-none focus:ring-0"
                 >
                   <Database className="h-4 w-4 mr-2" />
                   Knowledge Base
-                </TabsTrigger>
-                <TabsTrigger
-                  value="assessment-gateways"
-                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none focus:outline-none focus:ring-0"
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Assessment Gateways
                 </TabsTrigger>
               </TabsList>
 
@@ -605,7 +597,7 @@ export default function AdminPage() {
                   }}
                   onTest={handleTestEnhancedAssessment}
                   onAssessmentChange={(config) => {
-                    // Update shared state when assessment changes (for Knowledge Base and Gateways tabs)
+                    // Update shared state when assessment changes
                     setCurrentBuilderAssessment(config)
                   }}
                   onNext={() => {
@@ -628,19 +620,18 @@ export default function AdminPage() {
                         This content will be embedded and used for contextual responses.
                       </p>
                     </div>
-                    <ArchetypeKnowledgeBase
-                      archetypeId={currentBuilderAssessment.id?.toString() || currentBuilderAssessment.name}
-                      archetypeName={currentBuilderAssessment.name}
-                      showOnlyKnowledgeBase={true}
+                    <AssessmentKnowledgeBase
+                      assessmentId={currentBuilderAssessment.id?.toString() || currentBuilderAssessment.name}
+                      assessmentName={currentBuilderAssessment.name}
                     />
 
-                    {/* Next Step Navigation */}
+                    {/* Navigation */}
                     <div className="border-t pt-6 mt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-medium">Next Step</h3>
+                          <h3 className="text-lg font-medium">Knowledge Base Complete</h3>
                           <p className="text-sm text-gray-600">
-                            Continue to configure assessment gateways and finalize your assessment.
+                            Your assessment knowledge base is configured. Return to the Builder or Assessments tab to continue.
                           </p>
                         </div>
 
@@ -652,10 +643,10 @@ export default function AdminPage() {
                             ← Back to Builder
                           </Button>
                           <Button
-                            onClick={() => setActiveSetupTab('assessment-gateways')}
+                            onClick={() => setActiveSetupTab('assessments')}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-8"
                           >
-                            Next: Assessment Gateways →
+                            View All Assessments →
                           </Button>
                         </div>
                       </div>
@@ -670,93 +661,6 @@ export default function AdminPage() {
                     </p>
                     <p className="text-sm text-gray-500">
                       The Knowledge Base tab is linked to the assessment you're building in the Builder tab.
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Assessment Gateways Sub-tab */}
-              <TabsContent value="assessment-gateways" className="mt-0">
-                {currentBuilderAssessment && currentBuilderAssessment.name ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Assessment Gateways for: {currentBuilderAssessment.name}</CardTitle>
-                      <CardDescription>
-                        Configure access controls and progression requirements for this specific assessment.
-                        Level {currentBuilderAssessment.assessment_level || 1} assessment.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <AssessmentGatewayBuilder
-                        assessmentId={currentBuilderAssessment.id?.toString() || currentBuilderAssessment.name}
-                        assessmentLevel={currentBuilderAssessment.assessment_level || 1}
-                        assessmentName={currentBuilderAssessment.name}
-                        onGatewaysChange={(gateways) => {
-                          console.log(`Gateways updated for ${currentBuilderAssessment.name}:`, gateways)
-                          // Update the current assessment with gateway configuration
-                          setCurrentBuilderAssessment(prev => ({
-                            ...prev,
-                            gateway_configuration: gateways
-                          }))
-                        }}
-                        onQuizPromptsChange={(prompts) => {
-                          console.log(`Quiz prompts updated for ${currentBuilderAssessment.name}:`, prompts)
-                          // Update the current assessment with quiz prompts
-                          setCurrentBuilderAssessment(prev => ({
-                            ...prev,
-                            quiz_set_questions_prompt: prompts.setQuestions,
-                            quiz_experience_analysis_prompt: prompts.experienceAnalysis
-                          }))
-                        }}
-                      />
-                    </CardContent>
-
-                    {/* Final Save Navigation */}
-                    <CardContent className="border-t pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium">Finalize Assessment</h3>
-                          <p className="text-sm text-gray-600">
-                            Save your completed assessment. It will be available in the Assessments tab.
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <Button
-                            onClick={() => setActiveSetupTab('knowledge-base')}
-                            variant="outline"
-                          >
-                            ← Back to Knowledge Base
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              // Final save with live status
-                              const finalAssessment = {
-                                ...currentBuilderAssessment,
-                                status: 'live',
-                                is_active: true
-                              }
-                              handleSaveEnhancedAssessment(finalAssessment)
-                              setActiveSetupTab('assessments') // Go back to assessments list
-                              setCurrentBuilderAssessment(null) // Clear builder state
-                            }}
-                            className="bg-green-600 hover:bg-green-700 text-white px-8"
-                          >
-                            Save Assessment
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <Shield className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Assessment Selected</h3>
-                    <p className="text-gray-600 mb-4">
-                      Create or configure an assessment in the Builder tab first, then return here to set up gateways.
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      The Assessment Gateways tab is linked to the assessment you're building in the Builder tab.
                     </p>
                   </div>
                 )}
