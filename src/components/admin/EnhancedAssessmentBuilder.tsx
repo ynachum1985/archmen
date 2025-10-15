@@ -37,7 +37,6 @@ import { ArchetypeContentBuilder } from './ArchetypeContentBuilder'
 import { AssessmentTestingChat } from './AssessmentTestingChat'
 import { EmbeddingSettingsDialog } from './EmbeddingSettingsDialog'
 import { AssessmentContentDisplay } from './AssessmentContentDisplay'
-import { AssessmentGatewayBuilder } from './AssessmentGatewayBuilderSimple'
 import Link from 'next/link'
 
 interface EnhancedAssessmentConfig {
@@ -146,12 +145,6 @@ export function EnhancedAssessmentBuilder({
       ...assessment,
       // Ensure critical fields have defaults
       assessment_level: assessment.assessment_level || defaultConfig.assessment_level,
-      gateway_configuration: assessment.gateway_configuration || defaultConfig.gateway_configuration,
-      has_custom_gateways: assessment.has_custom_gateways ?? defaultConfig.has_custom_gateways,
-      general_gateways_enabled: assessment.general_gateways_enabled ?? defaultConfig.general_gateways_enabled,
-      quiz_enabled: assessment.quiz_enabled ?? defaultConfig.quiz_enabled,
-      quiz_passing_score: assessment.quiz_passing_score || defaultConfig.quiz_passing_score,
-      quiz_max_attempts: assessment.quiz_max_attempts || defaultConfig.quiz_max_attempts,
       liveProvider: assessment.liveProvider || defaultConfig.liveProvider,
       liveModel: assessment.liveModel || defaultConfig.liveModel
     }
@@ -308,7 +301,7 @@ Keep the response under 150 words and end with a specific question.`)
   const updateConfig = (updater: (prev: EnhancedAssessmentConfig) => EnhancedAssessmentConfig) => {
     setConfig(prev => {
       const newConfig = updater(prev)
-      // Notify parent component of changes (for Knowledge Base and Gateways tabs)
+      // Notify parent component of changes
       if (onAssessmentChange) {
         onAssessmentChange(newConfig)
       }
@@ -1032,14 +1025,13 @@ Keep the response under 150 words and end with a specific question.`)
               )}
             </div>
 
-            {/* Knowledge Base Section */}
-            {config.name && !hideKnowledgeBase && (
-              <div className="border-t pt-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium">Knowledge Base</h3>
-                    <p className="text-sm text-gray-600">Add content that the AI can reference when conducting this assessment</p>
-                  </div>
+            {/* Knowledge Base Section - Always Available */}
+            <div className="border-t pt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Knowledge Base</h3>
+                  <p className="text-sm text-gray-600">Add content that the AI can reference when conducting this assessment</p>
+                </div>
 
                   {/* File Upload Section */}
                   <div className="space-y-3">
@@ -1409,8 +1401,7 @@ Keep the response under 150 words and end with a specific question.`)
                     />
                   </div>
                 </div>
-              </div>
-            )}
+            </div>
 
             {/* Next Step Navigation */}
             {!hideNextStep && (

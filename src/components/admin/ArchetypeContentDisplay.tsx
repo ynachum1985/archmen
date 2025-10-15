@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Trash2, ExternalLink, FileText, Globe, ChevronDown, ChevronRight } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Trash2, ExternalLink, FileText, Globe, ChevronDown, ChevronRight, Filter } from 'lucide-react'
 
 interface ContentChunk {
   id: string
@@ -38,6 +39,10 @@ export const ArchetypeContentDisplay = forwardRef<ArchetypeContentDisplayRef, Ar
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+
+  // Metadata filtering state
+  const [selectedTopic, setSelectedTopic] = useState<string>('all')
+  const [selectedSource, setSelectedSource] = useState<string>('all')
 
   const fetchContentChunks = async () => {
     try {
@@ -117,6 +122,17 @@ export const ArchetypeContentDisplay = forwardRef<ArchetypeContentDisplayRef, Ar
     })
   }
 
+  // Get unique topics and sources for filtering
+  const uniqueTopics = Array.from(new Set(chunks.map(c => c.metadata.topic).filter(Boolean))) as string[]
+  const uniqueSources = Array.from(new Set(chunks.map(c => c.metadata.source).filter(Boolean))) as string[]
+
+  // Filter chunks based on selected filters
+  const filteredChunks = chunks.filter(chunk => {
+    const topicMatch = selectedTopic === 'all' || chunk.metadata.topic === selectedTopic
+    const sourceMatch = selectedSource === 'all' || chunk.metadata.source === selectedSource
+    return topicMatch && sourceMatch
+  })
+
   if (isLoading) {
     return (
       <Card>
@@ -193,8 +209,51 @@ export const ArchetypeContentDisplay = forwardRef<ArchetypeContentDisplayRef, Ar
             <p className="text-sm">Use the knowledge base section above to add content</p>
           </div>
         ) : (
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {chunks.map((chunk, index) => (
+          <>
+            {/* Metadata Filters */}
+            {(uniqueTopics.length > 0 || uniqueSources.length > 0) && (
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Filter by:</span>
+
+                {uniqueTopics.length > 0 && (
+                  <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                    <SelectTrigger className="h-8 w-40 text-xs">
+                      <SelectValue placeholder="Topic" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Topics</SelectItem>
+                      {uniqueTopics.map(topic => (
+                        <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {uniqueSources.length > 0 && (
+                  <Select value={selectedSource} onValueChange={setSelectedSource}>
+                    <SelectTrigger className="h-8 w-40 text-xs">
+                      <SelectValue placeholder="Source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Sources</SelectItem>
+                      {uniqueSources.map(source => (
+                        <SelectItem key={source} value={source}>{source}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {(selectedTopic !== 'all' || selectedSource !== 'all') && (
+                  <Badge variant="secondary" className="text-xs">
+                    {filteredChunks.length} of {chunks.length} chunks
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+            {filteredChunks.map((chunk, index) => (
               <div key={chunk.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -261,6 +320,7 @@ export const ArchetypeContentDisplay = forwardRef<ArchetypeContentDisplayRef, Ar
               </div>
             ))}
           </div>
+          </>
         )}
           </CardContent>
         </CollapsibleContent>
