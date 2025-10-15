@@ -28,6 +28,7 @@ import {
   Sparkles,
   Info
 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { AIPersonality, aiPersonalityService } from '@/lib/services/ai-personality.service'
 import { LLM_PROVIDERS, type LLMProvider, type LLMConfig, multiLLMService } from '@/lib/services/multi-llm.service'
@@ -188,8 +189,10 @@ export function EnhancedAssessmentBuilder({
   const [chunkSize, setChunkSize] = useState(400)  // Optimal: 300-500 tokens
   const [chunkOverlap, setChunkOverlap] = useState(80)  // 20% overlap (industry standard)
   const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')  // Best performance/cost
-  const [topK, setTopK] = useState(10)
-  const [similarityThreshold, setSimilarityThreshold] = useState(0.7)
+  const [topK, setTopK] = useState(10)  // Industry standard: 5-10 results
+  const [similarityThreshold, setSimilarityThreshold] = useState(0.7)  // 70% minimum relevance
+  const [maxContextTokens, setMaxContextTokens] = useState(4000)  // Max tokens to send to LLM
+  const [enableMetadataFiltering, setEnableMetadataFiltering] = useState(false)  // Filter by category/tags
 
   // LLM Testing states
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>('openai')
@@ -1136,69 +1139,173 @@ Keep the response under 150 words and end with a specific question.`)
                   </div>
 
                   {/* Embedding Settings */}
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                    <h4 className="text-sm font-medium text-gray-900">Embedding Settings</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <Label htmlFor="chunkSize" className="text-xs">Chunk Size</Label>
-                        <Input
-                          id="chunkSize"
-                          type="number"
-                          value={chunkSize}
-                          onChange={(e) => setChunkSize(parseInt(e.target.value) || 1000)}
-                          className="mt-1 h-8 text-xs"
-                        />
+                  <TooltipProvider>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                      <h4 className="text-sm font-medium text-gray-900">Embedding Settings</h4>
+
+                      {/* Row 1: Core Settings */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Label htmlFor="chunkSize" className="text-xs">Chunk Size</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">How much text per chunk (in tokens). 400 = ~300 words. Optimal: 300-500 for balanced context.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input
+                            id="chunkSize"
+                            type="number"
+                            value={chunkSize}
+                            onChange={(e) => setChunkSize(parseInt(e.target.value) || 400)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Label htmlFor="chunkOverlap" className="text-xs">Chunk Overlap</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">Overlap between chunks (in tokens). 80 = 20% overlap. Prevents losing context at boundaries.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input
+                            id="chunkOverlap"
+                            type="number"
+                            value={chunkOverlap}
+                            onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 80)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Label htmlFor="embeddingModel" className="text-xs">Embedding Model</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">AI model for converting text to vectors. text-embedding-3-small = best cost/performance.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small</SelectItem>
+                              <SelectItem value="mistral-embed">Mistral: mistral-embed</SelectItem>
+                              <SelectItem value="voyage-large-2">Voyage: voyage-large-2</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Label htmlFor="topK" className="text-xs">Top K Results</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">How many relevant chunks to retrieve. 10 = industry standard. Higher = more context but slower.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input
+                            id="topK"
+                            type="number"
+                            value={topK}
+                            onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="chunkOverlap" className="text-xs">Chunk Overlap</Label>
-                        <Input
-                          id="chunkOverlap"
-                          type="number"
-                          value={chunkOverlap}
-                          onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 200)}
-                          className="mt-1 h-8 text-xs"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="embeddingModel" className="text-xs">Embedding Model</Label>
-                        <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
-                          <SelectTrigger className="mt-1 h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small (1536d)</SelectItem>
-                            <SelectItem value="mistral-embed">Mistral: mistral-embed (1024d) - Best cost/accuracy</SelectItem>
-                            <SelectItem value="voyage-large-2">Voyage: voyage-large-2 (1536d)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="topK" className="text-xs">Top K Results</Label>
-                        <Input
-                          id="topK"
-                          type="number"
-                          value={topK}
-                          onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
-                          className="mt-1 h-8 text-xs"
-                        />
+
+                      {/* Row 2: Advanced Settings */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2 border-t border-gray-200">
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Label htmlFor="similarityThreshold" className="text-xs">Similarity Threshold</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">Minimum relevance score (0-1). 0.7 = 70% match required. Filters out irrelevant results.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input
+                            id="similarityThreshold"
+                            type="number"
+                            step="0.05"
+                            min="0"
+                            max="1"
+                            value={similarityThreshold}
+                            onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Label htmlFor="maxContextTokens" className="text-xs">Max Context Tokens</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">Maximum tokens to send to LLM. 4000 = balanced. Higher = more context but slower/costlier.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input
+                            id="maxContextTokens"
+                            type="number"
+                            step="1000"
+                            min="1000"
+                            max="16000"
+                            value={maxContextTokens}
+                            onChange={(e) => setMaxContextTokens(parseInt(e.target.value) || 4000)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            id="enableMetadataFiltering"
+                            type="checkbox"
+                            checked={enableMetadataFiltering}
+                            onChange={(e) => setEnableMetadataFiltering(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                          <div className="flex items-center gap-1">
+                            <Label htmlFor="enableMetadataFiltering" className="text-xs cursor-pointer">Metadata Filtering</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">Filter results by category, tags, or archetype. Improves precision for specific queries.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <Label htmlFor="similarityThreshold" className="text-xs">Similarity Threshold</Label>
-                        <Input
-                          id="similarityThreshold"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="1"
-                          value={similarityThreshold}
-                          onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value) || 0.7)}
-                          className="mt-1 h-8 text-xs w-32"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  </TooltipProvider>
 
                   {/* Process Content Button */}
                   <div className="flex justify-between items-center">
