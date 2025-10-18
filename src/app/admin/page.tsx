@@ -391,26 +391,38 @@ export default function AdminPage() {
     }
   }
 
-  // Group assessments by category
-  const getAssessmentsByCategory = () => {
-    const grouped: Record<string, typeof assessmentCategories> = {}
+  // Group assessments by level
+  const getAssessmentsByLevel = () => {
+    const grouped: Record<number, typeof assessmentCategories> = {
+      1: [],
+      2: [],
+      3: []
+    }
 
-    // Group by category
+    // Group by assessment level
     assessmentCategories.forEach(assessment => {
-      const category = assessment.category || 'Uncategorized'
-      if (!grouped[category]) {
-        grouped[category] = []
+      const level = assessment.assessment_level || 1
+      if (grouped[level as keyof typeof grouped]) {
+        grouped[level as keyof typeof grouped].push(assessment)
       }
-      grouped[category].push(assessment)
     })
 
     return grouped
   }
 
-  const toggleCategoryExpanded = (categoryName: string) => {
+  const getLevelTitle = (level: number) => {
+    const titles: Record<number, string> = {
+      1: 'Level 1 - Foundation: Basic Relationship Patterns',
+      2: 'Level 2 - Integration: Shadow Work & Emotional Depth',
+      3: 'Level 3 - Mastery: Advanced Concepts & Patriarchy Deconstruction'
+    }
+    return titles[level] || `Level ${level}`
+  }
+
+  const toggleLevelExpanded = (level: number) => {
     setExpandedCategories(prev => ({
       ...prev,
-      [categoryName]: !prev[categoryName]
+      [level]: !prev[level]
     }))
   }
 
@@ -576,8 +588,8 @@ export default function AdminPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-medium">Assessment Categories</h3>
-                      <p className="text-sm text-gray-600 mt-1">Organize and manage assessments by category</p>
+                      <h3 className="text-lg font-medium">Assessments by Level</h3>
+                      <p className="text-sm text-gray-600 mt-1">Manage assessments organized by difficulty level</p>
                     </div>
                     <Button
                       onClick={() => {
@@ -591,51 +603,7 @@ export default function AdminPage() {
                     </Button>
                   </div>
 
-                  {/* Create New Category Form */}
-                  {showNewCategoryForm && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
-                      <h4 className="font-medium text-sm">Create New Category</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <Input
-                          placeholder="Category name"
-                          value={newCategoryName}
-                          onChange={(e) => setNewCategoryName(e.target.value)}
-                        />
-                        <Input
-                          placeholder="Description (optional)"
-                          value={newCategoryDescription}
-                          onChange={(e) => setNewCategoryDescription(e.target.value)}
-                        />
-                        <Select value={newCategoryColor} onValueChange={setNewCategoryColor}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="blue">Blue</SelectItem>
-                            <SelectItem value="emerald">Emerald</SelectItem>
-                            <SelectItem value="purple">Purple</SelectItem>
-                            <SelectItem value="amber">Amber</SelectItem>
-                            <SelectItem value="rose">Rose</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={handleCreateCategory} className="bg-emerald-500 hover:bg-emerald-600">
-                          Create
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          setShowNewCategoryForm(false)
-                          setNewCategoryName('')
-                          setNewCategoryDescription('')
-                          setNewCategoryColor('blue')
-                        }}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Categories with Collapsible Assessments */}
+                  {/* Assessments by Level */}
                   {loadingAssessments ? (
                     <div className="flex items-center justify-center py-12">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
@@ -648,88 +616,80 @@ export default function AdminPage() {
                           <p className="text-gray-500">No assessments found. Create your first assessment using the Builder tab.</p>
                         </div>
                       ) : (
-                        Object.entries(getAssessmentsByCategory()).map(([categoryName, categoryAssessments]) => (
-                          <div key={categoryName} className="border border-gray-200 rounded-lg overflow-hidden">
-                            <button
-                              onClick={() => toggleCategoryExpanded(categoryName)}
-                              className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors"
-                            >
-                              <div className="flex items-center gap-2">
-                                <ChevronDown
-                                  className={`w-4 h-4 transition-transform ${
-                                    expandedCategories[categoryName] ? '' : '-rotate-90'
-                                  }`}
-                                />
-                                <h4 className="font-medium text-gray-900">{categoryName}</h4>
-                                <Badge variant="secondary" className="text-xs">
-                                  {categoryAssessments.length}
-                                </Badge>
-                              </div>
-                            </button>
+                        [1, 2, 3].map((level) => {
+                          const levelAssessments = getAssessmentsByLevel()[level]
+                          return (
+                            <div key={level} className="border border-gray-200 rounded-lg overflow-hidden">
+                              <button
+                                onClick={() => toggleLevelExpanded(level)}
+                                className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <ChevronDown
+                                    className={`w-4 h-4 transition-transform ${
+                                      expandedCategories[level] ? '' : '-rotate-90'
+                                    }`}
+                                  />
+                                  <h4 className="font-medium text-gray-900">{getLevelTitle(level)}</h4>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {levelAssessments.length}
+                                  </Badge>
+                                </div>
+                              </button>
 
-                            {expandedCategories[categoryName] && (
-                              <div className="p-4 space-y-3 bg-white">
-                                {categoryAssessments.map((assessment) => (
-                                  <Card key={assessment.id} className="border border-gray-200">
-                                    <CardHeader className="pb-3">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                          <CardTitle className="text-base">{assessment.name}</CardTitle>
-                                          <CardDescription className="text-sm">{assessment.description}</CardDescription>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Badge variant="outline" className="text-xs">
-                                            Level {assessment.assessment_level || 1}
-                                          </Badge>
-                                          <Select
-                                            value={assessment.status.toLowerCase()}
-                                            onValueChange={(value) => handleAssessmentStatusChange(assessment.id, value as 'draft' | 'live' | 'archived')}
+                              {expandedCategories[level] && (
+                                <div className="p-4 space-y-3 bg-white">
+                                  {levelAssessments.length === 0 ? (
+                                    <p className="text-sm text-gray-500 text-center py-4">No assessments at this level</p>
+                                  ) : (
+                                    levelAssessments.map((assessment) => (
+                                      <Card key={assessment.id} className="border border-gray-200">
+                                        <CardHeader className="pb-3">
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                              <CardTitle className="text-base">{assessment.name}</CardTitle>
+                                              <CardDescription className="text-sm">{assessment.description}</CardDescription>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <Select
+                                                value={assessment.status.toLowerCase()}
+                                                onValueChange={(value) => handleAssessmentStatusChange(assessment.id, value as 'draft' | 'live' | 'archived')}
+                                              >
+                                                <SelectTrigger className="w-[100px] h-7 text-xs">
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="draft">Draft</SelectItem>
+                                                  <SelectItem value="live">Live</SelectItem>
+                                                  <SelectItem value="archived">Archived</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                              const assessmentConfig = convertToAssessmentConfig(assessment)
+                                              if (assessmentConfig) {
+                                                setEditingAssessment(assessmentConfig)
+                                                setShowEditAssessmentDialog(true)
+                                              }
+                                            }}
                                           >
-                                            <SelectTrigger className="w-[100px] h-7 text-xs">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="draft">Draft</SelectItem>
-                                              <SelectItem value="live">Live</SelectItem>
-                                              <SelectItem value="archived">Archived</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                      </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          const assessmentConfig = convertToAssessmentConfig(assessment)
-                                          if (assessmentConfig) {
-                                            setEditingAssessment(assessmentConfig)
-                                            setShowEditAssessmentDialog(true)
-                                          }
-                                        }}
-                                      >
-                                        Edit
-                                      </Button>
-                                    </CardContent>
-                                  </Card>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-
-                      {/* Add New Category Button */}
-                      {!showNewCategoryForm && (
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowNewCategoryForm(true)}
-                          className="w-full"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add New Category
-                        </Button>
+                                            Edit
+                                          </Button>
+                                        </CardContent>
+                                      </Card>
+                                    ))
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })
                       )}
                     </div>
                   )}
