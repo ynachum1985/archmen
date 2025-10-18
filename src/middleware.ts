@@ -8,6 +8,9 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Set Permissions-Policy header to prevent browser warnings
+  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+
   // Check if environment variables are available
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
