@@ -162,6 +162,9 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       if (error) throw error
 
+      console.log(`[Dashboard] Loading assessments - Admin: ${isCurrentUserAdmin}, Count: ${data?.length || 0}`)
+      console.log(`[Dashboard] Assessments:`, data?.map(a => ({ name: a.name, status: a.status, is_active: a.is_active })))
+
       setAssessments(data || [])
     } catch (error) {
       console.error('Error loading assessments:', error)
