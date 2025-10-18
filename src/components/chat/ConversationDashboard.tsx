@@ -58,6 +58,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [selectedStatus, setSelectedStatus] = useState<string>('live')
   const [currentView, setCurrentView] = useState<'chat' | 'tasks' | 'settings' | 'archetypes'>('chat')
   const [currentConversation, setCurrentConversation] = useState<any>(null)
+  const [viewAsUser, setViewAsUser] = useState(false)
   const isAdminRef = useRef(false)
 
   useEffect(() => {
@@ -99,6 +100,10 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     isAdminRef.current = isAdmin
     loadAssessments(isAdmin)
   }, [isAdmin])
+
+  useEffect(() => {
+    loadAssessments(isAdmin)
+  }, [viewAsUser])
 
 
 
@@ -149,9 +154,11 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
       // Use provided adminStatus or fall back to state
       const isCurrentUserAdmin = adminStatus !== undefined ? adminStatus : isAdmin
 
-      // Admin users see all assessments (draft, live, archived)
-      // Regular users only see live assessments (enforced by RLS policies)
-      if (!isCurrentUserAdmin) {
+      // If viewing as user (even if admin), only show live assessments
+      // Otherwise, admin users see all assessments (draft, live, archived)
+      const shouldFilterAsUser = viewAsUser || !isCurrentUserAdmin
+
+      if (shouldFilterAsUser) {
         query = query.eq('status', 'live').eq('is_active', true)
       }
 
@@ -162,7 +169,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       if (error) throw error
 
-      console.log(`[Dashboard] Loading assessments - Admin: ${isCurrentUserAdmin}, Count: ${data?.length || 0}`)
+      console.log(`[Dashboard] Loading assessments - Admin: ${isCurrentUserAdmin}, ViewAsUser: ${viewAsUser}, Count: ${data?.length || 0}`)
       console.log(`[Dashboard] Assessments:`, data?.map(a => ({ name: a.name, status: a.status, is_active: a.is_active })))
 
       setAssessments(data || [])
@@ -489,18 +496,46 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
         style={{ width: sidebarCollapsed ? '64px' : `${sidebarWidth}px` }}
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200/50 flex items-center justify-between">
-          {!sidebarCollapsed && (
-            <h2 className="font-medium text-gray-900">Assessments</h2>
+        <div className="p-4 border-b border-gray-200/50 space-y-3">
+          <div className="flex items-center justify-between">
+            {!sidebarCollapsed && (
+              <h2 className="font-medium text-gray-900">Assessments</h2>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
+            >
+              {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {/* View Toggle for Admins */}
+          {!sidebarCollapsed && isAdmin && (
+            <div className="flex items-center gap-2 bg-gray-100/50 rounded-lg p-2">
+              <button
+                onClick={() => setViewAsUser(false)}
+                className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  !viewAsUser
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Admin View
+              </button>
+              <button
+                onClick={() => setViewAsUser(true)}
+                className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  viewAsUser
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                User View
+              </button>
+            </div>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
         </div>
 
         {/* Content */}
