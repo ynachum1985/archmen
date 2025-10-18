@@ -130,13 +130,8 @@ export default function AdminPage() {
   const [currentBuilderAssessment, setCurrentBuilderAssessment] = useState<any>(null)
   const [activeSetupTab, setActiveSetupTab] = useState('assessments')
 
-  // Category management state
-  const [categories, setCategories] = useState<Array<{ id: string; name: string; description: string; color: string; icon: string; is_active: boolean }>>([])
+  // Level expansion state (for grouping assessments by level)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [newCategoryDescription, setNewCategoryDescription] = useState('')
-  const [newCategoryColor, setNewCategoryColor] = useState('blue')
-  const [showNewCategoryForm, setShowNewCategoryForm] = useState(false)
 
   // Convert assessment data from Supabase to EnhancedAssessmentConfig format
   const convertToAssessmentConfig = (assessment: any) => {
@@ -344,52 +339,8 @@ export default function AdminPage() {
   // Load assessments on component mount
   useEffect(() => {
     loadAssessments()
-    loadCategories()
+    // Categories are no longer used - assessments are organized by level instead
   }, [])
-
-  // Load assessment categories
-  const loadCategories = async () => {
-    try {
-      const response = await fetch('/api/assessment-categories')
-      const data = await response.json()
-      if (data.success && data.categories) {
-        setCategories(data.categories)
-      }
-    } catch (error) {
-      console.error('Error loading categories:', error)
-    }
-  }
-
-  // Create new assessment category
-  const handleCreateCategory = async () => {
-    if (!newCategoryName.trim()) {
-      alert('Please enter a category name')
-      return
-    }
-
-    try {
-      const response = await fetch('/api/assessment-categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newCategoryName,
-          description: newCategoryDescription,
-          color: newCategoryColor
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to create category')
-
-      setNewCategoryName('')
-      setNewCategoryDescription('')
-      setNewCategoryColor('blue')
-      await loadCategories()
-      alert('Category created successfully!')
-    } catch (error) {
-      console.error('Error creating category:', error)
-      alert('Failed to create category')
-    }
-  }
 
   // Group assessments by level
   const getAssessmentsByLevel = () => {
