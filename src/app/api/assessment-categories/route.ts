@@ -5,6 +5,13 @@ export async function GET() {
   try {
     const supabase = createServiceClient()
 
+    if (!supabase) {
+      return NextResponse.json(
+        { success: false, error: 'Supabase client not available' },
+        { status: 500 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('assessment_categories')
       .select('*')
@@ -38,6 +45,13 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServiceClient()
+
+    if (!supabase) {
+      return NextResponse.json(
+        { success: false, error: 'Supabase client not available' },
+        { status: 500 }
+      )
+    }
 
     // Check if category already exists
     const { data: existing } = await supabase

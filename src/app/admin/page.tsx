@@ -19,7 +19,8 @@ import {
   Brain,
   Sparkles,
   TrendingUp,
-  Database
+  Database,
+  ChevronDown
 } from 'lucide-react'
 
 import { Input } from "@/components/ui/input"
