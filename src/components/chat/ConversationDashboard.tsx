@@ -63,6 +63,28 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
     loadAssessments()
     checkMainAssessmentCompleted().then(setMainAssessmentCompleted)
     checkAdminStatus()
+
+    // Subscribe to real-time changes in assessments
+    const supabase = createClient()
+    const subscription = supabase
+      .channel('enhanced_assessments_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'enhanced_assessments'
+        },
+        (payload) => {
+          // Reload assessments when any changes occur
+          loadAssessments()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [userId])
 
   useEffect(() => {
