@@ -60,35 +60,42 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [currentConversation, setCurrentConversation] = useState<any>(null)
 
   useEffect(() => {
-    loadAssessments()
-    checkMainAssessmentCompleted().then(setMainAssessmentCompleted)
-    checkAdminStatus()
+    const initializeDashboard = async () => {
+      const adminStatus = await checkAdminStatus()
+      await loadAssessments(adminStatus)
+      checkMainAssessmentCompleted().then(setMainAssessmentCompleted)
 
-    // Subscribe to real-time changes in assessments
-    const supabase = createClient()
-    const subscription = supabase
-      .channel('enhanced_assessments_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'enhanced_assessments'
-        },
-        (payload) => {
-          // Reload assessments when any changes occur
-          loadAssessments()
-        }
-      )
-      .subscribe()
+      // Subscribe to real-time changes in assessments
+      const supabase = createClient()
+      const subscription = supabase
+        .channel('enhanced_assessments_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'enhanced_assessments'
+          },
+          (payload) => {
+            // Reload assessments when any changes occur, passing current admin status
+            loadAssessments(adminStatus)
+          }
+        )
+        .subscribe()
 
+      return () => {
+        subscription.unsubscribe()
+      }
+    }
+
+    const cleanup = initializeDashboard()
     return () => {
-      subscription.unsubscribe()
+      cleanup.then(fn => fn?.())
     }
   }, [userId])
 
   useEffect(() => {
-    loadAssessments()
+    loadAssessments(isAdmin)
   }, [isAdmin])
 
 
@@ -110,19 +117,23 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
           .single()
 
         if (!error && data) {
-          setIsAdmin(data.is_admin || false)
+          const adminStatus = data.is_admin || false
+          setIsAdmin(adminStatus)
           // If admin, default to showing all statuses
-          if (data.is_admin) {
+          if (adminStatus) {
             setSelectedStatus('all')
           }
+          return adminStatus
         }
       }
+      return false
     } catch (error) {
       console.error('Error checking admin status:', error)
+      return false
     }
   }
 
-  const loadAssessments = async () => {
+  const loadAssessments = async (adminStatus?: boolean) => {
     try {
       const supabase = createClient()
 
@@ -130,9 +141,12 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         .from('enhanced_assessments')
         .select('id, name, description, category, expected_duration, assessment_level, status, is_active, quiz_enabled, has_custom_gateways, quiz_set_questions_prompt, quiz_experience_analysis_prompt')
 
+      // Use provided adminStatus or fall back to state
+      const isCurrentUserAdmin = adminStatus !== undefined ? adminStatus : isAdmin
+
       // Admin users see all assessments (draft, live, archived)
       // Regular users only see live assessments (enforced by RLS policies)
-      if (!isAdmin) {
+      if (!isCurrentUserAdmin) {
         query = query.eq('status', 'live').eq('is_active', true)
       }
 

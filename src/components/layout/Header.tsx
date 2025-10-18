@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AuthService } from '@/lib/services/auth.service'
 import { Button } from '@/components/ui/button'
-import { LogOut, LayoutDashboard } from 'lucide-react'
+import { LogOut, LayoutDashboard, Settings } from 'lucide-react'
 
 export function Header() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   const authService = new AuthService()
 
@@ -19,16 +20,31 @@ export function Header() {
       try {
         const supabase = createClient()
         const { data: { user }, error } = await supabase.auth.getUser()
-        
+
         if (error) {
           console.error('Error checking auth:', error)
           setUser(null)
+          setIsAdmin(false)
         } else {
           setUser(user)
+
+          // Check if user is admin
+          if (user) {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('is_admin')
+              .eq('id', user.id)
+              .single()
+
+            if (!profileError && profile) {
+              setIsAdmin(profile.is_admin || false)
+            }
+          }
         }
       } catch (error) {
         console.error('Error in checkAuth:', error)
         setUser(null)
+        setIsAdmin(false)
       } finally {
         setLoading(false)
       }
@@ -41,6 +57,9 @@ export function Header() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user || null)
+        if (!session?.user) {
+          setIsAdmin(false)
+        }
       }
     )
 
@@ -75,6 +94,18 @@ export function Header() {
               <span className="text-sm text-foreground/70">
                 {user.email}
               </span>
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Admin
+                  </Button>
+                </Link>
+              )}
               <Link href="/dashboard">
                 <Button
                   variant="outline"
