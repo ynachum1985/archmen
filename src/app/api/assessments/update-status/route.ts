@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,12 +19,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = createServiceClient()
 
-    // Update the assessment status
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase client not available' },
+        { status: 500 }
+      )
+    }
+
+    // Update the assessment status in enhanced_assessments table
     const { data, error } = await supabase
-      .from('assessments')
-      .update({ 
+      .from('enhanced_assessments')
+      .update({
         status,
         is_active: status === 'live' // Set is_active based on status
       })
@@ -35,7 +42,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error updating assessment status:', error)
       return NextResponse.json(
-        { error: 'Failed to update assessment status' },
+        { error: 'Failed to update assessment status', details: error.message },
         { status: 500 }
       )
     }
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error in update-status API:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
