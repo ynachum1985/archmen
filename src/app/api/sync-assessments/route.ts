@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assessment name is required' }, { status: 400 })
     }
 
-    // Check if assessment already exists (by ID or by name)
+    // Check if assessment already exists (by ID)
     let existingAssessment = null
 
     // First, check by ID if provided
@@ -41,35 +41,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to check existing assessment' }, { status: 500 })
       }
       existingAssessment = data
-    }
-
-    // If not found by ID, check by name (but only if creating new)
-    if (!existingAssessment && !assessment.id) {
-      const { data: nameMatches, error: nameCheckError } = await supabase
-        .from('enhanced_assessments')
-        .select('id, created_at')
-        .eq('name', assessment.name)
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      if (nameCheckError && nameCheckError.code !== 'PGRST116') { // PGRST116 is "not found"
-        console.error('Error checking existing assessment by name:', nameCheckError)
-        return NextResponse.json({ error: 'Failed to check existing assessment' }, { status: 500 })
-      }
-
-      // If we found a recent assessment with the same name (created within last 5 seconds),
-      // it's likely a duplicate from a race condition - return it instead of creating another
-      if (nameMatches && nameMatches.length > 0) {
-        const lastCreated = new Date(nameMatches[0].created_at)
-        const now = new Date()
-        const secondsAgo = (now.getTime() - lastCreated.getTime()) / 1000
-
-        if (secondsAgo < 5) {
-          // This is likely a duplicate request, return the existing one
-          console.log(`Found recent assessment with same name (${secondsAgo.toFixed(1)}s ago), returning existing`)
-          existingAssessment = nameMatches[0]
-        }
-      }
     }
 
     let result

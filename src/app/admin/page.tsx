@@ -441,9 +441,8 @@ export default function AdminPage() {
     try {
       console.log('Enhanced Assessment saved:', assessmentData)
 
-      // Save to database using the integration service
-      const assessmentId = await assessmentIntegrationService.createMainAssessment(assessmentData as Record<string, unknown>)
-      console.log('Assessment saved with ID:', assessmentId)
+      // Note: The assessment is already saved by EnhancedAssessmentBuilder's handleSave function
+      // which calls /api/sync-assessments. We just need to refresh the list here.
 
       // Refresh the assessments list to show the new assessment
       await loadAssessments()
