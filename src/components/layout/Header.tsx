@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AuthService } from '@/lib/services/auth.service'
 import { Button } from '@/components/ui/button'
-import { LogOut } from 'lucide-react'
+import { LogOut, LayoutDashboard } from 'lucide-react'
 
 export function Header() {
   const [user, setUser] = useState<any>(null)
@@ -75,6 +75,16 @@ export function Header() {
               <span className="text-sm text-foreground/70">
                 {user.email}
               </span>
+              <Link href="/dashboard">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 size="sm"
