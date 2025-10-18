@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -58,6 +58,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const [selectedStatus, setSelectedStatus] = useState<string>('live')
   const [currentView, setCurrentView] = useState<'chat' | 'tasks' | 'settings' | 'archetypes'>('chat')
   const [currentConversation, setCurrentConversation] = useState<any>(null)
+  const isAdminRef = useRef(false)
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -77,8 +78,8 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
             table: 'enhanced_assessments'
           },
           (payload) => {
-            // Reload assessments when any changes occur, passing current admin status
-            loadAssessments(adminStatus)
+            // Reload assessments when any changes occur, using ref for current admin status
+            loadAssessments(isAdminRef.current)
           }
         )
         .subscribe()
@@ -95,6 +96,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   }, [userId])
 
   useEffect(() => {
+    isAdminRef.current = isAdmin
     loadAssessments(isAdmin)
   }, [isAdmin])
 
@@ -119,6 +121,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
         if (!error && data) {
           const adminStatus = data.is_admin || false
           setIsAdmin(adminStatus)
+          isAdminRef.current = adminStatus
           // If admin, default to showing all statuses
           if (adminStatus) {
             setSelectedStatus('all')
@@ -126,9 +129,11 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
           return adminStatus
         }
       }
+      isAdminRef.current = false
       return false
     } catch (error) {
       console.error('Error checking admin status:', error)
+      isAdminRef.current = false
       return false
     }
   }
