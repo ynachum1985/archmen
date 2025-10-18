@@ -103,11 +103,13 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
   const loadAssessments = async () => {
     try {
       const supabase = createClient()
+
       let query = supabase
         .from('enhanced_assessments')
         .select('id, name, description, category, expected_duration, assessment_level, status, is_active, quiz_enabled, has_custom_gateways, quiz_set_questions_prompt, quiz_experience_analysis_prompt')
 
-      // Admin users see all assessments, regular users only see live ones
+      // Admin users see all assessments (draft, live, archived)
+      // Regular users only see live assessments (enforced by RLS policies)
       if (!isAdmin) {
         query = query.eq('status', 'live').eq('is_active', true)
       }

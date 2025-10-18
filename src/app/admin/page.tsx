@@ -129,6 +129,12 @@ export default function AdminPage() {
   const [currentBuilderAssessment, setCurrentBuilderAssessment] = useState<any>(null)
   const [activeSetupTab, setActiveSetupTab] = useState('assessments')
 
+  // Category management state
+  const [categories, setCategories] = useState<Array<{ id: string; name: string; description: string; color: string; icon: string; is_active: boolean }>>([])
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryDescription, setNewCategoryDescription] = useState('')
+  const [newCategoryColor, setNewCategoryColor] = useState('blue')
+
   // Convert assessment data from Supabase to EnhancedAssessmentConfig format
   const convertToAssessmentConfig = (assessment: any) => {
     // Safety check for undefined assessment
@@ -150,6 +156,13 @@ export default function AdminPage() {
         systemPrompt: assessment.system_prompt || `You are analyzing ${assessment.name?.toLowerCase() || 'relationship'} patterns.`,
         minQuestions: assessment.min_questions || 8,
         maxQuestions: assessment.max_questions || 15,
+        minArchetypes: assessment.min_archetypes || 2,
+        minConfidence: assessment.min_confidence || 70,
+        assessment_level: assessment.assessment_level || 1,
+        status: assessment.status || 'draft',
+        is_active: assessment.is_active || false,
+        liveProvider: assessment.live_provider || 'openai',
+        liveModel: assessment.live_model || 'gpt-4-turbo-preview',
         evidenceThreshold: (assessment.evidence_threshold || 0.7) * 100, // Convert to percentage
         adaptationSensitivity: (assessment.adaptation_sensitivity || 0.5) * 100,
         cycleSettings: assessment.cycle_settings || {
@@ -197,6 +210,13 @@ export default function AdminPage() {
       systemPrompt: `You are analyzing ${assessment.name?.toLowerCase() || 'relationship'} patterns.`,
       minQuestions: Math.max(8, (assessment.questionCount || 8) - 3),
       maxQuestions: (assessment.questionCount || 8) + 3,
+      minArchetypes: 2,
+      minConfidence: 70,
+      assessment_level: assessment.assessment_level || 1,
+      status: assessment.status?.toLowerCase() || 'draft',
+      is_active: assessment.status?.toLowerCase() === 'live',
+      liveProvider: 'openai',
+      liveModel: 'gpt-4-turbo-preview',
       evidenceThreshold: 70,
       adaptationSensitivity: 50,
       cycleSettings: {
@@ -302,7 +322,9 @@ export default function AdminPage() {
           archetypeCount: 0,
           questionCount: assessment.min_questions || 8,
           completionRate: 0,
-          isMain: assessment.category === 'Main'
+          isMain: assessment.category === 'Main',
+          assessment_level: assessment.assessment_level || 1,
+          ...assessment // Include all assessment fields for convertToAssessmentConfig
         }))
         console.log(`Formatted ${formattedAssessments.length} assessments for display`) // Debug log
         setAssessmentCategories(formattedAssessments)
@@ -319,7 +341,52 @@ export default function AdminPage() {
   // Load assessments on component mount
   useEffect(() => {
     loadAssessments()
+    loadCategories()
   }, [])
+
+  // Load assessment categories
+  const loadCategories = async () => {
+    try {
+      const response = await fetch('/api/assessment-categories')
+      const data = await response.json()
+      if (data.success && data.categories) {
+        setCategories(data.categories)
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error)
+    }
+  }
+
+  // Create new assessment category
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      alert('Please enter a category name')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/assessment-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCategoryName,
+          description: newCategoryDescription,
+          color: newCategoryColor
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to create category')
+
+      setNewCategoryName('')
+      setNewCategoryDescription('')
+      setNewCategoryColor('blue')
+      await loadCategories()
+      alert('Category created successfully!')
+    } catch (error) {
+      console.error('Error creating category:', error)
+      alert('Failed to create category')
+    }
+  }
 
   const handleToggleArchetype = (archetypeId: string) => {
     if (expandedArchetype === archetypeId) {
@@ -470,6 +537,13 @@ export default function AdminPage() {
                   Assessments
                 </TabsTrigger>
                 <TabsTrigger
+                  value="categories"
+                  className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none mr-8 focus:outline-none focus:ring-0"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Categories
+                </TabsTrigger>
+                <TabsTrigger
                   value="builder"
                   className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[state=active]:border-gray-400 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent bg-transparent rounded-none focus:outline-none focus:ring-0"
                 >
@@ -577,6 +651,76 @@ export default function AdminPage() {
                       )}
                     </div>
                   )}
+                </div>
+              </TabsContent>
+
+              {/* Categories Sub-tab */}
+              <TabsContent value="categories" className="mt-0">
+                <div className="space-y-6">
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-medium mb-4">Create New Category</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                        <Input
+                          placeholder="e.g., Relationship Patterns, Shadow Work, Integration"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <Input
+                          placeholder="Brief description of this category"
+                          value={newCategoryDescription}
+                          onChange={(e) => setNewCategoryDescription(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                        <Select value={newCategoryColor} onValueChange={setNewCategoryColor}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="blue">Blue</SelectItem>
+                            <SelectItem value="emerald">Emerald</SelectItem>
+                            <SelectItem value="purple">Purple</SelectItem>
+                            <SelectItem value="amber">Amber</SelectItem>
+                            <SelectItem value="rose">Rose</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleCreateCategory} className="bg-emerald-500 hover:bg-emerald-600">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Category
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Existing Categories</h3>
+                    {categories.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">No categories created yet. Create your first category above.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categories.map((cat) => (
+                          <Card key={cat.id} className="border border-gray-200">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-base">{cat.name}</CardTitle>
+                              <CardDescription className="text-sm">{cat.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 rounded-full bg-${cat.color}-500`}></div>
+                                <span className="text-xs text-gray-600">{cat.color}</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </TabsContent>
 
