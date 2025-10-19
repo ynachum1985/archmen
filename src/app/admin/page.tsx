@@ -147,14 +147,14 @@ export default function AdminPage() {
     }
 
     // If this is already a full assessment from Supabase, use it directly
-    if (assessment.system_prompt || assessment.combined_prompt) {
+    if (assessment.system_prompt || assessment.combined_prompt || assessment.assessment_prompt) {
       return {
         id: assessment.id,
         name: assessment.name,
         description: assessment.description,
         category: assessment.category || 'Relationship Assessment',
         purpose: assessment.purpose || `This assessment is designed to ${assessment.description?.toLowerCase() || 'assess relationship patterns'}`,
-        assessmentPrompt: assessment.system_prompt || `You are conducting the "${assessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences.`,
+        assessmentPrompt: assessment.assessment_prompt || assessment.system_prompt || `You are conducting the "${assessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences.`,
         expectedDuration: assessment.expected_duration || 20,
         systemPrompt: assessment.system_prompt || `You are analyzing ${assessment.name?.toLowerCase() || 'relationship'} patterns.`,
         minQuestions: assessment.min_questions || 8,
@@ -208,7 +208,7 @@ export default function AdminPage() {
       description: assessment.description,
       category: assessment.isMain ? 'Relationship Assessment' : 'Specialized Assessment',
       purpose: `This assessment is designed to ${assessment.description?.toLowerCase() || 'assess relationship patterns'}`,
-      assessmentPrompt: `You are conducting the "${assessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences.`,
+      assessmentPrompt: assessment.assessment_prompt || `You are conducting the "${assessment.name}" assessment. Ask thoughtful, open-ended questions to understand the user's patterns and preferences.`,
       expectedDuration: Math.ceil((assessment.questionCount || 8) * 1.5),
       systemPrompt: `You are analyzing ${assessment.name?.toLowerCase() || 'relationship'} patterns.`,
       minQuestions: Math.max(8, (assessment.questionCount || 8) - 3),
