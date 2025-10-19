@@ -59,17 +59,27 @@ function chunkText(text: string, chunkSize: number = 400, overlap: number = 80):
 
 // Generate embedding for text with support for multiple providers
 async function generateEmbedding(text: string, model: string = 'mistral-embed'): Promise<number[]> {
-  // Clean and preprocess text
-  const cleanText = preprocessText(text)
+  try {
+    console.log('[generateEmbedding] Starting with model:', model)
+    // Clean and preprocess text
+    const cleanText = preprocessText(text)
+    console.log('[generateEmbedding] Text preprocessed, length:', cleanText.length)
 
-  // Handle different embedding providers
-  if (model.startsWith('mistral-')) {
-    return await generateMistralEmbedding(cleanText, model)
-  } else if (model.startsWith('voyage-')) {
-    return await generateVoyageEmbedding(cleanText, model)
-  } else {
-    // OpenAI models (default)
-    return await generateOpenAIEmbedding(cleanText, model)
+    // Handle different embedding providers
+    if (model.startsWith('mistral-')) {
+      console.log('[generateEmbedding] Using Mistral provider')
+      return await generateMistralEmbedding(cleanText, model)
+    } else if (model.startsWith('voyage-')) {
+      console.log('[generateEmbedding] Using Voyage provider')
+      return await generateVoyageEmbedding(cleanText, model)
+    } else {
+      // OpenAI models (default)
+      console.log('[generateEmbedding] Using OpenAI provider')
+      return await generateOpenAIEmbedding(cleanText, model)
+    }
+  } catch (error) {
+    console.error('[generateEmbedding] Error:', error)
+    throw error
   }
 }
 
@@ -85,18 +95,27 @@ function preprocessText(text: string): string {
 
 // OpenAI embedding generation
 async function generateOpenAIEmbedding(text: string, model: string): Promise<number[]> {
+  console.log('[generateOpenAIEmbedding] Starting with model:', model)
+
   if (!openai) {
+    console.error('[generateOpenAIEmbedding] OpenAI client not initialized')
     throw new Error('OpenAI API key not configured')
   }
 
   try {
+    console.log('[generateOpenAIEmbedding] Calling OpenAI API with text length:', text.length)
     const response = await openai.embeddings.create({
       model,
       input: text
     })
+    console.log('[generateOpenAIEmbedding] Success, embedding dimension:', response.data[0].embedding.length)
     return response.data[0].embedding
   } catch (error) {
-    console.error('Error generating OpenAI embedding:', error)
+    console.error('[generateOpenAIEmbedding] Error:', error)
+    if (error instanceof Error) {
+      console.error('[generateOpenAIEmbedding] Error message:', error.message)
+      console.error('[generateOpenAIEmbedding] Error stack:', error.stack)
+    }
     throw error
   }
 }
@@ -117,8 +136,11 @@ async function generateVoyageEmbedding(text: string, model: string): Promise<num
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[process-assessment-content] Request received')
     const supabase = createServiceClient()
     const body = await request.json()
+    console.log('[process-assessment-content] Request body keys:', Object.keys(body))
+
     const {
       assessmentId,
       textContent,
@@ -132,7 +154,10 @@ export async function POST(request: NextRequest) {
       }
     } = body
 
+    console.log('[process-assessment-content] Parsed:', { assessmentId, hasTextContent: !!textContent, hasFileContent: !!fileContent })
+
     if (!assessmentId) {
+      console.error('[process-assessment-content] Missing assessmentId')
       return NextResponse.json({ error: 'Assessment ID is required' }, { status: 400 })
     }
 
