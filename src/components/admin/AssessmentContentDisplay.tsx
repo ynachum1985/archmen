@@ -261,8 +261,9 @@ export const AssessmentContentDisplay = forwardRef<AssessmentContentDisplayRef, 
             )}
 
             <div className="space-y-4 max-h-96 overflow-y-auto">
-            {filteredChunks.map((chunk, index) => (
-              <div key={chunk.id} className="border border-gray-200 rounded-lg p-4">
+              <>
+                {filteredChunks.map((chunk, index) => (
+                  <div key={chunk.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">Chunk {chunk.chunk_index + 1}</Badge>
@@ -317,8 +318,9 @@ export const AssessmentContentDisplay = forwardRef<AssessmentContentDisplayRef, 
                   Uploaded: {new Date(chunk.created_at).toLocaleDateString()}
                 </div>
               </div>
-            ))}
-          </div>
+                ))}
+              </>
+            </div>
           </>
         )}
           </CardContent>
