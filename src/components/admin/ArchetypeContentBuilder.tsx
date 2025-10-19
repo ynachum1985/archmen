@@ -318,35 +318,37 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
       {/* Archetype Tabs */}
       {selectedArchetypes.length > 0 && (
         <div className="flex gap-1 flex-wrap border-b border-gray-200">
-          {selectedArchetypes.map((archetypeId) => {
-            const archetype = archetypes.find(a => a.id === archetypeId)
-            if (!archetype) return null
+          <>
+            {selectedArchetypes.map((archetypeId) => {
+              const archetype = archetypes.find(a => a.id === archetypeId)
+              if (!archetype) return null
 
-            return (
-              <div
-                key={archetypeId}
-                className={`flex items-center gap-2 px-3 py-2 rounded-t-lg cursor-pointer transition-colors ${
-                  activeArchetypeTab === archetypeId
-                    ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-                onClick={() => setActiveArchetypeTab(archetypeId)}
-              >
-                <span className="text-sm font-medium">{archetype.name}</span>
-                {selectedArchetypes.length > 1 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removeArchetypeTab(archetypeId)
-                    }}
-                    className="text-gray-400 hover:text-red-500 ml-1"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            )
-          })}
+              return (
+                <div
+                  key={archetypeId}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-t-lg cursor-pointer transition-colors ${
+                    activeArchetypeTab === archetypeId
+                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setActiveArchetypeTab(archetypeId)}
+                >
+                  <span className="text-sm font-medium">{archetype.name}</span>
+                  {selectedArchetypes.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeArchetypeTab(archetypeId)
+                      }}
+                      className="text-gray-400 hover:text-red-500 ml-1"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </>
         </div>
       )}
 

@@ -182,31 +182,32 @@ export function InlineAssessmentView({ userId, onStartAssessment }: InlineAssess
 
       {/* Assessment Levels */}
       <div className="space-y-6">
-        {[1, 2, 3].map(level => {
-          const levelAssessments = getAssessmentsByLevel(level)
-          if (levelAssessments.length === 0) return null
+        <>
+          {[1, 2, 3].map(level => {
+            const levelAssessments = getAssessmentsByLevel(level)
+            if (levelAssessments.length === 0) return null
 
-          return (
-            <div key={level} className="space-y-3">
-              <h2 className={`text-lg font-medium ${getLevelColor(level)}`}>
-                {getLevelTitle(level)}
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {levelAssessments.map((assessment) => {
-                  const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
-                  const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
+            return (
+              <div key={level} className="space-y-3">
+                <h2 className={`text-lg font-medium ${getLevelColor(level)}`}>
+                  {getLevelTitle(level)}
+                </h2>
 
-                  return (
-                    <Card 
-                      key={assessment.id}
-                      className={`transition-all duration-200 ${
-                        isAccessible
-                          ? 'hover:shadow-md cursor-pointer border-gray-200'
-                          : 'opacity-60 cursor-not-allowed border-gray-100'
-                      }`}
-                      onClick={() => isAccessible ? createNewConversation(assessment) : null}
-                    >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {levelAssessments.map((assessment) => {
+                    const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
+                    const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
+
+                    return (
+                      <Card
+                        key={assessment.id}
+                        className={`transition-all duration-200 ${
+                          isAccessible
+                            ? 'hover:shadow-md cursor-pointer border-gray-200'
+                            : 'opacity-60 cursor-not-allowed border-gray-100'
+                        }`}
+                        onClick={() => isAccessible ? createNewConversation(assessment) : null}
+                      >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
@@ -249,7 +250,8 @@ export function InlineAssessmentView({ userId, onStartAssessment }: InlineAssess
               </div>
             </div>
           )
-        })}
+          })}
+        </>
       </div>
 
       {assessments.length === 0 && (
