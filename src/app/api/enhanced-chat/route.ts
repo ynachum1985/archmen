@@ -321,6 +321,68 @@ export async function POST(request: Request) {
         })
     }
 
+    // Detect archetypes from the conversation for inline revelation
+    let detectedArchetypes = []
+    if (assessmentId && conversationHistory.length > 0) {
+      try {
+        // Get all archetypes for analysis
+        const { data: allArchetypes } = await supabase
+          .from('enhanced_archetypes')
+          .select('id, name, description')
+          .eq('is_active', true)
+
+        if (allArchetypes && allArchetypes.length > 0) {
+          // Analyze the user's latest message for archetype patterns
+          const latestUserMessage = finalMessages[finalMessages.length - 1]?.content || ''
+
+          // Use AI to detect archetypes with confidence scores
+          const archetypeAnalysisPrompt = `Analyze this user message for Jungian archetype patterns. Return ONLY a JSON object with archetype names as keys and confidence percentages (0-100) as values. Only include archetypes with confidence >= 50.
+
+Available archetypes: ${allArchetypes.map(a => a.name).join(', ')}
+
+User message: "${latestUserMessage}"
+
+Recent conversation context: ${conversationHistory.slice(-2).map(m => `${m.role}: ${m.content}`).join('\n')}
+
+Return only valid JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
+
+          const multiLLM = new MultiLLMService()
+          const archetypeAnalysis = await multiLLM.generateChatCompletion(
+            [{ role: 'user', content: archetypeAnalysisPrompt }],
+            {
+              provider: 'openai',
+              model: 'gpt-3.5-turbo',
+              temperature: 0.3,
+              maxTokens: 200
+            }
+          )
+
+          try {
+            const archetypeScores = JSON.parse(archetypeAnalysis.content)
+
+            // Convert to array and match with archetype data
+            detectedArchetypes = Object.entries(archetypeScores)
+              .filter(([_, score]) => (score as number) >= 50)
+              .map(([name, score]) => {
+                const archetypeData = allArchetypes.find(a => a.name === name)
+                return {
+                  name,
+                  confidenceScore: score as number,
+                  description: archetypeData?.description || '',
+                  isNewlyRevealed: (score as number) >= 70 // Reveal when confidence >= 70%
+                }
+              })
+              .sort((a, b) => b.confidenceScore - a.confidenceScore)
+              .slice(0, 3) // Top 3 archetypes
+          } catch (parseError) {
+            console.error('Error parsing archetype analysis:', parseError)
+          }
+        }
+      } catch (error) {
+        console.error('Error detecting archetypes:', error)
+      }
+    }
+
     return NextResponse.json({
       content: finalResponse,
       context: result.context,
@@ -329,6 +391,7 @@ export async function POST(request: Request) {
       model: model,
       usage: result.usage,
       cost: result.cost,
+      detectedArchetypes: detectedArchetypes,
       ragContext: ragContext ? {
         totalChunks: ragContext.totalChunks,
         archetypeChunks: ragContext.archetypeContent.length,

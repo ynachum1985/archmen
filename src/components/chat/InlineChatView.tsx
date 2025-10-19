@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Send, Sparkles, AlertTriangle, Shield, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useContentModeration, getModerationMessage, shouldAllowContent, getCategoryWarnings } from '@/hooks/useContentModeration'
+import { InlineArchetypeCard } from '@/components/chat/InlineArchetypeCard'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -254,17 +255,20 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       }
 
       const aiData = await response.json()
-      
+
       // Add AI response to conversation
       const aiMessage: Message = {
         role: 'assistant',
         content: aiData.content,
         timestamp: new Date().toISOString(),
-        metadata: aiData.metadata
+        metadata: {
+          ...aiData.metadata,
+          detectedArchetypes: aiData.detectedArchetypes || []
+        }
       }
 
       const finalMessages = [...updatedMessages, aiMessage]
-      
+
       // Update conversation with AI response
       await supabase
         .from('conversations')
@@ -345,19 +349,35 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
               </div>
             )}
             {conversation.messages.map((msg, index) => (
-              <ChatBubble
-                key={index}
-                variant={msg.role === 'user' ? 'sent' : 'received'}
-                className="mb-6"
-              >
-                <ChatBubbleAvatar
-                  src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
-                  fallback={msg.role === 'assistant' ? 'AI' : 'You'}
-                />
-                <ChatBubbleMessage>
-                  {msg.content}
-                </ChatBubbleMessage>
-              </ChatBubble>
+              <div key={index} className="mb-6">
+                <ChatBubble
+                  variant={msg.role === 'user' ? 'sent' : 'received'}
+                  className="mb-4"
+                >
+                  <ChatBubbleAvatar
+                    src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
+                    fallback={msg.role === 'assistant' ? 'AI' : 'You'}
+                  />
+                  <ChatBubbleMessage>
+                    {msg.content}
+                  </ChatBubbleMessage>
+                </ChatBubble>
+
+                {/* Display detected archetypes inline */}
+                {msg.metadata?.detectedArchetypes && msg.metadata.detectedArchetypes.length > 0 && (
+                  <div className="ml-12 space-y-3">
+                    {msg.metadata.detectedArchetypes.map((archetype: any, arcIdx: number) => (
+                      <InlineArchetypeCard
+                        key={arcIdx}
+                        archetypeName={archetype.name}
+                        description={archetype.description}
+                        confidenceScore={archetype.confidenceScore}
+                        isNewlyRevealed={archetype.isNewlyRevealed}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </ChatMessageList>
