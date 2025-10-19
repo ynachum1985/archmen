@@ -526,9 +526,9 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1 p-2 h-0">
+        <ScrollArea className="flex-1 p-2">
           {!sidebarCollapsed && (
-            <div className="space-y-4 h-full overflow-y-auto">
+            <div className="space-y-4">
               {/* Assessment Levels */}
               <div className="space-y-2">
                 {/* Level 1 */}
