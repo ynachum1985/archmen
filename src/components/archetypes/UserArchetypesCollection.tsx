@@ -238,11 +238,12 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
       {/* Archetypes Grid */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
-          {filteredArchetypes.map((archetype) => {
-            const isExpanded = expandedId === archetype.user_archetype_id
+          <>
+            {filteredArchetypes.map((archetype) => {
+              const isExpanded = expandedId === archetype.user_archetype_id
 
-            return (
-              <Card
+              return (
+                <Card
                 key={archetype.user_archetype_id}
                 className={`border-gray-200/50 shadow-sm hover:shadow-md transition-all overflow-hidden ${
                   isExpanded ? 'col-span-full' : ''
@@ -406,8 +407,9 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                 </div>
               </CardContent>
               </Card>
-            )
-          })}
+              )
+            })}
+          </>
         </div>
       </ScrollArea>
     </div>
