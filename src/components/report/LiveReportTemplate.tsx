@@ -263,14 +263,16 @@ function ArchetypeDetailPanel({ archetype }: ArchetypeDetailPanelProps) {
               <ArchetypeOverviewContent archetype={archetype} />
             </TabsContent>
 
-            {contentPages.slice(1).map((page) => (
-              <TabsContent key={page.id} value={page.id} className="space-y-6">
-                <StructuredContentRenderer
-                  content={archetype.structuredContent?.[page.id as keyof ArchetypeContent]}
-                  fallbackContent={getFallbackContent(archetype, page.id)}
-                />
-              </TabsContent>
-            ))}
+            <>
+              {contentPages.slice(1).map((page) => (
+                <TabsContent key={page.id} value={page.id} className="space-y-6">
+                  <StructuredContentRenderer
+                    content={archetype.structuredContent?.[page.id as keyof ArchetypeContent]}
+                    fallbackContent={getFallbackContent(archetype, page.id)}
+                  />
+                </TabsContent>
+              ))}
+            </>
           </Tabs>
         ) : (
           <div className="space-y-8">
