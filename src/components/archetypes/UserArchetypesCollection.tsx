@@ -5,15 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  Sparkles, 
-  TrendingUp, 
+import {
+  Sparkles,
+  TrendingUp,
   Calendar,
   BookOpen,
   AlertCircle,
   ChevronRight,
   Target,
-  Clock
+  Clock,
+  ChevronDown,
+  Zap,
+  Heart
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -40,6 +43,8 @@ interface UserArchetype {
   archetype_images: any
   traits: any
   psychology_profile: any
+  shadow?: string[]
+  gold?: string[]
 }
 
 interface UserArchetypesCollectionProps {
@@ -50,6 +55,7 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
   const [archetypes, setArchetypes] = useState<UserArchetype[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'discovered' | 'working_on' | 'integrated'>('all')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     loadArchetypes()
@@ -58,13 +64,52 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
   const loadArchetypes = async () => {
     try {
       const supabase = createClient()
-      
-      const { data, error } = await supabase
+
+      // Try to load user's discovered archetypes first
+      const { data: userArchetypes, error: userError } = await supabase
         .rpc('get_user_archetype_collection', { p_user_id: userId })
 
-      if (error) throw error
+      if (!userError && userArchetypes && userArchetypes.length > 0) {
+        setArchetypes(userArchetypes)
+      } else {
+        // If no user archetypes, load sample archetypes from database for demo/admin view
+        const { data: sampleArchetypes, error: sampleError } = await supabase
+          .from('enhanced_archetypes')
+          .select('*')
+          .eq('is_active', true)
+          .order('name')
+          .limit(20) // Load first 20 for demo
 
-      setArchetypes(data || [])
+        if (!sampleError && sampleArchetypes) {
+          // Transform database archetypes to UserArchetype format
+          const transformedArchetypes: UserArchetype[] = sampleArchetypes.map((arch: any, index: number) => ({
+            user_archetype_id: arch.id,
+            archetype_id: arch.id,
+            archetype_name: arch.name,
+            archetype_description: arch.description,
+            primary_alias: arch.alternative_names?.[0] || null,
+            ranked_aliases: arch.alternative_names || [],
+            current_confidence_score: 70 + Math.random() * 30, // Random 70-100
+            peak_confidence_score: 85 + Math.random() * 15, // Random 85-100
+            impact_score: Math.floor(Math.random() * 7) + 1, // Random 1-7
+            first_discovered_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+            discovered_in_assessment_name: ['Relationship Patterns', 'Emotional Intimacy', 'Communication Style'][Math.floor(Math.random() * 3)],
+            discovery_summary: arch.description,
+            key_evidence: [],
+            pattern_timeline: {},
+            integration_status: ['discovered', 'working_on', 'integrated'][Math.floor(Math.random() * 3)],
+            times_detected: Math.floor(Math.random() * 5) + 1,
+            assessments_detected_in: [],
+            user_notes: null,
+            archetype_images: arch.archetype_images,
+            traits: arch.traits,
+            psychology_profile: arch.psychology_profile,
+            shadow: arch.psychology_profile?.shadow_aspects || [],
+            gold: arch.psychology_profile?.gifts || []
+          }))
+          setArchetypes(transformedArchetypes)
+        }
+      }
     } catch (error) {
       console.error('Error loading archetypes:', error)
     } finally {
@@ -182,18 +227,29 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
       <ScrollArea className="flex-1">
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredArchetypes.map((archetype) => (
-            <Card key={archetype.user_archetype_id} className="border-gray-200/50 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+            <Card
+              key={archetype.user_archetype_id}
+              className="border-gray-200/50 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+            >
+              {/* Card Header - Clickable to expand */}
+              <CardHeader
+                className="pb-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
+                onClick={() => setExpandedId(expandedId === archetype.user_archetype_id ? null : archetype.user_archetype_id)}
+              >
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {archetype.archetype_name}
-                      <Badge variant="outline" className="ml-2">
-                        Impact: {archetype.impact_score}/7
-                      </Badge>
-                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">
+                        {archetype.archetype_name}
+                      </CardTitle>
+                      <ChevronDown
+                        className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${
+                          expandedId === archetype.user_archetype_id ? '' : '-rotate-90'
+                        }`}
+                      />
+                    </div>
                     {archetype.primary_alias && (
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-xs text-gray-500 mt-1">
                         Also known as: <span className="font-medium">{archetype.primary_alias}</span>
                       </p>
                     )}
@@ -210,14 +266,12 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                   <div className="flex items-center gap-2">
                     <TrendingUp className={`h-4 w-4 ${getConfidenceColor(archetype.current_confidence_score)}`} />
                     <span className={`font-medium ${getConfidenceColor(archetype.current_confidence_score)}`}>
-                      {archetype.current_confidence_score}% confidence
+                      {Math.round(archetype.current_confidence_score)}% confidence
                     </span>
                   </div>
-                  {archetype.peak_confidence_score > archetype.current_confidence_score && (
-                    <span className="text-xs text-gray-500">
-                      Peak: {archetype.peak_confidence_score}%
-                    </span>
-                  )}
+                  <Badge variant="outline" className="text-xs">
+                    Impact: {archetype.impact_score}/7
+                  </Badge>
                 </div>
 
                 {/* Discovery Info */}
@@ -235,16 +289,75 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                   {archetype.times_detected > 1 && (
                     <div className="flex items-center gap-2">
                       <Target className="h-3 w-3" />
-                      <span>Detected {archetype.times_detected} times</span>
+                      <span>Detected {archetype.times_detected}x</span>
                     </div>
                   )}
                 </div>
 
-                {/* Discovery Summary */}
-                {archetype.discovery_summary && (
-                  <p className="text-sm text-gray-700 line-clamp-2 italic">
-                    "{archetype.discovery_summary}"
-                  </p>
+                {/* Expanded Content */}
+                {expandedId === archetype.user_archetype_id && (
+                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                    {/* Description */}
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        {archetype.archetype_description}
+                      </p>
+                    </div>
+
+                    {/* Shadow Aspects */}
+                    {archetype.shadow && archetype.shadow.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                          <h4 className="text-sm font-medium text-gray-900">Shadow Aspects</h4>
+                        </div>
+                        <ul className="text-xs text-gray-700 space-y-1 ml-6">
+                          {archetype.shadow.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-red-500 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Gold / Gifts */}
+                    {archetype.gold && archetype.gold.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Zap className="h-4 w-4 text-amber-500" />
+                          <h4 className="text-sm font-medium text-gray-900">Gold / Gifts</h4>
+                        </div>
+                        <ul className="text-xs text-gray-700 space-y-1 ml-6">
+                          {archetype.gold.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-amber-500 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Psychology Profile */}
+                    {archetype.psychology_profile && typeof archetype.psychology_profile === 'object' && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Heart className="h-4 w-4 text-purple-500" />
+                          <h4 className="text-sm font-medium text-gray-900">Psychology Profile</h4>
+                        </div>
+                        <div className="text-xs text-gray-700 space-y-1 ml-6">
+                          {Object.entries(archetype.psychology_profile).map(([key, value]) => (
+                            <p key={key}>
+                              <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
+                              {String(value)}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Actions */}

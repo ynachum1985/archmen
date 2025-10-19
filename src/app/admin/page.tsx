@@ -32,6 +32,7 @@ import { AssessmentKnowledgeBase } from "@/components/admin/AssessmentKnowledgeB
 import { LLMTestingInterface } from "@/components/admin/LLMTestingInterface"
 import { ArchetypeKnowledgeBase } from "@/components/admin/ArchetypeKnowledgeBase"
 import { UserManagement } from "@/components/admin/UserManagement"
+import { DiscoveredArchetypesTab } from "@/components/admin/DiscoveredArchetypesTab"
 
 import { assessmentIntegrationService } from "@/lib/services/assessment-integration.service"
 import { AIPersonalityManager } from "@/components/admin/AIPersonalityManager"
