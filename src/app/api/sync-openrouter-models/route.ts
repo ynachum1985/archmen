@@ -31,12 +31,43 @@ export async function GET() {
 
     console.log(`[sync-openrouter-models] Found ${data.data.length} models from OpenRouter`)
 
-    // Transform and filter models - include all non-deprecated models
+    // Major companies to include (curated list for quality and reliability)
+    const majorCompanies = [
+      'openai',           // GPT-4, GPT-3.5
+      'anthropic',        // Claude 3.5, Claude 3
+      'google',           // Gemini
+      'meta',             // Llama
+      'mistral',          // Mistral
+      'perplexity',       // Sonar
+      'qwen',             // Qwen
+      'cohere',           // Command
+      'together',         // Together AI models
+      'deepseek',         // DeepSeek
+      'nvidia',           // Nemotron
+      'aleph-alpha',      // Luminous
+      'jina',             // Jina models
+      'nousresearch',     // Nous models
+      'teknium',          // OpenHermes
+      'gryphe',           // MythoMax
+      'undi95',           // ReMM
+      'cognitivecomputations', // Dolphin
+      'lizpreciatior',    // Lzlm
+      'xwin-lm',          // Xwin-LM
+    ]
+
+    // Transform and filter models - only from major companies
     const models = data.data
       .filter((model: any) => {
-        // Include all models except those explicitly marked as deprecated
-        const isDeprecated = model.name?.includes('deprecated') || model.id?.includes('deprecated')
-        return !isDeprecated && model.id
+        // Check if model is from a major company
+        const modelId = model.id?.toLowerCase() || ''
+        const isFromMajorCompany = majorCompanies.some(company =>
+          modelId.startsWith(company.toLowerCase() + '/')
+        )
+
+        // Exclude deprecated models
+        const isDeprecated = model.name?.includes('deprecated') || modelId.includes('deprecated')
+
+        return isFromMajorCompany && !isDeprecated && model.id
       })
       .map((model: any) => ({
         id: model.id,
