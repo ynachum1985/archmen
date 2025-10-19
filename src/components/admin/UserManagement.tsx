@@ -76,6 +76,13 @@ interface ConversationMessage {
   question_context?: any
 }
 
+interface DiscoveredArchetype {
+  name: string
+  confidenceScore: number
+  isNewlyRevealed?: boolean
+  description?: string
+}
+
 interface UserDetailedHistory {
   user: User
   assessments: AssessmentAttempt[]
@@ -98,6 +105,9 @@ export function UserManagement() {
   const [userDetailedHistory, setUserDetailedHistory] = useState<UserDetailedHistory | null>(null)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [expandedAssessment, setExpandedAssessment] = useState<string | null>(null)
+  const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
+  const [assessmentSessions, setAssessmentSessions] = useState<Record<string, any>>({})
+  const [loadingSessions, setLoadingSessions] = useState(false)
   const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
   const [liveConversations, setLiveConversations] = useState<any[]>([])
   const [isLiveMonitoring, setIsLiveMonitoring] = useState(false)
@@ -434,6 +444,46 @@ export function UserManagement() {
     }
   }
 
+  const loadAssessmentSessions = async (userId: string) => {
+    setLoadingSessions(true)
+    try {
+      const { data: sessions, error } = await supabase
+        .from('assessment_sessions')
+        .select(`
+          id,
+          status,
+          progress_percentage,
+          current_question_index,
+          discovered_archetypes,
+          session_data,
+          created_at,
+          updated_at,
+          completed_at,
+          assessment_templates (
+            name,
+            description
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error loading assessment sessions:', error)
+        return
+      }
+
+      const sessionsMap: Record<string, any> = {}
+      sessions?.forEach(session => {
+        sessionsMap[session.id] = session
+      })
+      setAssessmentSessions(sessionsMap)
+    } catch (error) {
+      console.error('Error loading assessment sessions:', error)
+    } finally {
+      setLoadingSessions(false)
+    }
+  }
+
   const isUserLive = (userId: string) => {
     return liveConversations.some(conv => conv.user_id === userId)
   }
@@ -447,10 +497,12 @@ export function UserManagement() {
     if (expandedUser === user.id) {
       setExpandedUser(null)
       setUserDetailedHistory(null)
+      setAssessmentSessions({})
     } else {
       setExpandedUser(user.id)
       setSelectedUser(user)
       await loadDetailedUserHistory(user)
+      await loadAssessmentSessions(user.id)
     }
   }
 
@@ -695,6 +747,81 @@ export function UserManagement() {
                                   <div className="text-2xl font-bold text-purple-600">{userDetailedHistory.avg_session_duration || 0}m</div>
                                   <div className="text-sm text-gray-600">Avg Session Time</div>
                                 </div>
+                              </div>
+
+                              {/* Archetype Discovery */}
+                              <div>
+                                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                  <Brain className="h-5 w-5 text-purple-600" />
+                                  Archetype Discovery
+                                </h4>
+                                {loadingSessions ? (
+                                  <div className="flex items-center justify-center py-8">
+                                    <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                                  </div>
+                                ) : Object.keys(assessmentSessions).length > 0 ? (
+                                  <div className="space-y-4">
+                                    {Object.values(assessmentSessions).map((session: any, index: number) => {
+                                      const archetypes = session.discovered_archetypes as Record<string, number> | null
+                                      const hasArchetypes = archetypes && Object.keys(archetypes).length > 0
+
+                                      return (
+                                        <div key={session.id || index} className="border border-purple-200 bg-purple-50 rounded-lg p-4">
+                                          <div className="flex items-center justify-between mb-3">
+                                            <div>
+                                              <h5 className="font-medium text-purple-900">
+                                                {session.assessment_templates?.name || 'Assessment'}
+                                              </h5>
+                                              <p className="text-sm text-purple-700">
+                                                {session.status === 'completed' ? '✓ Completed' : '⏳ In Progress'} •
+                                                Progress: {session.progress_percentage || 0}% •
+                                                Questions: {session.current_question_index || 0}
+                                              </p>
+                                            </div>
+                                          </div>
+
+                                          {hasArchetypes ? (
+                                            <div className="space-y-2">
+                                              <p className="text-sm font-medium text-purple-800 mb-2">Discovered Archetypes:</p>
+                                              {Object.entries(archetypes).map(([name, score]: [string, any]) => {
+                                                const confidence = typeof score === 'number' ? Math.round(score * 100) : 0
+                                                const isRevealed = confidence >= 70
+
+                                                return (
+                                                  <div key={name} className="flex items-center justify-between bg-white p-2 rounded border border-purple-100">
+                                                    <div className="flex items-center gap-2">
+                                                      {isRevealed && <span className="text-lg">✨</span>}
+                                                      <span className="text-sm font-medium text-gray-700">{name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                      <div className="w-24 bg-gray-200 rounded-full h-2">
+                                                        <div
+                                                          className={`h-2 rounded-full transition-all ${
+                                                            isRevealed ? 'bg-green-500' : 'bg-yellow-500'
+                                                          }`}
+                                                          style={{ width: `${Math.min(confidence, 100)}%` }}
+                                                        />
+                                                      </div>
+                                                      <span className={`text-xs font-semibold ${isRevealed ? 'text-green-600' : 'text-yellow-600'}`}>
+                                                        {confidence}%
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          ) : (
+                                            <p className="text-sm text-purple-600 italic">
+                                              No archetypes discovered yet. {session.status === 'in_progress' ? 'Still analyzing...' : 'Assessment did not reveal archetypes.'}
+                                            </p>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">No assessment sessions found</p>
+                                )}
                               </div>
 
                               {/* Assessment History */}
