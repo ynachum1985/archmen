@@ -142,6 +142,7 @@ export async function POST(request: Request) {
     }
 
     let result
+    let ragContext = null  // Initialize outside so it's available throughout
 
     // If this is for assessment testing, use multi-LLM service for all providers
     if (assessmentId) {
@@ -180,7 +181,6 @@ export async function POST(request: Request) {
 
       // Get RAG-enhanced context using the comprehensive service
       // Skip RAG for first message since there's no user input yet
-      let ragContext = null
       if (!isFirstMessage && userMessage) {
         try {
           ragContext = await ragChatService.getRelevantContext(userMessage, {
@@ -199,6 +199,11 @@ export async function POST(request: Request) {
         }
       } else {
         console.log('Skipping RAG context for first message generation')
+        ragContext = { archetypeContent: [], assessmentContent: [], totalChunks: 0, searchQuery: '' }
+      }
+
+      // Ensure ragContext is always initialized
+      if (!ragContext) {
         ragContext = { archetypeContent: [], assessmentContent: [], totalChunks: 0, searchQuery: '' }
       }
 
