@@ -1071,10 +1071,10 @@ Keep the response under 150 words and end with a specific question.`)
               <Textarea
                 id="assessmentPrompt"
                 value={config.assessmentPrompt}
-                onChange={(e) => setConfig(prev => ({ ...prev, assessmentPrompt: e.target.value }))}
-                rows={6}
+                onChange={(e) => updateConfig(prev => ({ ...prev, assessmentPrompt: e.target.value }))}
+                rows={12}
                 placeholder="You are an expert archetypal analyst... Ask open-ended questions... Analyze language patterns..."
-                className="resize-y overflow-auto max-h-64"
+                className="resize-y overflow-auto max-h-96 min-h-64 font-mono text-sm"
               />
             </div>
           </div>
