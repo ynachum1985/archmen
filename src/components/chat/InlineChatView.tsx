@@ -328,9 +328,9 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white/40 backdrop-blur-sm relative">
+    <div className="flex-1 flex flex-col bg-white/40 backdrop-blur-sm relative h-full">
       {/* Chat Header */}
-      <div className="border-b border-gray-200/50 p-4 bg-white/60 backdrop-blur-sm">
+      <div className="flex-shrink-0 border-b border-gray-200/50 p-4 bg-white/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-gray-700" />
@@ -349,9 +349,9 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
         </div>
       </div>
 
-      {/* Chat Messages - with bottom padding for fixed input */}
-      <div className="flex-1 overflow-hidden">
-        <ChatMessageList className="h-full pb-24">
+      {/* Chat Messages - Scrollable container */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <ChatMessageList className="h-auto pb-24">
           <div className="max-w-3xl mx-auto px-4">
             {generatingFirstMessage && conversation.messages.length === 0 && (
               <div className="flex items-center justify-center py-12">
@@ -404,7 +404,7 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       </div>
 
       {/* Fixed Message Input - ChatGPT style */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-transparent backdrop-blur-sm border-t border-gray-200/50">
+      <div className="flex-shrink-0 bg-gradient-to-t from-white/95 via-white/90 to-transparent backdrop-blur-sm border-t border-gray-200/50">
         <div className="max-w-3xl mx-auto p-4">
           {/* Moderation Warning */}
           {moderationWarning && (
