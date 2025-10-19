@@ -44,7 +44,7 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
   // Embedding settings state - OPTIMIZED VALUES (see EMBEDDING_CONFIGURATION_ANALYSIS.md)
   const [chunkSize, setChunkSize] = useState(400)  // Optimal: 300-500 tokens
   const [chunkOverlap, setChunkOverlap] = useState(80)  // 20% overlap (industry standard)
-  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')  // Best performance/cost
+  const [embeddingModel, setEmbeddingModel] = useState('openrouter/mistral-embed')  // Default to OpenRouter Mistral for cost-effectiveness
   const [topK, setTopK] = useState(10)  // Industry standard: 5-10 results
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7)  // 70% minimum relevance
   const [maxContextTokens, setMaxContextTokens] = useState(4000)  // Max tokens to send to LLM
@@ -551,17 +551,22 @@ export const ArchetypeKnowledgeBase = forwardRef<any, ArchetypeKnowledgeBaseProp
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* OpenRouter Models - RECOMMENDED */}
+                      <SelectItem value="openrouter/mistral-embed">🚀 OpenRouter: Mistral Embed (1024d) - Best cost/performance</SelectItem>
+                      <SelectItem value="openrouter/voyage-3-lite">🚀 OpenRouter: Voyage 3-Lite (512d) - Fast & cheap</SelectItem>
+                      <SelectItem value="openrouter/voyage-3-large">🚀 OpenRouter: Voyage 3-Large (1024d) - Premium quality</SelectItem>
+
                       {/* OpenAI Models */}
                       <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small (1536d)</SelectItem>
                       <SelectItem value="text-embedding-3-large">OpenAI: text-embedding-3-large (3072d)</SelectItem>
                       <SelectItem value="text-embedding-ada-002">OpenAI: text-embedding-ada-002 (1536d)</SelectItem>
 
                       {/* Mistral Models */}
-                      <SelectItem value="mistral-embed">Mistral: mistral-embed (1024d) - Best cost/accuracy</SelectItem>
+                      <SelectItem value="mistral-embed">Mistral: mistral-embed (1024d)</SelectItem>
 
                       {/* Voyage AI Models */}
-                      <SelectItem value="voyage-3-lite">Voyage AI: voyage-3-lite (512d) - High relevance</SelectItem>
-                      <SelectItem value="voyage-3-large">Voyage AI: voyage-3-large (1024d) - Premium quality</SelectItem>
+                      <SelectItem value="voyage-3-lite">Voyage AI: voyage-3-lite (512d)</SelectItem>
+                      <SelectItem value="voyage-3-large">Voyage AI: voyage-3-large (1024d)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

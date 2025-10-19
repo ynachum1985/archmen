@@ -110,8 +110,19 @@ async function generateOpenRouterEmbedding(text: string, model: string) {
 
     console.log(`Generating embedding with OpenRouter model: ${model}`)
 
-    // Extract the actual model name (e.g., 'openrouter/text-embedding-3-small' -> 'text-embedding-3-small')
-    const actualModel = model.replace('openrouter/', '')
+    // Extract the actual model name (e.g., 'openrouter/mistral-embed' -> 'mistralai/mistral-embed')
+    let actualModel = model.replace('openrouter/', '')
+
+    // Map common embedding model names to OpenRouter format
+    const modelMapping: Record<string, string> = {
+      'mistral-embed': 'mistralai/mistral-embed',
+      'voyage-3-lite': 'voyage-ai/voyage-3-lite',
+      'voyage-3-large': 'voyage-ai/voyage-3-large',
+      'text-embedding-3-small': 'openai/text-embedding-3-small',
+      'text-embedding-3-large': 'openai/text-embedding-3-large'
+    }
+
+    actualModel = modelMapping[actualModel] || actualModel
 
     const response = await fetch('https://openrouter.ai/api/v1/embeddings', {
       method: 'POST',
