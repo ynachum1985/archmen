@@ -56,6 +56,7 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'discovered' | 'working_on' | 'integrated'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [assessments, setAssessments] = useState<any[]>([])
 
   useEffect(() => {
     loadArchetypes()
@@ -64,6 +65,17 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
   const loadArchetypes = async () => {
     try {
       const supabase = createClient()
+
+      // Load assessments first
+      const { data: assessmentsList } = await supabase
+        .from('enhanced_assessments')
+        .select('id, name')
+        .eq('status', 'live')
+        .order('name')
+
+      if (assessmentsList) {
+        setAssessments(assessmentsList)
+      }
 
       // Try to load user's discovered archetypes first
       const { data: userArchetypes, error: userError } = await supabase
@@ -81,6 +93,14 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
           .limit(20) // Load first 20 for demo
 
         if (!sampleError && sampleArchetypes) {
+          // Get random assessment names for demo
+          const getRandomAssessment = () => {
+            if (assessmentsList && assessmentsList.length > 0) {
+              return assessmentsList[Math.floor(Math.random() * assessmentsList.length)].name
+            }
+            return 'Relationship Patterns Assessment'
+          }
+
           // Transform database archetypes to UserArchetype format
           const transformedArchetypes: UserArchetype[] = sampleArchetypes.map((arch: any, index: number) => ({
             user_archetype_id: arch.id,
@@ -93,7 +113,7 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
             peak_confidence_score: 85 + Math.random() * 15, // Random 85-100
             impact_score: Math.floor(Math.random() * 7) + 1, // Random 1-7
             first_discovered_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-            discovered_in_assessment_name: ['Relationship Patterns', 'Emotional Intimacy', 'Communication Style'][Math.floor(Math.random() * 3)],
+            discovered_in_assessment_name: getRandomAssessment(),
             discovery_summary: arch.description,
             key_evidence: [],
             pattern_timeline: {},
@@ -225,11 +245,16 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
 
       {/* Archetypes Grid */}
       <ScrollArea className="flex-1">
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredArchetypes.map((archetype) => (
+        <div className="p-4 space-y-4">
+          {filteredArchetypes.map((archetype) => {
+            const isExpanded = expandedId === archetype.user_archetype_id
+
+            return (
             <Card
               key={archetype.user_archetype_id}
-              className="border-gray-200/50 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+              className={`border-gray-200/50 shadow-sm hover:shadow-md transition-all overflow-hidden ${
+                isExpanded ? 'col-span-full' : ''
+              }`}
             >
               {/* Card Header - Clickable to expand */}
               <CardHeader
@@ -260,7 +285,7 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-3">
+              <CardContent className={`space-y-3 ${isExpanded ? 'space-y-6' : ''}`}>
                 {/* Confidence Score */}
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
@@ -295,64 +320,72 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                 </div>
 
                 {/* Expanded Content */}
-                {expandedId === archetype.user_archetype_id && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                {isExpanded && (
+                  <div className="mt-6 pt-6 border-t border-gray-200 space-y-6">
                     {/* Description */}
                     <div>
-                      <p className="text-sm text-gray-700">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">Overview</h4>
+                      <p className="text-sm text-gray-700 leading-relaxed">
                         {archetype.archetype_description}
                       </p>
                     </div>
 
-                    {/* Shadow Aspects */}
-                    {archetype.shadow && archetype.shadow.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertCircle className="h-4 w-4 text-red-500" />
-                          <h4 className="text-sm font-medium text-gray-900">Shadow Aspects</h4>
+                    {/* Two Column Layout for Shadow and Gold */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Shadow Aspects */}
+                      {archetype.shadow && archetype.shadow.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                            <h4 className="text-sm font-medium text-gray-900">Shadow Aspects</h4>
+                          </div>
+                          <ul className="text-sm text-gray-700 space-y-2 ml-7">
+                            {archetype.shadow.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="text-red-500 mt-0.5 font-bold">•</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                        <ul className="text-xs text-gray-700 space-y-1 ml-6">
-                          {archetype.shadow.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2">
-                              <span className="text-red-500 mt-0.5">•</span>
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Gold / Gifts */}
-                    {archetype.gold && archetype.gold.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Zap className="h-4 w-4 text-amber-500" />
-                          <h4 className="text-sm font-medium text-gray-900">Gold / Gifts</h4>
+                      {/* Gold / Gifts */}
+                      {archetype.gold && archetype.gold.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Zap className="h-5 w-5 text-amber-500" />
+                            <h4 className="text-sm font-medium text-gray-900">Gold / Gifts</h4>
+                          </div>
+                          <ul className="text-sm text-gray-700 space-y-2 ml-7">
+                            {archetype.gold.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5 font-bold">•</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                        <ul className="text-xs text-gray-700 space-y-1 ml-6">
-                          {archetype.gold.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2">
-                              <span className="text-amber-500 mt-0.5">•</span>
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
                     {/* Psychology Profile */}
                     {archetype.psychology_profile && typeof archetype.psychology_profile === 'object' && (
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Heart className="h-4 w-4 text-purple-500" />
+                        <div className="flex items-center gap-2 mb-3">
+                          <Heart className="h-5 w-5 text-purple-500" />
                           <h4 className="text-sm font-medium text-gray-900">Psychology Profile</h4>
                         </div>
-                        <div className="text-xs text-gray-700 space-y-1 ml-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-7">
                           {Object.entries(archetype.psychology_profile).map(([key, value]) => (
-                            <p key={key}>
-                              <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                              {String(value)}
-                            </p>
+                            <div key={key} className="bg-gray-50 p-3 rounded">
+                              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+                                {key.replace(/_/g, ' ')}
+                              </p>
+                              <p className="text-sm text-gray-900">
+                                {String(value)}
+                              </p>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -366,12 +399,10 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                     variant="outline"
                     size="sm"
                     className="flex-1 text-xs"
-                    asChild
+                    onClick={() => setExpandedId(isExpanded ? null : archetype.user_archetype_id)}
                   >
-                    <Link href={`/dashboard/archetypes/${archetype.user_archetype_id}`}>
-                      View Details
-                      <ChevronRight className="h-3 w-3 ml-1" />
-                    </Link>
+                    {isExpanded ? 'Collapse' : 'View Details'}
+                    <ChevronRight className={`h-3 w-3 ml-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                   </Button>
                   <Button
                     variant="outline"
@@ -383,7 +414,8 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                 </div>
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
       </ScrollArea>
     </div>
