@@ -80,15 +80,17 @@ export async function POST(request: Request) {
     const conversationHistory = finalMessages.slice(0, -1)
 
     // Step 1: Moderate user input for safety using centralized settings
+    // Initialize moderation service (used for both input and output)
+    const moderation = new AIModeration(
+      process.env.OPENAI_API_KEY!,
+      process.env.PERSPECTIVE_API_KEY
+    )
+
     // Skip moderation for first message (no user input yet)
     let moderationResult = { flagged: false, action: 'allow', confidence: 0 }
 
     if (!isFirstMessage && userMessage) {
       console.log('=== Content Moderation Check ===')
-      const moderation = new AIModeration(
-        process.env.OPENAI_API_KEY!,
-        process.env.PERSPECTIVE_API_KEY
-      )
       moderationResult = await moderation.moderateContent(userMessage, {
         userId: user?.id,
         assessmentId,
@@ -280,6 +282,11 @@ export async function POST(request: Request) {
 
       console.log('Final system prompt length:', finalSystemPrompt.length)
       console.log('Using personality:', personalityConfig?.name || 'None')
+      console.log('Contextual messages:', {
+        count: contextualMessages.length,
+        roles: contextualMessages.map(m => m.role),
+        isFirstMessage
+      })
 
       // Use multi-LLM service
       console.log('Calling generateChatCompletion with:', { provider, model, temperature, maxTokens })
@@ -290,9 +297,16 @@ export async function POST(request: Request) {
           temperature,
           maxTokens
         })
-        console.log('MultiLLM response received:', { provider: result.provider, model: result.model })
+        console.log('MultiLLM response received:', { provider: result.provider, model: result.model, contentLength: result.content?.length })
       } catch (llmError) {
         console.error('MultiLLM service error:', llmError)
+        console.error('Error details:', {
+          message: llmError instanceof Error ? llmError.message : 'Unknown error',
+          stack: llmError instanceof Error ? llmError.stack : 'No stack',
+          provider,
+          model,
+          isFirstMessage
+        })
         return NextResponse.json(
           { error: `LLM service error: ${llmError instanceof Error ? llmError.message : 'Unknown error'}` },
           { status: 500 }
