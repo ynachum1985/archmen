@@ -526,9 +526,10 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1 p-2">
-          {!sidebarCollapsed && (
-            <div className="space-y-4">
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            {!sidebarCollapsed && (
+              <div className="space-y-4 p-2">
               {/* Assessment Levels */}
               <div className="space-y-2">
                 {/* Level 1 */}
@@ -731,9 +732,10 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
               </div>
 
 
-            </div>
-          )}
-        </ScrollArea>
+              </div>
+            )}
+          </ScrollArea>
+        </div>
 
         {/* Resize Handle */}
         {!sidebarCollapsed && (
