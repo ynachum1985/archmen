@@ -31,9 +31,13 @@ export async function GET() {
 
     console.log(`[sync-openrouter-models] Found ${data.data.length} models from OpenRouter`)
 
-    // Transform and filter models
+    // Transform and filter models - include all non-deprecated models
     const models = data.data
-      .filter((model: any) => !model.name.includes('deprecated') && model.id)
+      .filter((model: any) => {
+        // Include all models except those explicitly marked as deprecated
+        const isDeprecated = model.name?.includes('deprecated') || model.id?.includes('deprecated')
+        return !isDeprecated && model.id
+      })
       .map((model: any) => ({
         id: model.id,
         name: model.name,
@@ -46,6 +50,9 @@ export async function GET() {
         createdAt: model.created_at,
         modifiedAt: model.modified_at,
       }))
+
+    // Log some sample models for debugging
+    console.log('[sync-openrouter-models] Sample models:', models.slice(0, 5).map(m => m.id))
 
     // Store in Supabase for reference
     const supabase = createServiceClient()

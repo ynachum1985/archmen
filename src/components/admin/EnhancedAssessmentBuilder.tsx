@@ -192,7 +192,7 @@ export function EnhancedAssessmentBuilder({
           if (data.settings) {
             setChunkSize(data.settings.chunk_size || 400)
             setChunkOverlap(data.settings.chunk_overlap || 80)
-            setEmbeddingModel(data.settings.embedding_model || 'text-embedding-3-small')
+            setEmbeddingModel(data.settings.embedding_model || 'openrouter/text-embedding-3-small')
             setMaxContextTokens(data.settings.context_window || 4000)
 
             // Load additional settings from JSONB settings field
@@ -216,7 +216,7 @@ export function EnhancedAssessmentBuilder({
   // Embedding settings state - OPTIMIZED VALUES (see EMBEDDING_CONFIGURATION_ANALYSIS.md)
   const [chunkSize, setChunkSize] = useState(400)  // Optimal: 300-500 tokens
   const [chunkOverlap, setChunkOverlap] = useState(80)  // 20% overlap (industry standard)
-  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small')  // Best performance/cost
+  const [embeddingModel, setEmbeddingModel] = useState('openrouter/text-embedding-3-small')  // Best performance/cost via OpenRouter
   const [topK, setTopK] = useState(10)  // Industry standard: 5-10 results
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7)  // 70% minimum relevance
   const [maxContextTokens, setMaxContextTokens] = useState(4000)  // Max tokens to send to LLM
@@ -234,8 +234,9 @@ export function EnhancedAssessmentBuilder({
   const [showLLMComparison, setShowLLMComparison] = useState<boolean>(false)
 
   // Live Assessment LLM Configuration states
-  const [liveProvider, setLiveProvider] = useState<LLMProvider>('openai')
-  const [liveModel, setLiveModel] = useState<string>('gpt-4-turbo-preview')
+  const [liveProvider, setLiveProvider] = useState<LLMProvider>('openrouter')
+  const [liveModel, setLiveModel] = useState<string>('anthropic/claude-3.5-sonnet')
+  const [isSyncingModels, setIsSyncingModels] = useState(false)
 
   // Chat Testing state
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
@@ -340,8 +341,8 @@ Keep the response under 150 words and end with a specific question.`)
 
   // Sync live provider and model with config
   useEffect(() => {
-    setLiveProvider(config.liveProvider || 'openai')
-    setLiveModel(config.liveModel || 'gpt-4-turbo-preview')
+    setLiveProvider(config.liveProvider || 'openrouter')
+    setLiveModel(config.liveModel || 'anthropic/claude-3.5-sonnet')
   }, [config.liveProvider, config.liveModel])
 
   // Helper function to update config and notify parent
@@ -503,6 +504,29 @@ Keep the response under 150 words and end with a specific question.`)
       return
     }
     await handleSave(configToSave, false)
+  }
+
+  // Sync OpenRouter models
+  const handleSyncOpenRouterModels = async () => {
+    setIsSyncingModels(true)
+    try {
+      const response = await fetch('/api/sync-openrouter-models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to sync models')
+      }
+
+      const data = await response.json()
+      alert(`✅ Successfully synced ${data.modelCount} models from OpenRouter!\n\nLatest models including new releases are now available.`)
+    } catch (error) {
+      console.error('Error syncing OpenRouter models:', error)
+      alert(`❌ Failed to sync OpenRouter models: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsSyncingModels(false)
+    }
   }
 
   // Update config when live provider/model changes
@@ -1167,18 +1191,32 @@ Keep the response under 150 words and end with a specific question.`)
 
                 <div className="space-y-1">
                   <Label className="text-xs">Model</Label>
-                  <Select value={liveModel} onValueChange={setLiveModel}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent className="animate-none">
-                      {liveProvider && Object.keys(LLM_PROVIDERS[liveProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
-                        <SelectItem key={model} value={model}>
-                          {model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select value={liveModel} onValueChange={setLiveModel}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Select model" />
+                      </SelectTrigger>
+                      <SelectContent className="animate-none">
+                        {liveProvider && Object.keys(LLM_PROVIDERS[liveProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
+                          <SelectItem key={model} value={model}>
+                            {model}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {liveProvider === 'openrouter' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleSyncOpenRouterModels}
+                        disabled={isSyncingModels}
+                        className="h-9"
+                        title="Sync latest OpenRouter models"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {liveProvider && liveModel && (
@@ -1402,7 +1440,8 @@ Keep the response under 150 words and end with a specific question.`)
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="max-w-[280px]">
-                              <SelectItem value="text-embedding-3-small">OpenAI: text-embedding-3-small</SelectItem>
+                              <SelectItem value="openrouter/text-embedding-3-small">OpenRouter: text-embedding-3-small</SelectItem>
+                              <SelectItem value="text-embedding-3-small">OpenAI Direct: text-embedding-3-small</SelectItem>
                               <SelectItem value="mistral-embed">Mistral: mistral-embed</SelectItem>
                               <SelectItem value="voyage-large-2">Voyage: voyage-large-2</SelectItem>
                             </SelectContent>
