@@ -46,102 +46,105 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
   const [sending, setSending] = useState(false)
   const [moderationWarning, setModerationWarning] = useState<string | null>(null)
   const [generatingFirstMessage, setGeneratingFirstMessage] = useState(false)
+  const [assessmentStarted, setAssessmentStarted] = useState(false)
   const { moderateContent, isLoading: moderationLoading } = useContentModeration()
 
-  // Generate first question when conversation is empty
+  // Check if assessment has been started
   useEffect(() => {
-    const generateFirstMessage = async () => {
-      if (!conversation || conversation.messages.length > 0 || conversation.metadata?.firstMessageGenerated) {
-        return
-      }
-
-      setGeneratingFirstMessage(true)
-      try {
-        const supabase = createClient()
-
-        // Fetch assessment details to get the prompt
-        let provider = 'openai'
-        let model = 'gpt-4-turbo-preview'
-
-        if (conversation.metadata?.assessmentId) {
-          try {
-            const { data: assessment } = await supabase
-              .from('enhanced_assessments')
-              .select('live_provider, live_model, assessment_prompt')
-              .eq('id', conversation.metadata.assessmentId)
-              .single()
-
-            if (assessment) {
-              provider = assessment.live_provider || 'openai'
-              model = assessment.live_model || 'gpt-4-turbo-preview'
-            }
-          } catch (error) {
-            console.error('Error fetching assessment config:', error)
-          }
-        }
-
-        // Call the enhanced-chat API to generate the first question
-        const response = await fetch('/api/enhanced-chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messages: [],
-            conversationId: conversation.id,
-            assessmentId: conversation.metadata?.assessmentId,
-            userId,
-            provider,
-            model,
-            temperature: 0.7,
-            isFirstMessage: true
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to generate first question')
-        }
-
-        const aiData = await response.json()
-
-        // Add the first AI message to the conversation
-        const updatedConversation = {
-          ...conversation,
-          messages: [{
-            role: 'assistant',
-            content: aiData.content,
-            timestamp: new Date().toISOString(),
-            metadata: aiData.metadata
-          }],
-          metadata: {
-            ...conversation.metadata,
-            firstMessageGenerated: true
-          }
-        }
-
-        // Update the conversation in the database
-        const { error } = await supabase
-          .from('conversations')
-          .update({
-            messages: updatedConversation.messages,
-            metadata: updatedConversation.metadata,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', conversation.id)
-
-        if (error) throw error
-
-        // Update the parent component
-        onConversationUpdate(updatedConversation)
-      } catch (error) {
-        console.error('Error generating first message:', error)
-      } finally {
-        setGeneratingFirstMessage(false)
-      }
+    if (conversation?.messages.length > 0 || conversation?.metadata?.firstMessageGenerated) {
+      setAssessmentStarted(true)
     }
+  }, [conversation?.messages.length, conversation?.metadata?.firstMessageGenerated])
 
-    generateFirstMessage()
-  }, [conversation?.id, conversation?.messages.length])
+  // Generate first question when user clicks "Start Assessment"
+  const handleStartAssessment = async () => {
+    if (!conversation) return
+
+    setGeneratingFirstMessage(true)
+    try {
+      const supabase = createClient()
+
+      // Fetch assessment details to get the prompt
+      let provider = 'openai'
+      let model = 'gpt-4-turbo-preview'
+
+      if (conversation.metadata?.assessmentId) {
+        try {
+          const { data: assessment } = await supabase
+            .from('enhanced_assessments')
+            .select('live_provider, live_model, assessment_prompt')
+            .eq('id', conversation.metadata.assessmentId)
+            .single()
+
+          if (assessment) {
+            provider = assessment.live_provider || 'openai'
+            model = assessment.live_model || 'gpt-4-turbo-preview'
+          }
+        } catch (error) {
+          console.error('Error fetching assessment config:', error)
+        }
+      }
+
+      // Call the enhanced-chat API to generate the first question
+      const response = await fetch('/api/enhanced-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [],
+          conversationId: conversation.id,
+          assessmentId: conversation.metadata?.assessmentId,
+          userId,
+          provider,
+          model,
+          temperature: 0.7,
+          isFirstMessage: true
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate first question')
+      }
+
+      const aiData = await response.json()
+
+      // Add the first AI message to the conversation
+      const updatedConversation = {
+        ...conversation,
+        messages: [{
+          role: 'assistant',
+          content: aiData.content,
+          timestamp: new Date().toISOString(),
+          metadata: aiData.metadata
+        }],
+        metadata: {
+          ...conversation.metadata,
+          firstMessageGenerated: true
+        }
+      }
+
+      // Update the conversation in the database
+      const { error } = await supabase
+        .from('conversations')
+        .update({
+          messages: updatedConversation.messages,
+          metadata: updatedConversation.metadata,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversation.id)
+
+      if (error) throw error
+
+      // Update the parent component
+      onConversationUpdate(updatedConversation)
+      setAssessmentStarted(true)
+    } catch (error) {
+      console.error('Error generating first message:', error)
+    } finally {
+      setGeneratingFirstMessage(false)
+    }
+  }
 
   const sendMessage = async () => {
     if (!message.trim() || !conversation || !userId || sending) return
@@ -396,28 +399,48 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
             </Alert>
           )}
 
-          <div className="relative">
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Message ArchMen..."
-              className="w-full min-h-[3rem] max-h-[8rem] resize-none bg-white/90 backdrop-blur-sm border-gray-300/50 focus:border-blue-400 rounded-xl pr-12 shadow-sm"
-              disabled={sending || moderationLoading}
-            />
+          {!assessmentStarted ? (
             <Button
-              onClick={sendMessage}
-              disabled={!message.trim() || sending || moderationLoading}
-              size="icon"
-              className="absolute right-2 bottom-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg h-8 w-8"
+              onClick={handleStartAssessment}
+              disabled={generatingFirstMessage}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-3 rounded-xl"
             >
-              {moderationLoading ? (
-                <Shield className="h-4 w-4 animate-spin" />
+              {generatingFirstMessage ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating first question...
+                </>
               ) : (
-                <Send className="h-4 w-4" />
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Start Assessment
+                </>
               )}
             </Button>
-          </div>
+          ) : (
+            <div className="relative">
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Message ArchMen..."
+                className="w-full min-h-[3rem] max-h-[8rem] resize-none bg-white/90 backdrop-blur-sm border-gray-300/50 focus:border-blue-400 rounded-xl pr-12 shadow-sm"
+                disabled={sending || moderationLoading}
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={!message.trim() || sending || moderationLoading}
+                size="icon"
+                className="absolute right-2 bottom-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg h-8 w-8"
+              >
+                {moderationLoading ? (
+                  <Shield className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

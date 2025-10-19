@@ -325,26 +325,63 @@ export async function POST(request: Request) {
     let detectedArchetypes = []
     if (assessmentId && conversationHistory.length > 0) {
       try {
-        // Get all archetypes for analysis
+        // Fetch assessment configuration for thresholds
+        let minConfidenceThreshold = 50 // Default
+        let minArchetypesToReveal = 1 // Default
+
+        try {
+          const { data: assessment } = await supabase
+            .from('enhanced_assessments')
+            .select('min_confidence, min_archetypes')
+            .eq('id', assessmentId)
+            .single()
+
+          if (assessment) {
+            minConfidenceThreshold = assessment.min_confidence || 50
+            minArchetypesToReveal = assessment.min_archetypes || 1
+          }
+        } catch (error) {
+          console.error('Error fetching assessment config:', error)
+        }
+
+        // Get ALL active archetypes from database (58+)
         const { data: allArchetypes } = await supabase
           .from('enhanced_archetypes')
-          .select('id, name, description')
+          .select('id, name, description, core_traits, psychology_profile')
           .eq('is_active', true)
 
         if (allArchetypes && allArchetypes.length > 0) {
           // Analyze the user's latest message for archetype patterns
           const latestUserMessage = finalMessages[finalMessages.length - 1]?.content || ''
 
-          // Use AI to detect archetypes with confidence scores
-          const archetypeAnalysisPrompt = `Analyze this user message for Jungian archetype patterns. Return ONLY a JSON object with archetype names as keys and confidence percentages (0-100) as values. Only include archetypes with confidence >= 50.
+          // Build archetype context from RAG results
+          let archetypeContext = ''
+          if (ragContext && ragContext.archetypeContent.length > 0) {
+            archetypeContext = `\n\nRelevant archetype patterns from knowledge base:\n${ragContext.archetypeContent
+              .slice(0, 5)
+              .map(chunk => `- ${chunk.archetype_name}: ${chunk.content.substring(0, 200)}...`)
+              .join('\n')}`
+          }
 
-Available archetypes: ${allArchetypes.map(a => a.name).join(', ')}
+          // Use AI to detect archetypes with confidence scores against ALL archetypes
+          const archetypeAnalysisPrompt = `You are an expert Jungian psychologist analyzing user responses for archetypal patterns.
+
+Analyze this user message for Jungian archetype patterns. Compare against ALL available archetypes and return ONLY a JSON object with archetype names as keys and confidence percentages (0-100) as values.
+
+IMPORTANT: Only include archetypes with confidence >= ${minConfidenceThreshold}. Return top 5 matches maximum.
+
+Available archetypes (${allArchetypes.length} total):
+${allArchetypes.map(a => `- ${a.name}: ${a.description?.substring(0, 100) || ''}`).join('\n')}
+${archetypeContext}
 
 User message: "${latestUserMessage}"
 
-Recent conversation context: ${conversationHistory.slice(-2).map(m => `${m.role}: ${m.content}`).join('\n')}
+Recent conversation context: ${conversationHistory.slice(-3).map(m => `${m.role}: ${m.content.substring(0, 150)}`).join('\n')}
 
-Return only valid JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
+Analyze the language patterns, values, behaviors, and emotional responses. Match them to the archetypes.
+
+Return ONLY valid JSON like: {"Archetype Name": 75, "Another Archetype": 60}
+Do NOT include any other text.`
 
           const multiLLM = new MultiLLMService()
           const archetypeAnalysis = await multiLLM.generateChatCompletion(
@@ -353,7 +390,7 @@ Return only valid JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
               provider: 'openai',
               model: 'gpt-3.5-turbo',
               temperature: 0.3,
-              maxTokens: 200
+              maxTokens: 300
             }
           )
 
@@ -362,20 +399,21 @@ Return only valid JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
 
             // Convert to array and match with archetype data
             detectedArchetypes = Object.entries(archetypeScores)
-              .filter(([_, score]) => (score as number) >= 50)
+              .filter(([_, score]) => (score as number) >= minConfidenceThreshold)
               .map(([name, score]) => {
                 const archetypeData = allArchetypes.find(a => a.name === name)
                 return {
                   name,
                   confidenceScore: score as number,
                   description: archetypeData?.description || '',
-                  isNewlyRevealed: (score as number) >= 70 // Reveal when confidence >= 70%
+                  isNewlyRevealed: (score as number) >= Math.max(minConfidenceThreshold + 20, 70) // Reveal when confidence is 20+ points above threshold or 70%
                 }
               })
               .sort((a, b) => b.confidenceScore - a.confidenceScore)
-              .slice(0, 3) // Top 3 archetypes
+              .slice(0, 5) // Top 5 archetypes
           } catch (parseError) {
             console.error('Error parsing archetype analysis:', parseError)
+            console.error('Raw response:', archetypeAnalysis.content)
           }
         }
       } catch (error) {
