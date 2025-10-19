@@ -476,7 +476,7 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
 
 
   return (
-    <div className="flex h-screen bg-gray-50/30">
+    <div className="flex h-full bg-gray-50/30">
       {/* Sidebar - Hidden on mobile */}
       <div
         className={`hidden md:flex bg-white/60 backdrop-blur-sm border-r border-gray-200/50 flex-col transition-all duration-300 relative`}

@@ -404,7 +404,7 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       </div>
 
       {/* Fixed Message Input - ChatGPT style */}
-      <div className="flex-shrink-0 bg-gradient-to-t from-white/95 via-white/90 to-transparent backdrop-blur-sm border-t border-gray-200/50">
+      <div className="flex-shrink-0 bg-gradient-to-t from-white/95 via-white/90 to-transparent backdrop-blur-sm border-t border-gray-200/50 pb-4">
         <div className="max-w-3xl mx-auto p-4">
           {/* Moderation Warning */}
           {moderationWarning && (
