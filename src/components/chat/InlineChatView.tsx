@@ -107,6 +107,30 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       setMessage('')
 
       // Get AI response using enhanced-chat API
+      // First, fetch the assessment configuration to get the configured LLM model
+      let provider = 'openai'
+      let model = 'gpt-4-turbo-preview'
+
+      if (conversation.metadata?.assessmentId) {
+        try {
+          const supabase = createClient()
+          const { data: assessment } = await supabase
+            .from('enhanced_assessments')
+            .select('live_provider, live_model')
+            .eq('id', conversation.metadata.assessmentId)
+            .single()
+
+          if (assessment) {
+            provider = assessment.live_provider || 'openai'
+            model = assessment.live_model || 'gpt-4-turbo-preview'
+            console.log(`Using configured LLM for assessment: ${provider}/${model}`)
+          }
+        } catch (error) {
+          console.error('Error fetching assessment LLM config:', error)
+          // Fall back to defaults
+        }
+      }
+
       const response = await fetch('/api/enhanced-chat', {
         method: 'POST',
         headers: {
@@ -123,8 +147,8 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
           conversationId: conversation.id,
           assessmentId: conversation.metadata?.assessmentId,
           userId,
-          provider: 'openai',
-          model: 'gpt-4-turbo-preview',
+          provider,
+          model,
           temperature: 0.7
         }),
       })

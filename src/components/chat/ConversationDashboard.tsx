@@ -35,6 +35,8 @@ interface Assessment {
   assessment_level: number
   status: 'draft' | 'live' | 'archived'
   is_active: boolean
+  live_provider?: string
+  live_model?: string
 }
 
 interface ConversationDashboardProps {
@@ -149,7 +151,7 @@ export function ConversationDashboard({ userId }: ConversationDashboardProps) {
 
       let query = supabase
         .from('enhanced_assessments')
-        .select('id, name, description, category, expected_duration, assessment_level, status, is_active, quiz_enabled, has_custom_gateways, quiz_set_questions_prompt, quiz_experience_analysis_prompt')
+        .select('id, name, description, category, expected_duration, assessment_level, status, is_active, quiz_enabled, has_custom_gateways, quiz_set_questions_prompt, quiz_experience_analysis_prompt, live_provider, live_model')
 
       // Use provided adminStatus or fall back to state
       const isCurrentUserAdmin = adminStatus !== undefined ? adminStatus : isAdmin
@@ -588,6 +590,16 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                           <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
                             {assessment.expected_duration} min • {assessment.category}
                           </div>
+                          {isAccessible && (
+                            <div className="flex items-center gap-1 mt-2">
+                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                                {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
+                              </span>
+                              <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                                {assessment.live_provider || 'openai'}
+                              </span>
+                            </div>
+                          )}
                           {!isAccessible && (
                             <div className="text-xs text-gray-400 mt-1 italic">
                               Complete Main Assessment to unlock
@@ -640,6 +652,16 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                           <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
                             {assessment.expected_duration} min • {assessment.category}
                           </div>
+                          {isAccessible && (
+                            <div className="flex items-center gap-1 mt-2">
+                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                                {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
+                              </span>
+                              <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                                {assessment.live_provider || 'openai'}
+                              </span>
+                            </div>
+                          )}
                           {!isAccessible && (
                             <div className="text-xs text-gray-400 mt-1 italic">
                               Complete Main Assessment to unlock
@@ -692,6 +714,16 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                           <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
                             {assessment.expected_duration} min • {assessment.category}
                           </div>
+                          {isAccessible && (
+                            <div className="flex items-center gap-1 mt-2">
+                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                                {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
+                              </span>
+                              <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                                {assessment.live_provider || 'openai'}
+                              </span>
+                            </div>
+                          )}
                           {!isAccessible && (
                             <div className="text-xs text-gray-400 mt-1 italic">
                               Complete Main Assessment to unlock
