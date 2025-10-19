@@ -42,18 +42,25 @@ export const metadata: Metadata = {
   },
 };
 
+'use client'
+
+import { usePathname } from 'next/navigation'
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+  const isDashboard = pathname === '/dashboard'
+
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className={inter.className + " antialiased"}>
-        <div className="flex min-h-screen flex-col">
+        <div className={isDashboard ? "flex h-screen flex-col" : "flex min-h-screen flex-col"}>
           <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <main className={isDashboard ? "flex-1 overflow-hidden" : "flex-1"}>{children}</main>
+          {!isDashboard && <Footer />}
         </div>
       </body>
     </html>
