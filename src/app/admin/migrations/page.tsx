@@ -127,12 +127,13 @@ export default function MigrationsPage() {
       </div>
 
       <div className="space-y-4">
-        {migrations.map((migration) => {
-          const result = migrationResults[migration.name]
-          const isRunning = runningMigration === migration.name
-          
-          return (
-            <Card key={migration.name} className="relative">
+        <>
+          {migrations.map((migration) => {
+            const result = migrationResults[migration.name]
+            const isRunning = runningMigration === migration.name
+
+            return (
+              <Card key={migration.name} className="relative">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -211,7 +212,8 @@ export default function MigrationsPage() {
               )}
             </Card>
           )
-        })}
+          })}
+        </>
       </div>
 
       <div className="mt-8">
