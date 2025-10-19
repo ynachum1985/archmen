@@ -567,80 +567,90 @@ export default function AdminPage() {
                           <p className="text-gray-500">No assessments found. Create your first assessment using the Builder tab.</p>
                         </div>
                       ) : (
-                        [1, 2, 3].map((level) => {
-                          const levelAssessments = getAssessmentsByLevel()[level]
-                          return (
-                            <div key={level} className="border border-gray-200 rounded-lg overflow-hidden">
-                              <button
-                                onClick={() => toggleLevelExpanded(level)}
-                                className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <ChevronDown
-                                    className={`w-4 h-4 transition-transform ${
-                                      expandedCategories[level] ? '' : '-rotate-90'
-                                    }`}
-                                  />
-                                  <h4 className="font-medium text-gray-900">{getLevelTitle(level)}</h4>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {levelAssessments.length}
-                                  </Badge>
-                                </div>
-                              </button>
+                        <>
+                          {[1, 2, 3].map((level) => {
+                            const levelAssessments = getAssessmentsByLevel()[level]
+                            return (
+                              <div key={level} className="border border-gray-200 rounded-lg overflow-hidden">
+                                <button
+                                  onClick={() => toggleLevelExpanded(level)}
+                                  className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <ChevronDown
+                                      className={`w-4 h-4 transition-transform ${
+                                        expandedCategories[level] ? '' : '-rotate-90'
+                                      }`}
+                                    />
+                                    <h4 className="font-medium text-gray-900">{getLevelTitle(level)}</h4>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {levelAssessments.length}
+                                    </Badge>
+                                  </div>
+                                </button>
 
-                              {expandedCategories[level] && (
-                                <div className="p-4 space-y-3 bg-white">
-                                  {levelAssessments.length === 0 ? (
-                                    <p className="text-sm text-gray-500 text-center py-4">No assessments at this level</p>
-                                  ) : (
-                                    levelAssessments.map((assessment) => (
-                                      <Card key={assessment.id} className="border border-gray-200">
-                                        <CardHeader className="pb-3">
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex-1">
-                                              <CardTitle className="text-base">{assessment.name}</CardTitle>
-                                              <CardDescription className="text-sm">{assessment.description}</CardDescription>
+                                {expandedCategories[level] && (
+                                  <div className="p-4 space-y-3 bg-white">
+                                    {levelAssessments.length === 0 ? (
+                                      <p className="text-sm text-gray-500 text-center py-4">No assessments at this level</p>
+                                    ) : (
+                                      levelAssessments.map((assessment) => (
+                                        <Card key={assessment.id} className="border border-gray-200">
+                                          <CardHeader className="pb-3">
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex-1">
+                                                <CardTitle className="text-base">{assessment.name}</CardTitle>
+                                                <CardDescription className="text-sm">{assessment.description}</CardDescription>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                                    LLM: {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
+                                                  </Badge>
+                                                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                                    {assessment.live_provider || 'openai'}
+                                                  </Badge>
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                <Select
+                                                  value={assessment.status.toLowerCase()}
+                                                  onValueChange={(value) => handleAssessmentStatusChange(assessment.id, value as 'draft' | 'live' | 'archived')}
+                                                >
+                                                  <SelectTrigger className="w-[100px] h-7 text-xs">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="draft">Draft</SelectItem>
+                                                    <SelectItem value="live">Live</SelectItem>
+                                                    <SelectItem value="archived">Archived</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                              </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                              <Select
-                                                value={assessment.status.toLowerCase()}
-                                                onValueChange={(value) => handleAssessmentStatusChange(assessment.id, value as 'draft' | 'live' | 'archived')}
-                                              >
-                                                <SelectTrigger className="w-[100px] h-7 text-xs">
-                                                  <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                  <SelectItem value="draft">Draft</SelectItem>
-                                                  <SelectItem value="live">Live</SelectItem>
-                                                  <SelectItem value="archived">Archived</SelectItem>
-                                                </SelectContent>
-                                              </Select>
-                                            </div>
-                                          </div>
-                                        </CardHeader>
-                                        <CardContent>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => {
-                                              const assessmentConfig = convertToAssessmentConfig(assessment)
-                                              if (assessmentConfig) {
-                                                setEditingAssessment(assessmentConfig)
-                                                setShowEditAssessmentDialog(true)
-                                              }
-                                            }}
-                                          >
-                                            Edit
-                                          </Button>
-                                        </CardContent>
-                                      </Card>
-                                    ))
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })
+                                          </CardHeader>
+                                          <CardContent>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => {
+                                                const assessmentConfig = convertToAssessmentConfig(assessment)
+                                                if (assessmentConfig) {
+                                                  setEditingAssessment(assessmentConfig)
+                                                  setShowEditAssessmentDialog(true)
+                                                }
+                                              }}
+                                            >
+                                              Edit
+                                            </Button>
+                                          </CardContent>
+                                        </Card>
+                                      ))
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </>
                       )}
                     </div>
                   )}
