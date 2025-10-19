@@ -237,6 +237,7 @@ export function EnhancedAssessmentBuilder({
   const [liveProvider, setLiveProvider] = useState<LLMProvider>('openrouter')
   const [liveModel, setLiveModel] = useState<string>('anthropic/claude-3.5-sonnet')
   const [isSyncingModels, setIsSyncingModels] = useState(false)
+  const [syncedOpenRouterModels, setSyncedOpenRouterModels] = useState<string[]>([])
 
   // Chat Testing state
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
@@ -344,6 +345,26 @@ Keep the response under 150 words and end with a specific question.`)
     setLiveProvider(config.liveProvider || 'openrouter')
     setLiveModel(config.liveModel || 'anthropic/claude-3.5-sonnet')
   }, [config.liveProvider, config.liveModel])
+
+  // Load synced OpenRouter models from database on mount
+  useEffect(() => {
+    const loadSyncedModels = async () => {
+      try {
+        const response = await fetch('/api/get-synced-models')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.models && Array.isArray(data.models)) {
+            const modelIds = data.models.map((m: any) => m.id)
+            setSyncedOpenRouterModels(modelIds)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading synced models:', error)
+        // Silently fail - will use hardcoded models as fallback
+      }
+    }
+    loadSyncedModels()
+  }, [])
 
   // Helper function to update config and notify parent
   const updateConfig = (updater: (prev: EnhancedAssessmentConfig) => EnhancedAssessmentConfig) => {
@@ -520,6 +541,13 @@ Keep the response under 150 words and end with a specific question.`)
       }
 
       const data = await response.json()
+
+      // Extract model IDs from the synced models
+      if (data.models && Array.isArray(data.models)) {
+        const modelIds = data.models.map((m: any) => m.id)
+        setSyncedOpenRouterModels(modelIds)
+      }
+
       alert(`✅ Successfully synced ${data.modelCount} models from OpenRouter!\n\nLatest models including new releases are now available.`)
     } catch (error) {
       console.error('Error syncing OpenRouter models:', error)
@@ -1197,11 +1225,30 @@ Keep the response under 150 words and end with a specific question.`)
                         <SelectValue placeholder="Select model" />
                       </SelectTrigger>
                       <SelectContent className="animate-none">
-                        {liveProvider && Object.keys(LLM_PROVIDERS[liveProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
-                          <SelectItem key={model} value={model}>
-                            {model}
-                          </SelectItem>
-                        ))}
+                        {liveProvider && (
+                          <>
+                            {/* Show synced OpenRouter models if available */}
+                            {liveProvider === 'openrouter' && syncedOpenRouterModels.length > 0 ? (
+                              <>
+                                <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50">
+                                  Latest Models ({syncedOpenRouterModels.length})
+                                </div>
+                                {syncedOpenRouterModels.map((model) => (
+                                  <SelectItem key={model} value={model}>
+                                    {model}
+                                  </SelectItem>
+                                ))}
+                              </>
+                            ) : (
+                              /* Fall back to hardcoded models */
+                              Object.keys(LLM_PROVIDERS[liveProvider as keyof typeof LLM_PROVIDERS].models).map((model) => (
+                                <SelectItem key={model} value={model}>
+                                  {model}
+                                </SelectItem>
+                              ))
+                            )}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     {liveProvider === 'openrouter' && (
