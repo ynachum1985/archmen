@@ -167,7 +167,7 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       const moderationResult = await moderateContent(message.trim(), {
         userId,
         assessmentId: conversation.metadata.assessmentId,
-        conversationType: 'chat'
+        conversationType: conversation.metadata.assessmentId ? 'assessment' : 'chat'
       })
 
       // Check if content should be blocked
