@@ -197,6 +197,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save or update embedding settings
+    console.log('[process-assessment-content] Upserting embedding settings for assessment:', finalAssessmentId)
     const { error: settingsError } = await supabase
       .from('assessment_embedding_settings')
       .upsert({
@@ -207,14 +208,17 @@ export async function POST(request: NextRequest) {
         context_window: settings.contextWindow || 4000,
         semantic_search_enabled: settings.semanticSearchEnabled ?? true,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'assessment_id'
       })
 
     if (settingsError) {
-      console.error('Error saving embedding settings:', settingsError)
-      return NextResponse.json({ error: 'Failed to save embedding settings' }, { status: 500 })
+      console.error('[process-assessment-content] Error saving embedding settings:', settingsError)
+      // Don't fail the entire request if settings save fails - continue with embedding
+      console.log('[process-assessment-content] Continuing despite settings error')
+    } else {
+      console.log('[process-assessment-content] Settings saved successfully')
     }
-
-    console.log('Settings saved successfully')
 
     // Get the current highest chunk index for this assessment (for appending)
     console.log('Getting existing chunk count...')
