@@ -550,64 +550,66 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                     {level1Open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-1 pl-2">
-                    {getAssessmentsByLevel(1).map((assessment) => {
-                      const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
-                      const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
+                    <>
+                      {getAssessmentsByLevel(1).map((assessment) => {
+                        const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
+                        const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
 
-                      return (
-                        <button
-                          key={assessment.id}
-                          onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
-                          disabled={!isAccessible}
-                          className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
-                            isAccessible
-                              ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
-                              : 'opacity-50 cursor-not-allowed bg-gray-100/30'
-                          } ${currentAssessment?.id === assessment.id ? 'bg-blue-50 border-blue-200' : ''}`}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <Brain className={`h-3 w-3 ${isAccessible ? 'text-blue-500' : 'text-gray-400'}`} />
-                            <div className={`font-medium text-sm truncate ${
-                              isAccessible ? 'text-gray-900' : 'text-gray-500'
-                            }`}>
-                              {assessment.name}
-                              {isMainAssessment && (
-                                <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                  Start Here
-                                </span>
-                              )}
-                              {!isAccessible && (
-                                <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                                  Locked
-                                </span>
-                              )}
+                        return (
+                          <button
+                            key={assessment.id}
+                            onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
+                            disabled={!isAccessible}
+                            className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
+                              isAccessible
+                                ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
+                                : 'opacity-50 cursor-not-allowed bg-gray-100/30'
+                            } ${currentAssessment?.id === assessment.id ? 'bg-blue-50 border-blue-200' : ''}`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Brain className={`h-3 w-3 ${isAccessible ? 'text-blue-500' : 'text-gray-400'}`} />
+                              <div className={`font-medium text-sm truncate ${
+                                isAccessible ? 'text-gray-900' : 'text-gray-500'
+                              }`}>
+                                {assessment.name}
+                                {isMainAssessment && (
+                                  <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    Start Here
+                                  </span>
+                                )}
+                                {!isAccessible && (
+                                  <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                                    Locked
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
 
-                          <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
-                            {assessment.description}
-                          </div>
-                          <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
-                            {assessment.expected_duration} min • {assessment.category}
-                          </div>
-                          {isAdmin && !viewAsUser && isAccessible && (
-                            <div className="flex items-center gap-1 mt-2">
-                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
-                                {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
-                              </span>
-                              <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
-                                {assessment.live_provider || 'openai'}
-                              </span>
+                            <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
+                              {assessment.description}
                             </div>
-                          )}
-                          {!isAccessible && (
-                            <div className="text-xs text-gray-400 mt-1 italic">
-                              Complete Main Assessment to unlock
+                            <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
+                              {assessment.expected_duration} min • {assessment.category}
                             </div>
-                          )}
-                        </button>
-                      )
-                    })}
+                            {isAdmin && !viewAsUser && isAccessible && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                                  {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
+                                </span>
+                                <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                                  {assessment.live_provider || 'openai'}
+                                </span>
+                              </div>
+                            )}
+                            {!isAccessible && (
+                              <div className="text-xs text-gray-400 mt-1 italic">
+                                Complete Main Assessment to unlock
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </>
                   </CollapsibleContent>
                 </Collapsible>
 
@@ -618,58 +620,60 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                     {level2Open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-1 pl-2">
-                    {getAssessmentsByLevel(2).map((assessment) => {
-                      const isAccessible = isAdmin || mainAssessmentCompleted
+                    <>
+                      {getAssessmentsByLevel(2).map((assessment) => {
+                        const isAccessible = isAdmin || mainAssessmentCompleted
 
-                      return (
-                        <button
-                          key={assessment.id}
-                          onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
-                          disabled={!isAccessible}
-                          className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
-                            isAccessible
-                              ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
-                              : 'opacity-50 cursor-not-allowed bg-gray-100/30'
-                          } ${currentAssessment?.id === assessment.id ? 'bg-purple-50 border-purple-200' : ''}`}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <Brain className={`h-3 w-3 ${isAccessible ? 'text-purple-500' : 'text-gray-400'}`} />
-                            <div className={`font-medium text-sm truncate ${
-                              isAccessible ? 'text-gray-900' : 'text-gray-500'
-                            }`}>
-                              {assessment.name}
-                              {!isAccessible && (
-                                <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                                  Locked
+                        return (
+                          <button
+                            key={assessment.id}
+                            onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
+                            disabled={!isAccessible}
+                            className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
+                              isAccessible
+                                ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
+                                : 'opacity-50 cursor-not-allowed bg-gray-100/30'
+                            } ${currentAssessment?.id === assessment.id ? 'bg-purple-50 border-purple-200' : ''}`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Brain className={`h-3 w-3 ${isAccessible ? 'text-purple-500' : 'text-gray-400'}`} />
+                              <div className={`font-medium text-sm truncate ${
+                                isAccessible ? 'text-gray-900' : 'text-gray-500'
+                              }`}>
+                                {assessment.name}
+                                {!isAccessible && (
+                                  <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                                    Locked
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
+                              {assessment.description}
+                            </div>
+                            <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
+                              {assessment.expected_duration} min • {assessment.category}
+                            </div>
+                            {isAdmin && !viewAsUser && isAccessible && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                                  {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
                                 </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
-                            {assessment.description}
-                          </div>
-                          <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
-                            {assessment.expected_duration} min • {assessment.category}
-                          </div>
-                          {isAdmin && !viewAsUser && isAccessible && (
-                            <div className="flex items-center gap-1 mt-2">
-                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
-                                {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
-                              </span>
-                              <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
-                                {assessment.live_provider || 'openai'}
-                              </span>
-                            </div>
-                          )}
-                          {!isAccessible && (
-                            <div className="text-xs text-gray-400 mt-1 italic">
-                              Complete Main Assessment to unlock
-                            </div>
-                          )}
-                        </button>
-                      )
-                    })}
+                                <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                                  {assessment.live_provider || 'openai'}
+                                </span>
+                              </div>
+                            )}
+                            {!isAccessible && (
+                              <div className="text-xs text-gray-400 mt-1 italic">
+                                Complete Main Assessment to unlock
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </>
                   </CollapsibleContent>
                 </Collapsible>
 
@@ -680,58 +684,60 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                     {level3Open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-1 pl-2">
-                    {getAssessmentsByLevel(3).map((assessment) => {
-                      const isAccessible = isAdmin || mainAssessmentCompleted
+                    <>
+                      {getAssessmentsByLevel(3).map((assessment) => {
+                        const isAccessible = isAdmin || mainAssessmentCompleted
 
-                      return (
-                        <button
-                          key={assessment.id}
-                          onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
-                          disabled={!isAccessible}
-                          className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
-                            isAccessible
-                              ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
-                              : 'opacity-50 cursor-not-allowed bg-gray-100/30'
-                          } ${currentAssessment?.id === assessment.id ? 'bg-red-50 border-red-200' : ''}`}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <Brain className={`h-3 w-3 ${isAccessible ? 'text-red-500' : 'text-gray-400'}`} />
-                            <div className={`font-medium text-sm truncate ${
-                              isAccessible ? 'text-gray-900' : 'text-gray-500'
-                            }`}>
-                              {assessment.name}
-                              {!isAccessible && (
-                                <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                                  Locked
+                        return (
+                          <button
+                            key={assessment.id}
+                            onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
+                            disabled={!isAccessible}
+                            className={`w-full text-left p-3 rounded-lg transition-all duration-200 border border-transparent ${
+                              isAccessible
+                                ? 'hover:bg-gray-50/60 hover:border-gray-200/40 cursor-pointer'
+                                : 'opacity-50 cursor-not-allowed bg-gray-100/30'
+                            } ${currentAssessment?.id === assessment.id ? 'bg-red-50 border-red-200' : ''}`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Brain className={`h-3 w-3 ${isAccessible ? 'text-red-500' : 'text-gray-400'}`} />
+                              <div className={`font-medium text-sm truncate ${
+                                isAccessible ? 'text-gray-900' : 'text-gray-500'
+                              }`}>
+                                {assessment.name}
+                                {!isAccessible && (
+                                  <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                                    Locked
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
+                              {assessment.description}
+                            </div>
+                            <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
+                              {assessment.expected_duration} min • {assessment.category}
+                            </div>
+                            {isAdmin && !viewAsUser && isAccessible && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                                  {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
                                 </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className={`text-xs truncate ${isAccessible ? 'text-gray-500' : 'text-gray-400'}`}>
-                            {assessment.description}
-                          </div>
-                          <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
-                            {assessment.expected_duration} min • {assessment.category}
-                          </div>
-                          {isAdmin && !viewAsUser && isAccessible && (
-                            <div className="flex items-center gap-1 mt-2">
-                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
-                                {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
-                              </span>
-                              <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
-                                {assessment.live_provider || 'openai'}
-                              </span>
-                            </div>
-                          )}
-                          {!isAccessible && (
-                            <div className="text-xs text-gray-400 mt-1 italic">
-                              Complete Main Assessment to unlock
-                            </div>
-                          )}
-                        </button>
-                      )
-                    })}
+                                <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                                  {assessment.live_provider || 'openai'}
+                                </span>
+                              </div>
+                            )}
+                            {!isAccessible && (
+                              <div className="text-xs text-gray-400 mt-1 italic">
+                                Complete Main Assessment to unlock
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </>
                   </CollapsibleContent>
                 </Collapsible>
               </div>
