@@ -298,53 +298,55 @@ export function CleanTaskView({ userId, currentAssessmentId }: CleanTaskViewProp
 
             {/* Tasks List */}
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredTasks.map(task => (
-                <div
-                  key={task.id}
-                  className="flex items-start gap-3 p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-gray-200/50"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => markTaskComplete(task.id)}
-                    className="p-0 h-auto mt-0.5"
-                    disabled={!!task.completed_at}
+              <>
+                {filteredTasks.map(task => (
+                  <div
+                    key={task.id}
+                    className="flex items-start gap-3 p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-gray-200/50"
                   >
-                    {task.completed_at ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Circle className="h-4 w-4 text-gray-400" />
-                    )}
-                  </Button>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`text-sm font-medium ${
-                      task.completed_at ? 'line-through text-gray-500' : 'text-gray-900'
-                    }`}>
-                      {task.title}
-                    </h4>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {task.description}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className="text-xs h-5">
-                        {task.task_type}
-                      </Badge>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="h-3 w-3" />
-                        {task.estimated_duration_minutes}m
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => markTaskComplete(task.id)}
+                      className="p-0 h-auto mt-0.5"
+                      disabled={!!task.completed_at}
+                    >
+                      {task.completed_at ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-sm font-medium ${
+                        task.completed_at ? 'line-through text-gray-500' : 'text-gray-900'
+                      }`}>
+                        {task.title}
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {task.description}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className="text-xs h-5">
+                          {task.task_type}
+                        </Badge>
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Clock className="h-3 w-3" />
+                          {task.estimated_duration_minutes}m
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              
-              {filteredTasks.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <Circle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No tasks found</p>
-                </div>
-              )}
+                ))}
+
+                {filteredTasks.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <Circle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No tasks found</p>
+                  </div>
+                )}
+              </>
             </div>
           </div>
         )}
