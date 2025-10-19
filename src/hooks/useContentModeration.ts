@@ -28,13 +28,26 @@ export function useContentModeration(): UseModerationReturn {
   const [lastResult, setLastResult] = useState<ModerationResult | null>(null)
 
   const moderateContent = useCallback(async (
-    content: string, 
+    content: string,
     context?: ModerationContext
   ): Promise<ModerationResult> => {
     setIsLoading(true)
     setError(null)
 
     try {
+      // For assessments, skip frontend moderation - it's handled server-side in enhanced-chat API
+      if (context?.conversationType === 'assessment') {
+        const result: ModerationResult = {
+          flagged: false,
+          action: 'allow',
+          confidence: 0,
+          categories: {},
+          reasoning: 'Assessment moderation handled server-side'
+        }
+        setLastResult(result)
+        return result
+      }
+
       const response = await fetch('/api/moderate-content', {
         method: 'POST',
         headers: {
@@ -52,28 +65,30 @@ export function useContentModeration(): UseModerationReturn {
       }
 
       const data = await response.json()
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Moderation failed')
       }
 
       const result = data.moderation
       setLastResult(result)
-      
+
       return result
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       setError(errorMessage)
-      
-      // Return a safe default that flags for human review
+
+      // For assessments, allow content to proceed on error
+      // For other contexts, flag for human review
+      const isAssessment = context?.conversationType === 'assessment'
       const fallbackResult: ModerationResult = {
-        flagged: true,
-        action: 'human_review',
+        flagged: false,
+        action: isAssessment ? 'allow' : 'human_review',
         confidence: 0,
         categories: {},
-        reasoning: 'Moderation service error'
+        reasoning: isAssessment ? 'Moderation error - allowing for assessment' : 'Moderation service error'
       }
-      
+
       setLastResult(fallbackResult)
       return fallbackResult
     } finally {
