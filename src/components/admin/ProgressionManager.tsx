@@ -158,56 +158,58 @@ export function ProgressionManager() {
         {/* Assessment Levels Tab */}
         <TabsContent value="levels" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {levels.map((level) => {
-              const stats = getLevelStats(level.level_number)
-              return (
-                <Card key={level.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setSelectedLevel(level)}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-bold text-blue-600">{level.level_number}</span>
-                        </div>
-                        {level.name}
-                      </CardTitle>
-                      {level.is_active ? (
-                        <Unlock className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <Lock className="h-4 w-4 text-gray-400" />
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <Badge className={getLevelThemeColor(level.theme)}>
-                        {level.theme.replace('_', ' ')}
-                      </Badge>
-                      
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {level.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500">
-                          Emotional Maturity: {level.emotional_maturity_required}/10
-                        </span>
-                        <span className="text-blue-600">
-                          {stats.usersAtLevel} users
-                        </span>
+            <>
+              {levels.map((level) => {
+                const stats = getLevelStats(level.level_number)
+                return (
+                  <Card key={level.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedLevel(level)}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-bold text-blue-600">{level.level_number}</span>
+                          </div>
+                          {level.name}
+                        </CardTitle>
+                        {level.is_active ? (
+                          <Unlock className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Lock className="h-4 w-4 text-gray-400" />
+                        )}
                       </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <Badge className={getLevelThemeColor(level.theme)}>
+                          {level.theme.replace('_', ' ')}
+                        </Badge>
 
-                      {stats.usersBlocked > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-orange-600">
-                          <AlertTriangle className="h-3 w-3" />
-                          {stats.usersBlocked} blocked
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {level.description}
+                        </p>
+
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">
+                            Emotional Maturity: {level.emotional_maturity_required}/10
+                          </span>
+                          <span className="text-blue-600">
+                            {stats.usersAtLevel} users
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+
+                        {stats.usersBlocked > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-orange-600">
+                            <AlertTriangle className="h-3 w-3" />
+                            {stats.usersBlocked} blocked
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </>
           </div>
 
           {/* Level Details Modal/Panel */}
@@ -361,29 +363,31 @@ export function ProgressionManager() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {levels.map((level) => {
-                    const stats = getLevelStats(level.level_number)
-                    const percentage = userProgressions.length > 0 
-                      ? (stats.usersAtLevel / userProgressions.length) * 100 
-                      : 0
-                    
-                    return (
-                      <div key={level.id} className="flex items-center justify-between">
-                        <span className="text-sm">Level {level.level_number}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-500 h-2 rounded-full"
-                              style={{ width: `${percentage}%` }}
-                            />
+                  <>
+                    {levels.map((level) => {
+                      const stats = getLevelStats(level.level_number)
+                      const percentage = userProgressions.length > 0
+                        ? (stats.usersAtLevel / userProgressions.length) * 100
+                        : 0
+
+                      return (
+                        <div key={level.id} className="flex items-center justify-between">
+                          <span className="text-sm">Level {level.level_number}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-blue-500 h-2 rounded-full"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500 w-8">
+                              {stats.usersAtLevel}
+                            </span>
                           </div>
-                          <span className="text-xs text-gray-500 w-8">
-                            {stats.usersAtLevel}
-                          </span>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </>
                 </div>
               </CardContent>
             </Card>
