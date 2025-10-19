@@ -10,6 +10,7 @@ import { Send, Sparkles, AlertTriangle, Shield, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useContentModeration, getModerationMessage, shouldAllowContent, getCategoryWarnings } from '@/hooks/useContentModeration'
 import { InlineArchetypeCard } from '@/components/chat/InlineArchetypeCard'
+import { AssessmentProgressBar } from '@/components/chat/AssessmentProgressBar'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -47,7 +48,42 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
   const [moderationWarning, setModerationWarning] = useState<string | null>(null)
   const [generatingFirstMessage, setGeneratingFirstMessage] = useState(false)
   const [assessmentStarted, setAssessmentStarted] = useState(false)
+  const [assessmentSettings, setAssessmentSettings] = useState({
+    minQuestions: 8,
+    maxQuestions: 15,
+    minArchetypes: 2,
+    minConfidence: 70
+  })
   const { moderateContent, isLoading: moderationLoading } = useContentModeration()
+
+  // Fetch assessment settings
+  useEffect(() => {
+    const fetchAssessmentSettings = async () => {
+      if (!conversation?.metadata?.assessmentId) return
+
+      try {
+        const supabase = createClient()
+        const { data: assessment } = await supabase
+          .from('enhanced_assessments')
+          .select('min_questions, max_questions, min_archetypes, min_confidence')
+          .eq('id', conversation.metadata.assessmentId)
+          .single()
+
+        if (assessment) {
+          setAssessmentSettings({
+            minQuestions: assessment.min_questions || 8,
+            maxQuestions: assessment.max_questions || 15,
+            minArchetypes: assessment.min_archetypes || 2,
+            minConfidence: assessment.min_confidence || 70
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching assessment settings:', error)
+      }
+    }
+
+    fetchAssessmentSettings()
+  }, [conversation?.metadata?.assessmentId])
 
   // Check if assessment has been started
   useEffect(() => {
@@ -313,6 +349,21 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
     }
   }
 
+  // Count unique detected archetypes
+  const getDetectedArchetypesCount = () => {
+    const archetypeNames = new Set<string>()
+    conversation?.messages.forEach(msg => {
+      if (msg.metadata?.detectedArchetypes && Array.isArray(msg.metadata.detectedArchetypes)) {
+        msg.metadata.detectedArchetypes.forEach((arch: any) => {
+          if (arch.name) {
+            archetypeNames.add(arch.name)
+          }
+        })
+      }
+    })
+    return archetypeNames.size
+  }
+
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50/30">
@@ -348,6 +399,18 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
           </div>
         </div>
       </div>
+
+      {/* Progress Bar */}
+      {assessmentStarted && (
+        <AssessmentProgressBar
+          messageCount={conversation.messages.length}
+          detectedArchetypesCount={getDetectedArchetypesCount()}
+          minQuestions={assessmentSettings.minQuestions}
+          maxQuestions={assessmentSettings.maxQuestions}
+          minArchetypes={assessmentSettings.minArchetypes}
+          minConfidence={assessmentSettings.minConfidence}
+        />
+      )}
 
       {/* Chat Messages - Scrollable container */}
       <div className="flex-1 overflow-y-auto min-h-0">
