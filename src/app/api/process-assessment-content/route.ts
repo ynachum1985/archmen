@@ -58,7 +58,7 @@ function chunkText(text: string, chunkSize: number = 400, overlap: number = 80):
 }
 
 // Generate embedding for text with support for multiple providers
-async function generateEmbedding(text: string, model: string = 'mistral-embed'): Promise<number[]> {
+async function generateEmbedding(text: string, model: string = 'text-embedding-3-small'): Promise<number[]> {
   try {
     console.log('[generateEmbedding] Starting with model:', model)
     // Clean and preprocess text
@@ -66,7 +66,10 @@ async function generateEmbedding(text: string, model: string = 'mistral-embed'):
     console.log('[generateEmbedding] Text preprocessed, length:', cleanText.length)
 
     // Handle different embedding providers
-    if (model.startsWith('mistral-')) {
+    if (model.startsWith('openrouter/')) {
+      console.log('[generateEmbedding] Using OpenRouter provider')
+      return await generateOpenRouterEmbedding(cleanText, model)
+    } else if (model.startsWith('mistral-')) {
       console.log('[generateEmbedding] Using Mistral provider')
       return await generateMistralEmbedding(cleanText, model)
     } else if (model.startsWith('voyage-')) {
@@ -120,6 +123,53 @@ async function generateOpenAIEmbedding(text: string, model: string): Promise<num
   }
 }
 
+// OpenRouter embedding generation
+async function generateOpenRouterEmbedding(text: string, model: string): Promise<number[]> {
+  try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.warn('[generateOpenRouterEmbedding] OpenRouter API key not configured, falling back to OpenAI')
+      return await generateOpenAIEmbedding(text, 'text-embedding-3-small')
+    }
+
+    console.log('[generateOpenRouterEmbedding] Calling OpenRouter API with model:', model)
+
+    // Extract the actual model name (e.g., 'openrouter/text-embedding-3-small' -> 'text-embedding-3-small')
+    const actualModel = model.replace('openrouter/', '')
+
+    const response = await fetch('https://openrouter.ai/api/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://archmen.vercel.app',
+        'X-Title': 'ArchMen Assessment Platform'
+      },
+      body: JSON.stringify({
+        model: actualModel,
+        input: text
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(`OpenRouter API error: ${error.error?.message || response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    if (!data.data || !data.data[0] || !data.data[0].embedding) {
+      throw new Error('Invalid embedding response from OpenRouter')
+    }
+
+    console.log('[generateOpenRouterEmbedding] Success, embedding dimension:', data.data[0].embedding.length)
+    return data.data[0].embedding
+  } catch (error) {
+    console.error('[generateOpenRouterEmbedding] Error:', error)
+    console.warn('[generateOpenRouterEmbedding] Falling back to OpenAI')
+    return await generateOpenAIEmbedding(text, 'text-embedding-3-small')
+  }
+}
+
 // Mistral embedding generation (placeholder - implement with actual Mistral API)
 async function generateMistralEmbedding(text: string, model: string): Promise<number[]> {
   // For now, fallback to OpenAI - implement actual Mistral API when available
@@ -150,7 +200,7 @@ export async function POST(request: NextRequest) {
       settings = {
         chunkSize: 1000,
         chunkOverlap: 200,
-        embeddingModel: 'mistral-embed'
+        embeddingModel: 'openrouter/text-embedding-3-small'
       }
     } = body
 

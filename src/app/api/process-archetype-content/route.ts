@@ -74,12 +74,14 @@ function chunkText(text: string, chunkSize: number = 400, overlap: number = 80) 
 }
 
 // Generate embedding for text with support for multiple providers
-async function generateEmbedding(text: string, model: string = 'mistral-embed') {
+async function generateEmbedding(text: string, model: string = 'openrouter/text-embedding-3-small') {
   // Clean and preprocess text
   const cleanText = preprocessText(text)
 
   // Handle different embedding providers
-  if (model.startsWith('mistral-')) {
+  if (model.startsWith('openrouter/')) {
+    return await generateOpenRouterEmbedding(cleanText, model)
+  } else if (model.startsWith('mistral-')) {
     return await generateMistralEmbedding(cleanText, model)
   } else if (model.startsWith('voyage-')) {
     return await generateVoyageEmbedding(cleanText, model)
@@ -96,6 +98,53 @@ function preprocessText(text: string): string {
     .replace(/\s+/g, ' ') // Normalize whitespace
     .replace(/[^\w\s.,!?;:()\-'"]/g, '') // Remove special characters but keep punctuation
     .substring(0, 8000) // Limit input length
+}
+
+// OpenRouter embedding generation
+async function generateOpenRouterEmbedding(text: string, model: string) {
+  try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.warn('OpenRouter API key not configured, falling back to OpenAI')
+      return await generateOpenAIEmbedding(text, 'text-embedding-3-small')
+    }
+
+    console.log(`Generating embedding with OpenRouter model: ${model}`)
+
+    // Extract the actual model name (e.g., 'openrouter/text-embedding-3-small' -> 'text-embedding-3-small')
+    const actualModel = model.replace('openrouter/', '')
+
+    const response = await fetch('https://openrouter.ai/api/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://archmen.vercel.app',
+        'X-Title': 'ArchMen Assessment Platform'
+      },
+      body: JSON.stringify({
+        model: actualModel,
+        input: text
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(`OpenRouter API error: ${error.error?.message || response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    if (!data.data || !data.data[0] || !data.data[0].embedding) {
+      throw new Error('Invalid embedding response from OpenRouter')
+    }
+
+    console.log(`Successfully generated embedding with ${data.data[0].embedding.length} dimensions`)
+    return data.data[0].embedding
+  } catch (error) {
+    console.error('OpenRouter embedding error:', error)
+    console.warn('Falling back to OpenAI')
+    return await generateOpenAIEmbedding(text, 'text-embedding-3-small')
+  }
 }
 
 // OpenAI embedding generation
