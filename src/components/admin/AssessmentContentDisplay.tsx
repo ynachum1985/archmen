@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +29,12 @@ interface AssessmentContentDisplayProps {
   assessmentName: string
 }
 
-export function AssessmentContentDisplay({ assessmentId, assessmentName }: AssessmentContentDisplayProps) {
+export interface AssessmentContentDisplayRef {
+  refresh: () => Promise<void>
+}
+
+export const AssessmentContentDisplay = forwardRef<AssessmentContentDisplayRef, AssessmentContentDisplayProps>(
+  ({ assessmentId, assessmentName }, ref) => {
   const [chunks, setChunks] = useState<ContentChunk[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,6 +43,11 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
   // Metadata filtering state
   const [selectedTopic, setSelectedTopic] = useState<string>('all')
   const [selectedSource, setSelectedSource] = useState<string>('all')
+
+  // Expose refresh function to parent component
+  useImperativeHandle(ref, () => ({
+    refresh: fetchContentChunks
+  }))
 
   useEffect(() => {
     // Only fetch if we have a valid assessment ID or name
@@ -317,3 +327,4 @@ export function AssessmentContentDisplay({ assessmentId, assessmentName }: Asses
     </Collapsible>
   )
 }
+)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,10 +15,14 @@ interface AssessmentKnowledgeBaseProps {
   assessmentName: string
 }
 
-export function AssessmentKnowledgeBase({
+export interface AssessmentContentDisplayRef {
+  refresh: () => Promise<void>
+}
+
+export const AssessmentKnowledgeBase = forwardRef<AssessmentContentDisplayRef, AssessmentKnowledgeBaseProps>(({
   assessmentId,
   assessmentName
-}: AssessmentKnowledgeBaseProps) {
+}: AssessmentKnowledgeBaseProps, ref) => {
   // Content state
   const [textContents, setTextContents] = useState<string[]>([''])
   const [referenceUrls, setReferenceUrls] = useState<string[]>([''])
@@ -39,6 +43,18 @@ export function AssessmentKnowledgeBase({
   const [isTestingEmbedding, setIsTestingEmbedding] = useState(false)
   const [embeddingTestResults, setEmbeddingTestResults] = useState<Array<{content: string, similarity: number}> | null>(null)
 
+  // Ref for AssessmentContentDisplay to trigger refresh
+  const contentDisplayRef = useRef<AssessmentContentDisplayRef>(null)
+
+  // Expose refresh function to parent component
+  useImperativeHandle(ref, () => ({
+    refresh: async () => {
+      if (contentDisplayRef.current) {
+        await contentDisplayRef.current.refresh()
+      }
+    }
+  }))
+
   const handleProcessContent = async () => {
     if (!assessmentId || !assessmentName) {
       alert('Assessment ID and name are required')
@@ -49,7 +65,7 @@ export function AssessmentKnowledgeBase({
     try {
       // Combine all content
       const combinedContent = textContents.filter(c => c.trim()).join('\n\n')
-      
+
       if (!combinedContent && uploadedFiles.flat().length === 0) {
         alert('Please add some content or upload files')
         return
@@ -83,6 +99,11 @@ export function AssessmentKnowledgeBase({
       setTextContents([''])
       setReferenceUrls([''])
       setUploadedFiles([[]])
+
+      // Refresh the AssessmentContentDisplay component
+      if (contentDisplayRef.current) {
+        await contentDisplayRef.current.refresh()
+      }
     } catch (error) {
       console.error('Error processing content:', error)
       alert('Failed to process content')
@@ -491,11 +512,12 @@ export function AssessmentKnowledgeBase({
       {/* Existing Content Display */}
       <div className="mt-6">
         <AssessmentContentDisplay
+          ref={contentDisplayRef}
           assessmentId={assessmentId}
           assessmentName={assessmentName}
         />
       </div>
     </div>
   )
-}
+})
 
