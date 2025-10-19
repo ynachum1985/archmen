@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, ChevronDown } from 'lucide-react'
 
 interface AssessmentProgressBarProps {
   messageCount: number
@@ -10,6 +10,7 @@ interface AssessmentProgressBarProps {
   maxQuestions: number
   minArchetypes: number
   minConfidence: number
+  sessionData?: Record<string, any>
 }
 
 export function AssessmentProgressBar({
@@ -18,10 +19,12 @@ export function AssessmentProgressBar({
   minQuestions,
   maxQuestions,
   minArchetypes,
-  minConfidence
+  minConfidence,
+  sessionData
 }: AssessmentProgressBarProps) {
   const [progress, setProgress] = useState(0)
   const [stage, setStage] = useState<'questions' | 'confidence' | 'archetype'>('questions')
+  const [showDebug, setShowDebug] = useState(false)
 
   useEffect(() => {
     // Calculate conversation turns (each user message = 1 turn)
@@ -83,9 +86,18 @@ export function AssessmentProgressBar({
               {getStageLabel()}
             </span>
           </div>
-          <span className="text-xs text-gray-500">
-            {Math.round(progress * 100)}%
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">
+              {Math.round(progress * 100)}%
+            </span>
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              title="Toggle debug info"
+            >
+              <ChevronDown className={`h-3 w-3 transition-transform ${showDebug ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -95,6 +107,25 @@ export function AssessmentProgressBar({
             style={{ width: `${progress * 100}%` }}
           />
         </div>
+
+        {/* Debug Info */}
+        {showDebug && (
+          <div className="mt-3 p-2 bg-gray-100/50 rounded text-xs text-gray-600 space-y-1 font-mono">
+            <div>Questions: {Math.ceil(messageCount / 2)}/{minQuestions}</div>
+            <div>Archetypes: {detectedArchetypesCount}/{minArchetypes}</div>
+            <div>Confidence: {minConfidence}% needed</div>
+            {sessionData?.discovered_archetypes && (
+              <div className="mt-2 pt-2 border-t border-gray-300/50">
+                <div className="font-semibold mb-1">Detected Archetypes:</div>
+                {Object.entries(sessionData.discovered_archetypes).map(([name, score]: [string, any]) => (
+                  <div key={name} className="text-gray-500">
+                    {name}: {typeof score === 'number' ? Math.round(score * 100) : score}%
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

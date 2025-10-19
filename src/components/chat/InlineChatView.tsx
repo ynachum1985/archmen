@@ -420,6 +420,7 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
           maxQuestions={assessmentSettings.maxQuestions}
           minArchetypes={assessmentSettings.minArchetypes}
           minConfidence={assessmentSettings.minConfidence}
+          sessionData={conversation.metadata as Record<string, any>}
         />
       )}
 

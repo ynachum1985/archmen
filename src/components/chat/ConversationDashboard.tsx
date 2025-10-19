@@ -500,26 +500,26 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
 
           {/* View Toggle for Admins */}
           {!sidebarCollapsed && isAdmin && (
-            <div className="flex items-center gap-2 bg-gray-100/50 rounded-lg p-2">
+            <div className="flex items-center gap-1 bg-gray-100/50 rounded-lg p-1.5">
               <button
                 onClick={() => setViewAsUser(false)}
-                className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap ${
                   !viewAsUser
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Admin View
+                Admin
               </button>
               <button
                 onClick={() => setViewAsUser(true)}
-                className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap ${
                   viewAsUser
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                User View
+                User
               </button>
             </div>
           )}
