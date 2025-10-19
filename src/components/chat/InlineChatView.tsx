@@ -51,10 +51,20 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
 
   // Check if assessment has been started
   useEffect(() => {
-    if (conversation?.messages.length > 0 || conversation?.metadata?.firstMessageGenerated) {
+    // Assessment is started if:
+    // 1. There are messages AND firstMessageGenerated is true (AI-generated first question)
+    // 2. OR there are messages AND it's not the first message (user has already answered)
+    const hasMessages = conversation?.messages && conversation.messages.length > 0
+    const firstMessageGenerated = conversation?.metadata?.firstMessageGenerated === true
+
+    // Only consider assessment started if we have a real AI-generated first question
+    // Not if we just have a default welcome message
+    if (hasMessages && firstMessageGenerated) {
       setAssessmentStarted(true)
+    } else {
+      setAssessmentStarted(false)
     }
-  }, [conversation?.messages.length, conversation?.metadata?.firstMessageGenerated])
+  }, [conversation?.messages, conversation?.metadata?.firstMessageGenerated])
 
   // Generate first question when user clicks "Start Assessment"
   const handleStartAssessment = async () => {
@@ -351,37 +361,44 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
                 </div>
               </div>
             )}
-            {conversation.messages.map((msg, index) => (
-              <div key={index} className="mb-6">
-                <ChatBubble
-                  variant={msg.role === 'user' ? 'sent' : 'received'}
-                  className="mb-4"
-                >
-                  <ChatBubbleAvatar
-                    src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
-                    fallback={msg.role === 'assistant' ? 'AI' : 'You'}
-                  />
-                  <ChatBubbleMessage>
-                    {msg.content}
-                  </ChatBubbleMessage>
-                </ChatBubble>
+            {conversation.messages.map((msg, index) => {
+              // Only show messages if assessment has been properly started with AI-generated first question
+              if (!assessmentStarted && index === 0) {
+                return null // Don't show default welcome message
+              }
 
-                {/* Display detected archetypes inline */}
-                {msg.metadata?.detectedArchetypes && msg.metadata.detectedArchetypes.length > 0 && (
-                  <div className="ml-12 space-y-3">
-                    {msg.metadata.detectedArchetypes.map((archetype: any, arcIdx: number) => (
-                      <InlineArchetypeCard
-                        key={arcIdx}
-                        archetypeName={archetype.name}
-                        description={archetype.description}
-                        confidenceScore={archetype.confidenceScore}
-                        isNewlyRevealed={archetype.isNewlyRevealed}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              return (
+                <div key={index} className="mb-6">
+                  <ChatBubble
+                    variant={msg.role === 'user' ? 'sent' : 'received'}
+                    className="mb-4"
+                  >
+                    <ChatBubbleAvatar
+                      src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
+                      fallback={msg.role === 'assistant' ? 'AI' : 'You'}
+                    />
+                    <ChatBubbleMessage>
+                      {msg.content}
+                    </ChatBubbleMessage>
+                  </ChatBubble>
+
+                  {/* Display detected archetypes inline */}
+                  {msg.metadata?.detectedArchetypes && msg.metadata.detectedArchetypes.length > 0 && (
+                    <div className="ml-12 space-y-3">
+                      {msg.metadata.detectedArchetypes.map((archetype: any, arcIdx: number) => (
+                        <InlineArchetypeCard
+                          key={arcIdx}
+                          archetypeName={archetype.name}
+                          description={archetype.description}
+                          confidenceScore={archetype.confidenceScore}
+                          isNewlyRevealed={archetype.isNewlyRevealed}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </ChatMessageList>
       </div>
