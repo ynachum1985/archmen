@@ -242,12 +242,12 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
             const isExpanded = expandedId === archetype.user_archetype_id
 
             return (
-            <Card
-              key={archetype.user_archetype_id}
-              className={`border-gray-200/50 shadow-sm hover:shadow-md transition-all overflow-hidden ${
-                isExpanded ? 'col-span-full' : ''
-              }`}
-            >
+              <Card
+                key={archetype.user_archetype_id}
+                className={`border-gray-200/50 shadow-sm hover:shadow-md transition-all overflow-hidden ${
+                  isExpanded ? 'col-span-full' : ''
+                }`}
+              >
               {/* Card Header - Clickable to expand */}
               <CardHeader
                 className="pb-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
@@ -405,7 +405,7 @@ export function UserArchetypesCollection({ userId }: UserArchetypesCollectionPro
                   </Button>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
             )
           })}
         </div>
