@@ -300,70 +300,76 @@ export default function AssessmentDetailPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
-                  {testResults
-                    .sort((a, b) => b.score - a.score)
-                    .map((archetype, index) => (
-                      <div key={index} className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-medium text-gray-900">
-                            #{index + 1} {archetype.name}
-                          </h3>
-                          <div className="flex gap-3">
-                            <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                              Score: {Math.round(archetype.score * 100)}%
-                            </Badge>
-                            <Badge variant="outline" className="border-gray-300 text-gray-600">
-                              Confidence: {Math.round(archetype.confidence * 100)}%
-                            </Badge>
-                          </div>
-                        </div>
-
-                        {archetype.traits && archetype.traits.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">Key Traits Identified:</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {archetype.traits.map((trait, i) => (
-                                <Badge 
-                                  key={i} 
-                                  variant="outline" 
-                                  className="bg-green-50 text-green-700 border-green-200"
-                                >
-                                  {trait}
-                                </Badge>
-                              ))}
+                  <>
+                    {testResults
+                      .sort((a, b) => b.score - a.score)
+                      .map((archetype, index) => (
+                        <div key={index} className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <h3 className="text-xl font-medium text-gray-900">
+                              #{index + 1} {archetype.name}
+                            </h3>
+                            <div className="flex gap-3">
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                                Score: {Math.round(archetype.score * 100)}%
+                              </Badge>
+                              <Badge variant="outline" className="border-gray-300 text-gray-600">
+                                Confidence: {Math.round(archetype.confidence * 100)}%
+                              </Badge>
                             </div>
                           </div>
-                        )}
 
-                        {archetype.evidence && archetype.evidence.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">Linguistic Evidence:</h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                              {archetype.evidence.map((evidence, i) => (
-                                <li key={i} className="flex items-start gap-3">
-                                  <span className="text-blue-500 mt-1">•</span>
-                                  {evidence}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                          {archetype.traits && archetype.traits.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-3">Key Traits Identified:</h4>
+                              <div className="flex flex-wrap gap-2">
+                                <>
+                                  {archetype.traits.map((trait, i) => (
+                                    <Badge
+                                      key={i}
+                                      variant="outline"
+                                      className="bg-green-50 text-green-700 border-green-200"
+                                    >
+                                      {trait}
+                                    </Badge>
+                                  ))}
+                                </>
+                              </div>
+                            </div>
+                          )}
 
-                        {index < testResults.length - 1 && (
-                          <hr className="border-gray-200" />
-                        )}
-                      </div>
-                    ))}
+                          {archetype.evidence && archetype.evidence.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-3">Linguistic Evidence:</h4>
+                              <ul className="space-y-2 text-sm text-gray-600">
+                                <>
+                                  {archetype.evidence.map((evidence, i) => (
+                                    <li key={i} className="flex items-start gap-3">
+                                      <span className="text-blue-500 mt-1">•</span>
+                                      {evidence}
+                                    </li>
+                                  ))}
+                                </>
+                              </ul>
+                            </div>
+                          )}
+
+                          {index < testResults.length - 1 && (
+                            <hr className="border-gray-200" />
+                          )}
+                        </div>
+                      ))}
+                  </>
 
                   <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
-                    <Button 
+                    <Button
                       onClick={() => setActiveTab('builder')}
                       variant="outline"
                       className="border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       Modify Configuration
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => setActiveTab('test')}
                       className="bg-blue-500 hover:bg-blue-600 text-white"
                     >
