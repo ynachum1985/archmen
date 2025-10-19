@@ -124,6 +124,9 @@ export function InlineAssessmentView({ userId, onStartAssessment }: InlineAssess
           metadata: {
             assessmentId: assessment.id,
             assessmentName: assessment.name,
+            description: assessment.description,
+            category: assessment.category,
+            assessmentLevel: assessment.assessment_level,
             status: 'active',
             title: assessment.name
           },

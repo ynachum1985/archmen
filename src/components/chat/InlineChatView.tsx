@@ -222,11 +222,16 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-gray-700" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-medium text-gray-900">{conversation.metadata.title}</h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mb-1">
               {conversation.metadata.category} • Level {conversation.metadata.assessmentLevel}
             </p>
+            {conversation.metadata.description && (
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {conversation.metadata.description}
+              </p>
+            )}
           </div>
         </div>
       </div>
