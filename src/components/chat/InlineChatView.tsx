@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble'
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useContentModeration, getModerationMessage, shouldAllowContent, getCategoryWarnings } from '@/hooks/useContentModeration'
 import { InlineArchetypeCard } from '@/components/chat/InlineArchetypeCard'
 import { AssessmentProgressBar } from '@/components/chat/AssessmentProgressBar'
+import { ThinkingAnimation } from '@/components/chat/ThinkingAnimation'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -45,6 +46,7 @@ interface InlineChatViewProps {
 export function InlineChatView({ conversation, userId, onConversationUpdate }: InlineChatViewProps) {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
+  const [thinking, setThinking] = useState(false)
   const [moderationWarning, setModerationWarning] = useState<string | null>(null)
   const [generatingFirstMessage, setGeneratingFirstMessage] = useState(false)
   const [assessmentStarted, setAssessmentStarted] = useState(false)
@@ -54,7 +56,13 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
     minArchetypes: 2,
     minConfidence: 70
   })
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const { moderateContent, isLoading: moderationLoading } = useContentModeration()
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [conversation?.messages, thinking])
 
   // Fetch assessment settings
   useEffect(() => {
@@ -277,6 +285,8 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
         }
       }
 
+      setThinking(true)
+
       const response = await fetch('/api/enhanced-chat', {
         method: 'POST',
         headers: {
@@ -304,6 +314,7 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       }
 
       const aiData = await response.json()
+      setThinking(false)
 
       // Add AI response to conversation
       const aiMessage: Message = {
@@ -462,6 +473,12 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
                 </div>
               )
             })}
+
+            {/* Show thinking animation while AI is responding */}
+            {thinking && <ThinkingAnimation />}
+
+            {/* Scroll anchor */}
+            <div ref={messagesEndRef} />
           </div>
         </ChatMessageList>
       </div>
