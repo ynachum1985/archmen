@@ -1,9 +1,12 @@
+'use client'
+
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { APP_CONFIG } from "@/config/app.config";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,10 +44,6 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
-
-'use client'
-
-import { usePathname } from 'next/navigation'
 
 export default function RootLayout({
   children,
