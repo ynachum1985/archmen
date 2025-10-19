@@ -847,25 +847,27 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
             <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
               Assessments:
             </span>
-            {assessments.map((assessment) => {
-              const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
-              const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
+            <>
+              {assessments.map((assessment) => {
+                const isMainAssessment = assessment.id === '550e8400-e29b-41d4-a716-446655440001'
+                const isAccessible = isAdmin || isMainAssessment || mainAssessmentCompleted
 
-              return (
-                <button
-                  key={assessment.id}
-                  onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
-                  disabled={!isAccessible}
-                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                    isAccessible
-                      ? `${currentAssessment?.id === assessment.id ? 'bg-blue-200 text-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  {assessment.name}
-                </button>
-              )
-            })}
+                return (
+                  <button
+                    key={assessment.id}
+                    onClick={() => isAccessible ? handleAssessmentSelect(assessment) : null}
+                    disabled={!isAccessible}
+                    className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                      isAccessible
+                        ? `${currentAssessment?.id === assessment.id ? 'bg-blue-200 text-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {assessment.name}
+                  </button>
+                )
+              })}
+            </>
           </div>
         </div>
 
