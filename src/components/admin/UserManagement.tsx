@@ -108,7 +108,6 @@ export function UserManagement() {
   const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
   const [assessmentSessions, setAssessmentSessions] = useState<Record<string, any>>({})
   const [loadingSessions, setLoadingSessions] = useState(false)
-  const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
   const [liveConversations, setLiveConversations] = useState<any[]>([])
   const [isLiveMonitoring, setIsLiveMonitoring] = useState(false)
 
