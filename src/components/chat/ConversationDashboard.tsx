@@ -590,7 +590,7 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                           <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
                             {assessment.expected_duration} min • {assessment.category}
                           </div>
-                          {isAccessible && (
+                          {isAdmin && !viewAsUser && isAccessible && (
                             <div className="flex items-center gap-1 mt-2">
                               <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
                                 {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
@@ -652,7 +652,7 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                           <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
                             {assessment.expected_duration} min • {assessment.category}
                           </div>
-                          {isAccessible && (
+                          {isAdmin && !viewAsUser && isAccessible && (
                             <div className="flex items-center gap-1 mt-2">
                               <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
                                 {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}
@@ -714,7 +714,7 @@ This will take approximately ${assessment.expected_duration} minutes. Let's begi
                           <div className={`text-xs mt-1 ${isAccessible ? 'text-gray-400' : 'text-gray-300'}`}>
                             {assessment.expected_duration} min • {assessment.category}
                           </div>
-                          {isAccessible && (
+                          {isAdmin && !viewAsUser && isAccessible && (
                             <div className="flex items-center gap-1 mt-2">
                               <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
                                 {assessment.live_model ? assessment.live_model.split('/').pop() : 'gpt-4-turbo-preview'}

@@ -114,8 +114,8 @@ QUESTIONING STRATEGY:
   minConfidence: 70,
 
   // Live Assessment LLM Configuration
-  liveProvider: 'openai',
-  liveModel: 'gpt-4-turbo-preview',
+  liveProvider: 'openrouter',
+  liveModel: 'anthropic/claude-3.5-sonnet',
 
   reportGeneration: `Generate a comprehensive archetypal analysis that includes:
 

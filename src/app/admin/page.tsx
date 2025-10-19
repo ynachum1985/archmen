@@ -134,6 +134,10 @@ export default function AdminPage() {
   // Level expansion state (for grouping assessments by level)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
 
+  // OpenRouter model sync state
+  const [isSyncingModels, setIsSyncingModels] = useState(false)
+  const [lastModelSync, setLastModelSync] = useState<string | null>(null)
+
   // Convert assessment data from Supabase to EnhancedAssessmentConfig format
   const convertToAssessmentConfig = (assessment: any) => {
     // Safety check for undefined assessment
@@ -160,8 +164,8 @@ export default function AdminPage() {
         assessment_level: assessment.assessment_level || 1,
         status: assessment.status || 'draft',
         is_active: assessment.is_active || false,
-        liveProvider: assessment.live_provider || 'openai',
-        liveModel: assessment.live_model || 'gpt-4-turbo-preview',
+        liveProvider: assessment.live_provider || 'openrouter',
+        liveModel: assessment.live_model || 'anthropic/claude-3.5-sonnet',
         evidenceThreshold: (assessment.evidence_threshold || 0.7) * 100, // Convert to percentage
         adaptationSensitivity: (assessment.adaptation_sensitivity || 0.5) * 100,
         cycleSettings: assessment.cycle_settings || {
@@ -214,8 +218,8 @@ export default function AdminPage() {
       assessment_level: assessment.assessment_level || 1,
       status: assessment.status?.toLowerCase() || 'draft',
       is_active: assessment.status?.toLowerCase() === 'live',
-      liveProvider: 'openai',
-      liveModel: 'gpt-4-turbo-preview',
+      liveProvider: 'openrouter',
+      liveModel: 'anthropic/claude-3.5-sonnet',
       evidenceThreshold: 70,
       adaptationSensitivity: 50,
       cycleSettings: {
@@ -485,6 +489,29 @@ export default function AdminPage() {
 
   // Removed bulk generateEmbeddings function - now handled individually per archetype
 
+  const handleSyncOpenRouterModels = async () => {
+    setIsSyncingModels(true)
+    try {
+      const response = await fetch('/api/sync-openrouter-models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to sync models')
+      }
+
+      const data = await response.json()
+      setLastModelSync(new Date().toLocaleString())
+      alert(`✅ Successfully synced ${data.modelCount} models from OpenRouter!\n\nLatest models are now available for use in assessments.`)
+    } catch (error) {
+      console.error('Error syncing OpenRouter models:', error)
+      alert(`❌ Failed to sync OpenRouter models: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsSyncingModels(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -542,16 +569,33 @@ export default function AdminPage() {
                       <h3 className="text-lg font-medium">Assessments by Level</h3>
                       <p className="text-sm text-gray-600 mt-1">Manage assessments organized by difficulty level</p>
                     </div>
-                    <Button
-                      onClick={() => {
-                        setCurrentBuilderAssessment(null)
-                        setActiveSetupTab('builder')
-                      }}
-                      className="bg-emerald-500 hover:bg-emerald-600"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      New Assessment
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={handleSyncOpenRouterModels}
+                        disabled={isSyncingModels}
+                        variant="outline"
+                        className="text-xs"
+                        title="Sync latest OpenRouter models"
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        {isSyncingModels ? 'Syncing...' : 'Sync OpenRouter Models'}
+                      </Button>
+                      {lastModelSync && (
+                        <span className="text-xs text-gray-500">
+                          Last synced: {lastModelSync}
+                        </span>
+                      )}
+                      <Button
+                        onClick={() => {
+                          setCurrentBuilderAssessment(null)
+                          setActiveSetupTab('builder')
+                        }}
+                        className="bg-emerald-500 hover:bg-emerald-600"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Assessment
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Assessments by Level */}
