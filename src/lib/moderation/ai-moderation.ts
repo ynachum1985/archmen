@@ -112,7 +112,12 @@ export class AIModeration {
     moderationLevel?: 'strict' | 'moderate' | 'lenient' | 'disabled'
   }): Promise<ModerationResult> {
     try {
-      // Run all moderation checks in parallel
+      // For assessments, use lenient moderation by default (only block serious concerns)
+      const moderationLevel = context?.conversationType === 'assessment'
+        ? 'lenient'
+        : (context?.moderationLevel || 'moderate')
+
+      // Run moderation checks in parallel
       const [openaiResult, perspectiveResult, customResult] = await Promise.allSettled([
         this.checkOpenAIModerationAPI(content),
         this.checkPerspectiveAPI(content),
@@ -125,7 +130,7 @@ export class AIModeration {
         perspectiveResult.status === 'fulfilled' ? perspectiveResult.value : null,
         customResult.status === 'fulfilled' ? customResult.value : null,
         content,
-        context
+        { ...context, moderationLevel }
       )
 
       // Log for monitoring
@@ -134,10 +139,13 @@ export class AIModeration {
       return result
     } catch (error) {
       console.error('Moderation error:', error)
-      
-      // Fail-safe: if moderation fails, flag for human review
+
+      // Fail-safe: for assessments, allow content to proceed (don't block on error)
+      // For other contexts, flag for human review
+      const isAssessment = context?.conversationType === 'assessment'
+
       return {
-        flagged: true,
+        flagged: false,
         categories: {
           harassment: false,
           harassment_threatening: false,
@@ -157,8 +165,8 @@ export class AIModeration {
         },
         category_scores: {},
         confidence: 0,
-        reasoning: 'Moderation system error - flagged for human review',
-        action: 'human_review'
+        reasoning: isAssessment ? 'Moderation system error - allowing for assessment' : 'Moderation system error',
+        action: isAssessment ? 'allow' : 'human_review'
       }
     }
   }
@@ -212,11 +220,12 @@ export class AIModeration {
       )
 
       if (!response.ok) {
-        throw new Error(`Perspective API error: ${response.status}`)
+        console.warn(`Perspective API error: ${response.status}`)
+        return null
       }
 
       const data = await response.json()
-      
+
       return {
         toxicity: data.attributeScores?.TOXICITY?.summaryScore?.value || 0,
         severe_toxicity: data.attributeScores?.SEVERE_TOXICITY?.summaryScore?.value || 0,
@@ -226,7 +235,7 @@ export class AIModeration {
         threat: data.attributeScores?.THREAT?.summaryScore?.value || 0
       }
     } catch (error) {
-      console.error('Perspective API error:', error)
+      console.warn('Perspective API error (continuing without it):', error)
       return null
     }
   }
