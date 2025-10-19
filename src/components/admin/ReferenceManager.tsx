@@ -368,10 +368,11 @@ export function ReferenceManager({ files, links, onFilesChange, onLinksChange }:
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {links.map((link) => {
-                    const IconComponent = getLinkIcon(link.type)
-                    return (
-                      <div key={link.id} className="flex items-start justify-between p-4 border rounded-lg">
+                  <>
+                    {links.map((link) => {
+                      const IconComponent = getLinkIcon(link.type)
+                      return (
+                        <div key={link.id} className="flex items-start justify-between p-4 border rounded-lg">
                         <div className="flex items-start gap-3 flex-1">
                           <IconComponent className="h-5 w-5 text-gray-500 mt-1" />
                           <div className="flex-1">
@@ -417,8 +418,9 @@ export function ReferenceManager({ files, links, onFilesChange, onLinksChange }:
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </>
                 </div>
               </CardContent>
             </Card>

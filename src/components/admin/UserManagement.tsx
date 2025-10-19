@@ -515,10 +515,11 @@ export function UserManagement() {
                 <p className="text-sm text-gray-500">Users will appear here as they sign up and use assessments</p>
               </div>
             ) : (
-              filteredUsers.map((user, userIndex) => {
-                const progress = userProgress[user.id]
-                return (
-                  <div key={`user-${user.id}-${userIndex}`} className="border-b border-gray-100 py-4 hover:bg-gray-50 transition-colors">
+              <>
+                {filteredUsers.map((user, userIndex) => {
+                  const progress = userProgress[user.id]
+                  return (
+                    <div key={`user-${user.id}-${userIndex}`} className="border-b border-gray-100 py-4 hover:bg-gray-50 transition-colors">
                     <div className="px-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -810,8 +811,9 @@ export function UserManagement() {
                       )}
                     </div>
                   </div>
-                )
-              })
+                  )
+                })}
+              </>
             )}
           </div>
         </TabsContent>
