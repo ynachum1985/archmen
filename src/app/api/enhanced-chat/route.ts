@@ -44,7 +44,8 @@ export async function POST(request: Request) {
       provider = 'openai',
       model = 'gpt-4-turbo-preview',
       temperature = 0.7,
-      maxTokens = 2000
+      maxTokens = 2000,
+      isFirstMessage = false // Flag for generating first question
     } = requestBody
 
     // Handle legacy conversation-chat format
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
     console.log('=== Enhanced Chat API Request ===')
     console.log('Provider:', provider, 'Model:', model)
     console.log('Assessment ID:', assessmentId)
+    console.log('Is First Message:', isFirstMessage)
     console.log('Messages count:', messages?.length)
     console.log('Environment variables check:')
     console.log('- OPENAI_API_KEY:', !!process.env.OPENAI_API_KEY)
@@ -64,10 +66,10 @@ export async function POST(request: Request) {
     console.log('- KIMI_API_KEY:', !!process.env.KIMI_API_KEY)
     console.log('- GROQ_API_KEY:', !!process.env.GROQ_API_KEY)
     console.log('- OPENROUTER_API_KEY:', !!process.env.OPENROUTER_API_KEY)
-    
+
     // Check if user is authenticated (optional for demo)
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     // Log if user is authenticated (for analytics)
     if (user) {
       console.log('Authenticated enhanced chat request from user:', user.id)
@@ -78,43 +80,44 @@ export async function POST(request: Request) {
     const conversationHistory = finalMessages.slice(0, -1)
 
     // Step 1: Moderate user input for safety using centralized settings
-    console.log('=== Content Moderation Check ===')
-    const moderation = new AIModeration(
-      process.env.OPENAI_API_KEY!,
-      process.env.PERSPECTIVE_API_KEY
-    )
-    const moderationResult = await moderation.moderateContent(userMessage, {
-      userId: user?.id,
-      assessmentId,
-      conversationType: assessmentId ? 'assessment' : 'chat'
-    })
+    // Skip moderation for first message (no user input yet)
+    let moderationResult = { flagged: false, action: 'allow', confidence: 0 }
 
-    console.log('Moderation result:', {
-      flagged: moderationResult.flagged,
-      action: moderationResult.action,
-      confidence: moderationResult.confidence
-    })
+    if (!isFirstMessage && userMessage) {
+      console.log('=== Content Moderation Check ===')
+      const moderation = new AIModeration(
+        process.env.OPENAI_API_KEY!,
+        process.env.PERSPECTIVE_API_KEY
+      )
+      moderationResult = await moderation.moderateContent(userMessage, {
+        userId: user?.id,
+        assessmentId,
+        conversationType: assessmentId ? 'assessment' : 'chat'
+      })
 
-    console.log('Moderation result:', {
-      flagged: moderationResult.flagged,
-      action: moderationResult.action,
-      confidence: moderationResult.confidence
-    })
+      console.log('Moderation result:', {
+        flagged: moderationResult.flagged,
+        action: moderationResult.action,
+        confidence: moderationResult.confidence
+      })
 
-    // Block harmful content immediately
-    if (moderationResult.action === 'block') {
-      return NextResponse.json({
-        error: 'Content blocked due to safety concerns',
-        moderation: {
-          flagged: true,
-          reason: 'Your message contains content that violates our community guidelines. Please rephrase your message in a respectful way.'
-        }
-      }, { status: 400 })
-    }
+      // Block harmful content immediately
+      if (moderationResult.action === 'block') {
+        return NextResponse.json({
+          error: 'Content blocked due to safety concerns',
+          moderation: {
+            flagged: true,
+            reason: 'Your message contains content that violates our community guidelines. Please rephrase your message in a respectful way.'
+          }
+        }, { status: 400 })
+      }
 
-    // Flag for human review but allow to continue
-    if (moderationResult.action === 'human_review') {
-      console.log('Content flagged for human review but allowing to continue')
+      // Flag for human review but allow to continue
+      if (moderationResult.action === 'human_review') {
+        console.log('Content flagged for human review but allowing to continue')
+      }
+    } else if (isFirstMessage) {
+      console.log('Skipping moderation for first message generation')
     }
 
     // Step 2: Load AI personality if specified
@@ -174,21 +177,27 @@ export async function POST(request: Request) {
       }
 
       // Get RAG-enhanced context using the comprehensive service
+      // Skip RAG for first message since there's no user input yet
       let ragContext = null
-      try {
-        ragContext = await ragChatService.getRelevantContext(userMessage, {
-          conversationId,
-          assessmentId,
-          userId: user?.id,
-          maxContextChunks: 8,
-          similarityThreshold: 0.7,
-          includeArchetypes: true,
-          includeAssessments: true
-        })
-        console.log(`RAG context retrieved: ${ragContext.totalChunks} chunks (${ragContext.archetypeContent.length} archetype, ${ragContext.assessmentContent.length} assessment)`)
-      } catch (error) {
-        console.error('Error fetching RAG context:', error)
-        ragContext = { archetypeContent: [], assessmentContent: [], totalChunks: 0, searchQuery: userMessage }
+      if (!isFirstMessage && userMessage) {
+        try {
+          ragContext = await ragChatService.getRelevantContext(userMessage, {
+            conversationId,
+            assessmentId,
+            userId: user?.id,
+            maxContextChunks: 8,
+            similarityThreshold: 0.7,
+            includeArchetypes: true,
+            includeAssessments: true
+          })
+          console.log(`RAG context retrieved: ${ragContext.totalChunks} chunks (${ragContext.archetypeContent.length} archetype, ${ragContext.assessmentContent.length} assessment)`)
+        } catch (error) {
+          console.error('Error fetching RAG context:', error)
+          ragContext = { archetypeContent: [], assessmentContent: [], totalChunks: 0, searchQuery: userMessage }
+        }
+      } else {
+        console.log('Skipping RAG context for first message generation')
+        ragContext = { archetypeContent: [], assessmentContent: [], totalChunks: 0, searchQuery: '' }
       }
 
       // Get assessment configuration to use proper prompt
@@ -242,17 +251,32 @@ export async function POST(request: Request) {
         ? ragChatService.createEnhancedSystemPrompt(finalSystemPrompt, ragContext)
         : finalSystemPrompt
 
-      const contextualMessages = [
-        ...conversationHistory, // Previous conversation
-        {
-          role: 'system',
-          content: enhancedSystemPrompt
-        },
-        {
-          role: 'user',
-          content: userMessage
-        }
-      ]
+      // For first message, generate an opening question instead of responding to user input
+      let contextualMessages
+      if (isFirstMessage) {
+        contextualMessages = [
+          {
+            role: 'system',
+            content: enhancedSystemPrompt
+          },
+          {
+            role: 'user',
+            content: 'Please generate your first question to begin this assessment. Make it open-ended and engaging.'
+          }
+        ]
+      } else {
+        contextualMessages = [
+          ...conversationHistory, // Previous conversation
+          {
+            role: 'system',
+            content: enhancedSystemPrompt
+          },
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ]
+      }
 
       console.log('Final system prompt length:', finalSystemPrompt.length)
       console.log('Using personality:', personalityConfig?.name || 'None')
