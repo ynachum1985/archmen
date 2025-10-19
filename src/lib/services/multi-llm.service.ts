@@ -209,7 +209,11 @@ export class MultiLLMService {
     if (process.env.OPENROUTER_API_KEY) {
       this.openrouterClient = new OpenAI({
         apiKey: process.env.OPENROUTER_API_KEY,
-        baseURL: 'https://openrouter.ai/api/v1'
+        baseURL: 'https://openrouter.ai/api/v1',
+        defaultHeaders: {
+          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://archmen.vercel.app',
+          'X-Title': 'ArchMen Assessment Platform'
+        }
       })
     }
   }
@@ -492,12 +496,7 @@ export class MultiLLMService {
       model: config.model,
       messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
       temperature: config.temperature,
-      max_tokens: config.maxTokens,
-      // OpenRouter specific headers
-      headers: {
-        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://archmen.vercel.app',
-        'X-Title': 'ArchMen Assessment Platform'
-      }
+      max_tokens: config.maxTokens
     })
 
     const usage = completion.usage
