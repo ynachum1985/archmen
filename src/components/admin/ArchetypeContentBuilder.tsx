@@ -476,7 +476,8 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
                       <p>No content blocks yet. Add some content using the buttons above.</p>
                     </div>
                   ) : (
-                    blocks.map((block) => (
+                    <>
+                      {blocks.map((block) => (
                       <div key={block.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
@@ -566,7 +567,8 @@ export function ArchetypeContentBuilder({ onContentChange }: ArchetypeContentBui
                           </div>
                         )}
                       </div>
-                    ))
+                      ))}
+                    </>
                   )}
                 </div>
               </div>
