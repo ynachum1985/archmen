@@ -458,11 +458,7 @@ export function UserManagement() {
           session_data,
           created_at,
           updated_at,
-          completed_at,
-          assessment_templates (
-            name,
-            description
-          )
+          completed_at
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -472,8 +468,15 @@ export function UserManagement() {
         return
       }
 
+      // Sort to show in-progress assessments first
+      const sortedSessions = (sessions || []).sort((a, b) => {
+        if (a.status === 'in_progress' && b.status !== 'in_progress') return -1
+        if (a.status !== 'in_progress' && b.status === 'in_progress') return 1
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+
       const sessionsMap: Record<string, any> = {}
-      sessions?.forEach(session => {
+      sortedSessions.forEach(session => {
         sessionsMap[session.id] = session
       })
       setAssessmentSessions(sessionsMap)
@@ -764,56 +767,68 @@ export function UserManagement() {
                                     {Object.values(assessmentSessions).map((session: any, index: number) => {
                                       const archetypes = session.discovered_archetypes as Record<string, number> | null
                                       const hasArchetypes = archetypes && Object.keys(archetypes).length > 0
+                                      const sessionData = session.session_data as Record<string, any> | null
+                                      const assessmentName = sessionData?.theme || sessionData?.assessment_name || 'Main Assessment'
+                                      const isInProgress = session.status === 'in_progress'
 
                                       return (
-                                        <div key={session.id || index} className="border border-purple-200 bg-purple-50 rounded-lg p-4">
+                                        <div key={session.id || index} className={`border rounded-lg p-4 ${isInProgress ? 'border-blue-300 bg-blue-50' : 'border-purple-200 bg-purple-50'}`}>
                                           <div className="flex items-center justify-between mb-3">
                                             <div>
-                                              <h5 className="font-medium text-purple-900">
-                                                {session.assessment_templates?.name || 'Assessment'}
+                                              <h5 className="font-medium text-lg">
+                                                {isInProgress ? '🔵' : '✅'} {assessmentName}
                                               </h5>
-                                              <p className="text-sm text-purple-700">
-                                                {session.status === 'completed' ? '✓ Completed' : '⏳ In Progress'} •
+                                              <p className="text-sm text-gray-700">
+                                                {isInProgress ? '⏳ In Progress' : '✓ Completed'} •
                                                 Progress: {session.progress_percentage || 0}% •
                                                 Questions: {session.current_question_index || 0}
                                               </p>
+                                              {sessionData?.started_at && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                  Started: {new Date(sessionData.started_at).toLocaleString()}
+                                                </p>
+                                              )}
                                             </div>
                                           </div>
 
                                           {hasArchetypes ? (
-                                            <div className="space-y-2">
-                                              <p className="text-sm font-medium text-purple-800 mb-2">Discovered Archetypes:</p>
-                                              {Object.entries(archetypes).map(([name, score]: [string, any]) => {
-                                                const confidence = typeof score === 'number' ? Math.round(score * 100) : 0
-                                                const isRevealed = confidence >= 70
+                                            <div className="space-y-3">
+                                              <p className="text-sm font-semibold text-gray-800 mb-2">🧠 Detected Archetypes:</p>
+                                              {Object.entries(archetypes)
+                                                .sort(([, a], [, b]) => (typeof b === 'number' ? b : 0) - (typeof a === 'number' ? a : 0))
+                                                .map(([name, score]: [string, any]) => {
+                                                  const confidence = typeof score === 'number' ? Math.round(score * 100) : 0
+                                                  const isRevealed = confidence >= 70
 
-                                                return (
-                                                  <div key={name} className="flex items-center justify-between bg-white p-2 rounded border border-purple-100">
-                                                    <div className="flex items-center gap-2">
-                                                      {isRevealed && <span className="text-lg">✨</span>}
-                                                      <span className="text-sm font-medium text-gray-700">{name}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                                                        <div
-                                                          className={`h-2 rounded-full transition-all ${
-                                                            isRevealed ? 'bg-green-500' : 'bg-yellow-500'
-                                                          }`}
-                                                          style={{ width: `${Math.min(confidence, 100)}%` }}
-                                                        />
+                                                  return (
+                                                    <div key={name} className="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
+                                                      <div className="flex items-center gap-2 flex-1">
+                                                        {isRevealed && <span className="text-lg">✨</span>}
+                                                        <span className="text-sm font-medium text-gray-800">{name}</span>
                                                       </div>
-                                                      <span className={`text-xs font-semibold ${isRevealed ? 'text-green-600' : 'text-yellow-600'}`}>
-                                                        {confidence}%
-                                                      </span>
+                                                      <div className="flex items-center gap-3">
+                                                        <div className="w-32 bg-gray-200 rounded-full h-2.5">
+                                                          <div
+                                                            className={`h-2.5 rounded-full transition-all ${
+                                                              isRevealed ? 'bg-green-500' : confidence > 40 ? 'bg-yellow-500' : 'bg-orange-400'
+                                                            }`}
+                                                            style={{ width: `${Math.min(confidence, 100)}%` }}
+                                                          />
+                                                        </div>
+                                                        <span className={`text-sm font-bold min-w-12 text-right ${isRevealed ? 'text-green-600' : confidence > 40 ? 'text-yellow-600' : 'text-orange-600'}`}>
+                                                          {confidence}%
+                                                        </span>
+                                                      </div>
                                                     </div>
-                                                  </div>
-                                                )
-                                              })}
+                                                  )
+                                                })}
                                             </div>
                                           ) : (
-                                            <p className="text-sm text-purple-600 italic">
-                                              No archetypes discovered yet. {session.status === 'in_progress' ? 'Still analyzing...' : 'Assessment did not reveal archetypes.'}
-                                            </p>
+                                            <div className="bg-white p-3 rounded border border-gray-200">
+                                              <p className="text-sm text-gray-600">
+                                                {isInProgress ? '🔍 Analyzing responses... No archetypes detected yet.' : 'No archetypes were detected in this assessment.'}
+                                              </p>
+                                            </div>
                                           )}
                                         </div>
                                       )
