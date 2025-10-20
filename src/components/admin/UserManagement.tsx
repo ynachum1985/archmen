@@ -109,6 +109,9 @@ export function UserManagement() {
   const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
   const [assessmentSessions, setAssessmentSessions] = useState<Record<string, any>>({})
   const [loadingSessions, setLoadingSessions] = useState(false)
+  const [assessmentResponses, setAssessmentResponses] = useState<Record<string, any[]>>({})
+  const [archetypeAnalysis, setArchetypeAnalysis] = useState<Record<string, any>>({})
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false)
   const [liveConversations, setLiveConversations] = useState<any[]>([])
   const [isLiveMonitoring, setIsLiveMonitoring] = useState(false)
 
@@ -480,10 +483,63 @@ export function UserManagement() {
         sessionsMap[session.id] = session
       })
       setAssessmentSessions(sessionsMap)
+
+      // Load detailed analysis for each session
+      await loadDetailedAnalysis(userId, sortedSessions)
     } catch (error) {
       console.error('Error loading assessment sessions:', error)
     } finally {
       setLoadingSessions(false)
+    }
+  }
+
+  const loadDetailedAnalysis = async (userId: string, sessions: any[]) => {
+    setLoadingAnalysis(true)
+    try {
+      // Load assessment responses (linguistic analysis)
+      const { data: responses, error: responsesError } = await supabase
+        .from('assessment_responses')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (responsesError) {
+        console.error('Error loading assessment responses:', responsesError)
+      }
+
+      // Group responses by session
+      const responsesMap: Record<string, any[]> = {}
+      responses?.forEach(response => {
+        const sessionId = response.session_id
+        if (!responsesMap[sessionId]) {
+          responsesMap[sessionId] = []
+        }
+        responsesMap[sessionId].push(response)
+      })
+      setAssessmentResponses(responsesMap)
+
+      // Load archetype results
+      const sessionIds = sessions.map(s => s.id)
+      if (sessionIds.length > 0) {
+        const { data: results, error: resultsError } = await supabase
+          .from('archetype_results')
+          .select('*')
+          .in('assessment_id', sessionIds)
+
+        if (resultsError) {
+          console.error('Error loading archetype results:', resultsError)
+        }
+
+        const analysisMap: Record<string, any> = {}
+        results?.forEach(result => {
+          analysisMap[result.assessment_id] = result
+        })
+        setArchetypeAnalysis(analysisMap)
+      }
+    } catch (error) {
+      console.error('Error loading detailed analysis:', error)
+    } finally {
+      setLoadingAnalysis(false)
     }
   }
 
@@ -792,7 +848,7 @@ export function UserManagement() {
                                           </div>
 
                                           {hasArchetypes ? (
-                                            <div className="space-y-3">
+                                            <div className="space-y-4">
                                               <p className="text-sm font-semibold text-gray-800 mb-2">🧠 Detected Archetypes:</p>
                                               {Object.entries(archetypes)
                                                 .sort(([, a], [, b]) => (typeof b === 'number' ? b : 0) - (typeof a === 'number' ? a : 0))
@@ -801,23 +857,25 @@ export function UserManagement() {
                                                   const isRevealed = confidence >= 70
 
                                                   return (
-                                                    <div key={name} className="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
-                                                      <div className="flex items-center gap-2 flex-1">
-                                                        {isRevealed && <span className="text-lg">✨</span>}
-                                                        <span className="text-sm font-medium text-gray-800">{name}</span>
-                                                      </div>
-                                                      <div className="flex items-center gap-3">
-                                                        <div className="w-32 bg-gray-200 rounded-full h-2.5">
-                                                          <div
-                                                            className={`h-2.5 rounded-full transition-all ${
-                                                              isRevealed ? 'bg-green-500' : confidence > 40 ? 'bg-yellow-500' : 'bg-orange-400'
-                                                            }`}
-                                                            style={{ width: `${Math.min(confidence, 100)}%` }}
-                                                          />
+                                                    <div key={name} className="bg-white p-3 rounded border border-gray-200">
+                                                      <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex items-center gap-2 flex-1">
+                                                          {isRevealed && <span className="text-lg">✨</span>}
+                                                          <span className="text-sm font-medium text-gray-800">{name}</span>
                                                         </div>
-                                                        <span className={`text-sm font-bold min-w-12 text-right ${isRevealed ? 'text-green-600' : confidence > 40 ? 'text-yellow-600' : 'text-orange-600'}`}>
-                                                          {confidence}%
-                                                        </span>
+                                                        <div className="flex items-center gap-3">
+                                                          <div className="w-32 bg-gray-200 rounded-full h-2.5">
+                                                            <div
+                                                              className={`h-2.5 rounded-full transition-all ${
+                                                                isRevealed ? 'bg-green-500' : confidence > 40 ? 'bg-yellow-500' : 'bg-orange-400'
+                                                              }`}
+                                                              style={{ width: `${Math.min(confidence, 100)}%` }}
+                                                            />
+                                                          </div>
+                                                          <span className={`text-sm font-bold min-w-12 text-right ${isRevealed ? 'text-green-600' : confidence > 40 ? 'text-yellow-600' : 'text-orange-600'}`}>
+                                                            {confidence}%
+                                                          </span>
+                                                        </div>
                                                       </div>
                                                     </div>
                                                   )
@@ -828,6 +886,36 @@ export function UserManagement() {
                                               <p className="text-sm text-gray-600">
                                                 {isInProgress ? '🔍 Analyzing responses... No archetypes detected yet.' : 'No archetypes were detected in this assessment.'}
                                               </p>
+                                            </div>
+                                          )}
+
+                                          {/* Show detailed linguistic analysis */}
+                                          {assessmentResponses[session.id] && assessmentResponses[session.id].length > 0 && (
+                                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                              <p className="text-sm font-semibold text-gray-800 mb-3">📊 AI Analysis Details:</p>
+                                              <div className="space-y-3 max-h-96 overflow-y-auto">
+                                                {assessmentResponses[session.id].slice(0, 5).map((response: any, idx: number) => {
+                                                  const analysis = response.response_data?.linguistic_analysis || {}
+                                                  return (
+                                                    <div key={idx} className="bg-gray-50 p-2 rounded text-xs border border-gray-100">
+                                                      <p className="font-medium text-gray-700 mb-1">Response {idx + 1}:</p>
+                                                      <p className="text-gray-600 italic mb-2 line-clamp-2">"{response.response_value}"</p>
+                                                      {analysis.emotionalTone && (
+                                                        <p className="text-gray-600"><span className="font-medium">Emotional Tone:</span> {Array.isArray(analysis.emotionalTone) ? analysis.emotionalTone.join(', ') : analysis.emotionalTone}</p>
+                                                      )}
+                                                      {analysis.keyPhrases && (
+                                                        <p className="text-gray-600"><span className="font-medium">Key Phrases:</span> {Array.isArray(analysis.keyPhrases) ? analysis.keyPhrases.slice(0, 3).join(', ') : analysis.keyPhrases}</p>
+                                                      )}
+                                                      {analysis.languagePatterns && (
+                                                        <p className="text-gray-600"><span className="font-medium">Patterns:</span> {Array.isArray(analysis.languagePatterns) ? analysis.languagePatterns.slice(0, 2).join(', ') : analysis.languagePatterns}</p>
+                                                      )}
+                                                      {analysis.archetypeSignals && Object.keys(analysis.archetypeSignals).length > 0 && (
+                                                        <p className="text-gray-600"><span className="font-medium">Archetype Signals:</span> {Object.entries(analysis.archetypeSignals).map(([arch, sig]: [string, any]) => `${arch} (${Math.round(sig * 100)}%)`).join(', ')}</p>
+                                                      )}
+                                                    </div>
+                                                  )
+                                                })}
+                                              </div>
                                             </div>
                                           )}
                                         </div>
