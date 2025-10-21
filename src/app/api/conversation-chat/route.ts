@@ -381,6 +381,11 @@ async function performDetailedLinguisticAnalysis(
   linguisticStyle: string
 }> {
   try {
+    const conversationContext = conversationHistory
+      .slice(-3)
+      .map(msg => `${msg.role}: ${msg.content}`)
+      .join('\n')
+
     const analysisPrompt = `Perform a detailed linguistic analysis of this user message in the context of Jungian archetypes. Return ONLY a JSON object with the following structure:
 
 {
@@ -396,7 +401,7 @@ async function performDetailedLinguisticAnalysis(
 Available archetypes: ${archetypes.map(a => a.name).join(', ')}
 
 Conversation context (last 3 messages):
-${conversationHistory.slice(-3).map(msg => \`\${msg.role}: \${msg.content}\`).join('\n')}
+${conversationContext}
 
 Latest user message: ${message}
 
