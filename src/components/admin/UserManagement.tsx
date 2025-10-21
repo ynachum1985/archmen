@@ -534,12 +534,13 @@ export function UserManagement() {
   const loadDetailedAnalysis = async (userId: string, sessions: any[]) => {
     setLoadingAnalysis(true)
     try {
-      // Load assessment responses (linguistic analysis)
+      // Load assessment responses (linguistic analysis) - this is the source of truth
       const { data: responses, error: responsesError } = await supabase
         .from('assessment_responses')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
+        .limit(100)
 
       if (responsesError) {
         console.error('Error loading assessment responses:', responsesError)
@@ -555,50 +556,54 @@ export function UserManagement() {
         responsesMap[sessionId].push(response)
       })
 
-      // Also extract analysis from conversation messages
-      sessions.forEach(session => {
-        if (session.isConversation && session.session_data?.messages) {
-          const messages = session.session_data.messages
-          const analysisFromMessages: any[] = []
-
-          // Extract user responses and their metadata
-          messages.forEach((msg: any, idx: number) => {
-            if (msg.role === 'user') {
-              analysisFromMessages.push({
-                id: `${session.id}-msg-${idx}`,
-                response_value: msg.content,
-                response_data: msg.metadata || {},
-                created_at: msg.timestamp
-              })
-            }
-          })
-
-          if (analysisFromMessages.length > 0) {
-            responsesMap[session.id] = analysisFromMessages
-          }
-        }
-      })
-
       setAssessmentResponses(responsesMap)
 
-      // Load archetype results
-      const sessionIds = sessions.map(s => s.id)
-      if (sessionIds.length > 0) {
-        const { data: results, error: resultsError } = await supabase
-          .from('archetype_results')
-          .select('*')
-          .in('assessment_id', sessionIds)
+      // Load user archetypes for this user
+      const { data: userArchetypes, error: archetypesError } = await supabase
+        .from('user_archetypes')
+        .select(`
+          id,
+          archetype_id,
+          current_confidence_score,
+          peak_confidence_score,
+          key_evidence,
+          discovery_summary,
+          pattern_timeline,
+          assessments_detected_in,
+          enhanced_archetypes(name, description)
+        `)
+        .eq('user_id', userId)
+        .order('current_confidence_score', { ascending: false })
 
-        if (resultsError) {
-          console.error('Error loading archetype results:', resultsError)
-        }
-
-        const analysisMap: Record<string, any> = {}
-        results?.forEach(result => {
-          analysisMap[result.assessment_id] = result
-        })
-        setArchetypeAnalysis(analysisMap)
+      if (archetypesError) {
+        console.error('Error loading user archetypes:', archetypesError)
       }
+
+      // Create analysis map from user archetypes
+      const analysisMap: Record<string, any> = {}
+      userArchetypes?.forEach(ua => {
+        // Group by conversation/assessment where detected
+        const assessments = ua.assessments_detected_in || []
+        assessments.forEach((assessmentId: string) => {
+          if (!analysisMap[assessmentId]) {
+            analysisMap[assessmentId] = {
+              archetypes: [],
+              totalConfidence: 0
+            }
+          }
+          analysisMap[assessmentId].archetypes.push({
+            name: ua.enhanced_archetypes?.name || 'Unknown',
+            confidence: ua.current_confidence_score,
+            peakConfidence: ua.peak_confidence_score,
+            evidence: ua.key_evidence,
+            summary: ua.discovery_summary,
+            timeline: ua.pattern_timeline
+          })
+          analysisMap[assessmentId].totalConfidence += ua.current_confidence_score
+        })
+      })
+
+      setArchetypeAnalysis(analysisMap)
     } catch (error) {
       console.error('Error loading detailed analysis:', error)
     } finally {
@@ -952,28 +957,41 @@ export function UserManagement() {
                                             </div>
                                           )}
 
-                                          {/* Show detailed linguistic analysis */}
+                                          {/* Show detailed linguistic analysis from assessment_responses */}
                                           {assessmentResponses[session.id] && assessmentResponses[session.id].length > 0 && (
                                             <div className="mt-4 pt-4 border-t border-gray-200">
-                                              <p className="text-sm font-semibold text-gray-800 mb-3">📊 AI Analysis Details:</p>
+                                              <p className="text-sm font-semibold text-gray-800 mb-3">📊 AI Analysis Details ({assessmentResponses[session.id].length} responses):</p>
                                               <div className="space-y-3 max-h-96 overflow-y-auto">
                                                 {assessmentResponses[session.id].slice(0, 5).map((response: any, idx: number) => {
                                                   const analysis = response.response_data?.linguistic_analysis || {}
+                                                  const archetypeConfidence = response.response_data?.archetype_confidence || {}
                                                   return (
-                                                    <div key={idx} className="bg-gray-50 p-2 rounded text-xs border border-gray-100">
-                                                      <p className="font-medium text-gray-700 mb-1">Response {idx + 1}:</p>
-                                                      <p className="text-gray-600 italic mb-2 line-clamp-2">"{response.response_value}"</p>
-                                                      {analysis.emotionalTone && (
-                                                        <p className="text-gray-600"><span className="font-medium">Emotional Tone:</span> {Array.isArray(analysis.emotionalTone) ? analysis.emotionalTone.join(', ') : analysis.emotionalTone}</p>
+                                                    <div key={idx} className="bg-gray-50 p-3 rounded text-xs border border-gray-100">
+                                                      <p className="font-medium text-gray-700 mb-2">Response {idx + 1}:</p>
+                                                      <p className="text-gray-600 italic mb-2 line-clamp-3">"{response.response_value}"</p>
+
+                                                      {analysis.emotionalTone && analysis.emotionalTone.length > 0 && (
+                                                        <p className="text-gray-600 mb-1"><span className="font-medium">🎭 Emotional Tone:</span> {analysis.emotionalTone.join(', ')}</p>
                                                       )}
-                                                      {analysis.keyPhrases && (
-                                                        <p className="text-gray-600"><span className="font-medium">Key Phrases:</span> {Array.isArray(analysis.keyPhrases) ? analysis.keyPhrases.slice(0, 3).join(', ') : analysis.keyPhrases}</p>
+
+                                                      {analysis.keyPhrases && analysis.keyPhrases.length > 0 && (
+                                                        <p className="text-gray-600 mb-1"><span className="font-medium">💬 Key Phrases:</span> {analysis.keyPhrases.slice(0, 3).join(', ')}</p>
                                                       )}
-                                                      {analysis.languagePatterns && (
-                                                        <p className="text-gray-600"><span className="font-medium">Patterns:</span> {Array.isArray(analysis.languagePatterns) ? analysis.languagePatterns.slice(0, 2).join(', ') : analysis.languagePatterns}</p>
+
+                                                      {analysis.languagePatterns && analysis.languagePatterns.length > 0 && (
+                                                        <p className="text-gray-600 mb-1"><span className="font-medium">📝 Patterns:</span> {analysis.languagePatterns.slice(0, 2).join(', ')}</p>
                                                       )}
-                                                      {analysis.archetypeSignals && Object.keys(analysis.archetypeSignals).length > 0 && (
-                                                        <p className="text-gray-600"><span className="font-medium">Archetype Signals:</span> {Object.entries(analysis.archetypeSignals).map(([arch, sig]: [string, any]) => `${arch} (${Math.round(sig * 100)}%)`).join(', ')}</p>
+
+                                                      {analysis.dominantThemes && analysis.dominantThemes.length > 0 && (
+                                                        <p className="text-gray-600 mb-1"><span className="font-medium">🎯 Themes:</span> {analysis.dominantThemes.slice(0, 2).join(', ')}</p>
+                                                      )}
+
+                                                      {Object.keys(archetypeConfidence).length > 0 && (
+                                                        <p className="text-gray-600 mb-1"><span className="font-medium">🧠 Archetype Signals:</span> {Object.entries(archetypeConfidence).map(([arch, conf]: [string, any]) => `${arch} (${Math.round(conf)}%)`).join(', ')}</p>
+                                                      )}
+
+                                                      {analysis.shadowIndicators && analysis.shadowIndicators.length > 0 && (
+                                                        <p className="text-gray-600"><span className="font-medium">🌑 Shadow Work:</span> {analysis.shadowIndicators.slice(0, 2).join(', ')}</p>
                                                       )}
                                                     </div>
                                                   )
