@@ -96,12 +96,32 @@ async function handleConversationChat(request: NextRequest, data: ConversationCh
     const aiResponse = ragResponse.content
     const ragContext = ragResponse.context
 
+    // Perform detailed linguistic analysis
+    const linguisticAnalysis = await performDetailedLinguisticAnalysis(
+      message,
+      conversationHistory,
+      archetypes || []
+    )
+
     // Analyze message for archetype patterns
     const archetypeConfidence = await analyzeArchetypePatterns(
       message,
       conversationHistory,
       archetypes || []
     )
+
+    // Save detailed analysis to database for RAG and admin visibility
+    if (Object.keys(archetypeConfidence).length > 0 || linguisticAnalysis.emotionalTone.length > 0) {
+      await saveAnalysisToDatabase(
+        supabase,
+        userId,
+        conversationId,
+        assessmentId,
+        message,
+        linguisticAnalysis,
+        archetypeConfidence
+      )
+    }
 
     // Update emerging archetypes in real-time
     if (Object.keys(archetypeConfidence).length > 0) {
@@ -343,6 +363,100 @@ function extractEvidenceQuotes(
   return userMessages.slice(0, 3)
 }
 
+/**
+ * Perform detailed linguistic analysis on user message
+ * Returns emotional tone, key phrases, language patterns, and archetype signals
+ */
+async function performDetailedLinguisticAnalysis(
+  message: string,
+  conversationHistory: any[],
+  archetypes: any[]
+): Promise<{
+  emotionalTone: string[]
+  keyPhrases: string[]
+  languagePatterns: string[]
+  archetypeSignals: Record<string, number>
+  dominantThemes: string[]
+  shadowIndicators: string[]
+  linguisticStyle: string
+}> {
+  try {
+    const analysisPrompt = `Perform a detailed linguistic analysis of this user message in the context of Jungian archetypes. Return ONLY a JSON object with the following structure:
+
+{
+  "emotionalTone": ["emotion1", "emotion2"],
+  "keyPhrases": ["phrase1", "phrase2"],
+  "languagePatterns": ["pattern1", "pattern2"],
+  "archetypeSignals": {"Archetype Name": 0.75, "Another": 0.60},
+  "dominantThemes": ["theme1", "theme2"],
+  "shadowIndicators": ["shadow1", "shadow2"],
+  "linguisticStyle": "description of communication style"
+}
+
+Available archetypes: ${archetypes.map(a => a.name).join(', ')}
+
+Conversation context (last 3 messages):
+${conversationHistory.slice(-3).map(msg => \`\${msg.role}: \${msg.content}\`).join('\n')}
+
+Latest user message: ${message}
+
+Analyze for:
+- Emotional vocabulary and tone
+- Key phrases that reveal values or patterns
+- Language patterns (defensive, open, analytical, emotional, etc.)
+- Which archetypes these patterns signal (0-1 scale)
+- Dominant themes in their thinking
+- Shadow work indicators (unconscious patterns)
+- Overall linguistic style
+
+Return ONLY valid JSON.`
+
+    const openai = getOpenAIClient()
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: analysisPrompt }],
+      temperature: 0.3,
+      max_tokens: 500,
+    })
+
+    const response = completion.choices[0]?.message?.content || '{}'
+
+    try {
+      const parsed = JSON.parse(response)
+      return {
+        emotionalTone: Array.isArray(parsed.emotionalTone) ? parsed.emotionalTone : [],
+        keyPhrases: Array.isArray(parsed.keyPhrases) ? parsed.keyPhrases : [],
+        languagePatterns: Array.isArray(parsed.languagePatterns) ? parsed.languagePatterns : [],
+        archetypeSignals: typeof parsed.archetypeSignals === 'object' ? parsed.archetypeSignals : {},
+        dominantThemes: Array.isArray(parsed.dominantThemes) ? parsed.dominantThemes : [],
+        shadowIndicators: Array.isArray(parsed.shadowIndicators) ? parsed.shadowIndicators : [],
+        linguisticStyle: typeof parsed.linguisticStyle === 'string' ? parsed.linguisticStyle : ''
+      }
+    } catch {
+      return {
+        emotionalTone: [],
+        keyPhrases: [],
+        languagePatterns: [],
+        archetypeSignals: {},
+        dominantThemes: [],
+        shadowIndicators: [],
+        linguisticStyle: ''
+      }
+    }
+  } catch (error) {
+    console.error('Error performing linguistic analysis:', error)
+    return {
+      emotionalTone: [],
+      keyPhrases: [],
+      languagePatterns: [],
+      archetypeSignals: {},
+      dominantThemes: [],
+      shadowIndicators: [],
+      linguisticStyle: ''
+    }
+  }
+}
+
 async function analyzeArchetypePatterns(
   message: string,
   conversationHistory: any[],
@@ -376,7 +490,7 @@ Return only JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
     })
 
     const response = completion.choices[0]?.message?.content || '{}'
-    
+
     try {
       const parsed = JSON.parse(response)
       // Filter out low confidence scores and limit to top 5
@@ -388,7 +502,7 @@ Return only JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
           acc[name] = confidence as number
           return acc
         }, {} as ArchetypeConfidence)
-      
+
       return filtered
     } catch {
       return {}
@@ -396,6 +510,104 @@ Return only JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
   } catch (error) {
     console.error('Error analyzing archetype patterns:', error)
     return {}
+  }
+}
+
+/**
+ * Save detailed analysis to assessment_responses table for RAG and admin visibility
+ */
+async function saveAnalysisToDatabase(
+  supabase: any,
+  userId: string,
+  conversationId: string,
+  assessmentId: string | undefined,
+  userMessage: string,
+  linguisticAnalysis: any,
+  archetypeConfidence: ArchetypeConfidence
+): Promise<void> {
+  try {
+    // Save to assessment_responses table
+    await supabase.from('assessment_responses').insert({
+      user_id: userId,
+      session_id: conversationId,
+      template_id: assessmentId || 'main-assessment',
+      question_id: `response_${Date.now()}`,
+      response_value: userMessage,
+      response_data: {
+        linguistic_analysis: linguisticAnalysis,
+        archetype_confidence: archetypeConfidence,
+        timestamp: new Date().toISOString()
+      }
+    })
+
+    // Update or create user_archetypes for each detected archetype
+    for (const [archetypeName, confidence] of Object.entries(archetypeConfidence)) {
+      if (confidence < 30) continue // Skip low confidence
+
+      // Get archetype ID from name
+      const { data: archetype } = await supabase
+        .from('enhanced_archetypes')
+        .select('id')
+        .eq('name', archetypeName)
+        .single()
+
+      if (!archetype) continue
+
+      // Check if user already has this archetype
+      const { data: existingUserArchetype } = await supabase
+        .from('user_archetypes')
+        .select('id, current_confidence_score, peak_confidence_score, assessments_detected_in')
+        .eq('user_id', userId)
+        .eq('archetype_id', archetype.id)
+        .single()
+
+      const confidencePercent = Math.round(confidence)
+      const keyEvidence = linguisticAnalysis.keyPhrases || []
+
+      if (existingUserArchetype) {
+        // Update existing archetype with new evidence
+        const newPeakScore = Math.max(
+          existingUserArchetype.peak_confidence_score || 0,
+          confidencePercent
+        )
+        const assessmentsDetectedIn = existingUserArchetype.assessments_detected_in || []
+        if (!assessmentsDetectedIn.includes(conversationId)) {
+          assessmentsDetectedIn.push(conversationId)
+        }
+
+        await supabase
+          .from('user_archetypes')
+          .update({
+            current_confidence_score: confidencePercent,
+            peak_confidence_score: newPeakScore,
+            key_evidence: keyEvidence,
+            assessments_detected_in: assessmentsDetectedIn,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingUserArchetype.id)
+      } else {
+        // Create new user archetype
+        await supabase.from('user_archetypes').insert({
+          user_id: userId,
+          archetype_id: archetype.id,
+          discovered_in_conversation_id: conversationId,
+          current_confidence_score: confidencePercent,
+          peak_confidence_score: confidencePercent,
+          key_evidence: keyEvidence,
+          assessments_detected_in: [conversationId],
+          discovery_summary: `Discovered in Main Assessment conversation`,
+          pattern_timeline: {
+            [new Date().toISOString().split('T')[0]]: {
+              confidence: confidencePercent,
+              conversation_id: conversationId
+            }
+          }
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error saving analysis to database:', error)
+    // Don't throw - continue conversation even if save fails
   }
 }
 
@@ -408,7 +620,7 @@ async function determineSuggestedActions(
 
   // Check if AI is suggesting homework or practices
   const homeworkKeywords = ['practice', 'homework', 'exercise', 'try', 'experiment', 'reflect on', 'journal about']
-  const hasHomeworkSuggestion = homeworkKeywords.some(keyword => 
+  const hasHomeworkSuggestion = homeworkKeywords.some(keyword =>
     aiResponse.toLowerCase().includes(keyword)
   )
 
@@ -422,7 +634,7 @@ async function determineSuggestedActions(
 
   // Check if we should suggest scheduling
   const scheduleKeywords = ['daily', 'weekly', 'schedule', 'time', 'routine']
-  const hasScheduleSuggestion = scheduleKeywords.some(keyword => 
+  const hasScheduleSuggestion = scheduleKeywords.some(keyword =>
     aiResponse.toLowerCase().includes(keyword)
   )
 

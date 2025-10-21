@@ -450,6 +450,7 @@ export function UserManagement() {
   const loadAssessmentSessions = async (userId: string) => {
     setLoadingSessions(true)
     try {
+      // First try to load from assessment_sessions table
       const { data: sessions, error } = await supabase
         .from('assessment_sessions')
         .select(`
@@ -468,11 +469,48 @@ export function UserManagement() {
 
       if (error) {
         console.error('Error loading assessment sessions:', error)
-        return
       }
 
-      // Sort to show in-progress assessments first
-      const sortedSessions = (sessions || []).sort((a, b) => {
+      // Also load from conversations table (for Main Assessment and other conversations)
+      const { data: conversations, error: convError } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          messages,
+          metadata,
+          emerging_archetypes,
+          created_at,
+          updated_at
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (convError) {
+        console.error('Error loading conversations:', convError)
+      }
+
+      // Convert conversations to session format
+      const conversationSessions = (conversations || []).map(conv => ({
+        id: conv.id,
+        status: conv.metadata?.status === 'active' ? 'in_progress' : 'completed',
+        progress_percentage: Math.round(((conv.messages?.length || 0) / 20) * 100),
+        current_question_index: Math.ceil((conv.messages?.length || 0) / 2),
+        discovered_archetypes: conv.emerging_archetypes || {},
+        session_data: {
+          theme: conv.metadata?.title || 'Conversation',
+          assessment_name: conv.metadata?.title || 'Conversation',
+          started_at: conv.created_at,
+          messages: conv.messages
+        },
+        created_at: conv.created_at,
+        updated_at: conv.updated_at,
+        completed_at: null,
+        isConversation: true
+      }))
+
+      // Combine both sources and sort
+      const allSessions = [...(sessions || []), ...conversationSessions]
+      const sortedSessions = allSessions.sort((a, b) => {
         if (a.status === 'in_progress' && b.status !== 'in_progress') return -1
         if (a.status !== 'in_progress' && b.status === 'in_progress') return 1
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -516,6 +554,31 @@ export function UserManagement() {
         }
         responsesMap[sessionId].push(response)
       })
+
+      // Also extract analysis from conversation messages
+      sessions.forEach(session => {
+        if (session.isConversation && session.session_data?.messages) {
+          const messages = session.session_data.messages
+          const analysisFromMessages: any[] = []
+
+          // Extract user responses and their metadata
+          messages.forEach((msg: any, idx: number) => {
+            if (msg.role === 'user') {
+              analysisFromMessages.push({
+                id: `${session.id}-msg-${idx}`,
+                response_value: msg.content,
+                response_data: msg.metadata || {},
+                created_at: msg.timestamp
+              })
+            }
+          })
+
+          if (analysisFromMessages.length > 0) {
+            responsesMap[session.id] = analysisFromMessages
+          }
+        }
+      })
+
       setAssessmentResponses(responsesMap)
 
       // Load archetype results
