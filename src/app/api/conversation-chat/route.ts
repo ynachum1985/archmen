@@ -112,15 +112,20 @@ async function handleConversationChat(request: NextRequest, data: ConversationCh
 
     // Save detailed analysis to database for RAG and admin visibility
     if (Object.keys(archetypeConfidence).length > 0 || linguisticAnalysis.emotionalTone.length > 0) {
-      await saveAnalysisToDatabase(
-        supabase,
-        userId,
-        conversationId,
-        assessmentId,
-        message,
-        linguisticAnalysis,
-        archetypeConfidence
-      )
+      try {
+        await saveAnalysisToDatabase(
+          supabase,
+          userId,
+          conversationId,
+          assessmentId,
+          message,
+          linguisticAnalysis,
+          archetypeConfidence
+        )
+      } catch (error) {
+        console.error('Failed to save analysis to database:', error)
+        // Don't throw - continue with response even if analysis save fails
+      }
     }
 
     // Update emerging archetypes in real-time
@@ -302,13 +307,19 @@ async function updateEmergingArchetypes(
       .slice(0, 5)
 
     // Update conversation
-    await supabase
+    const { error: updateError } = await supabase
       .from('conversations')
       .update({ emerging_archetypes: sortedArchetypes })
       .eq('id', conversationId)
 
+    if (updateError) {
+      console.error('❌ Error updating emerging archetypes:', updateError)
+    } else {
+      console.log('✅ Emerging archetypes updated:', sortedArchetypes.length, 'archetypes')
+    }
+
   } catch (error) {
-    console.error('Error updating emerging archetypes:', error)
+    console.error('❌ Error updating emerging archetypes:', error)
   }
 }
 
@@ -381,6 +392,8 @@ async function performDetailedLinguisticAnalysis(
   linguisticStyle: string
 }> {
   try {
+    console.log('📝 Performing linguistic analysis for message:', message.substring(0, 50))
+
     const conversationContext = conversationHistory
       .slice(-3)
       .map(msg => `${msg.role}: ${msg.content}`)
@@ -425,9 +438,12 @@ Return ONLY valid JSON.`
     })
 
     const response = completion.choices[0]?.message?.content || '{}'
+    console.log('📊 Linguistic analysis response:', response)
 
     try {
       const parsed = JSON.parse(response)
+      console.log('✅ Parsed linguistic analysis:', parsed)
+
       return {
         emotionalTone: Array.isArray(parsed.emotionalTone) ? parsed.emotionalTone : [],
         keyPhrases: Array.isArray(parsed.keyPhrases) ? parsed.keyPhrases : [],
@@ -437,7 +453,9 @@ Return ONLY valid JSON.`
         shadowIndicators: Array.isArray(parsed.shadowIndicators) ? parsed.shadowIndicators : [],
         linguisticStyle: typeof parsed.linguisticStyle === 'string' ? parsed.linguisticStyle : ''
       }
-    } catch {
+    } catch (parseError) {
+      console.error('❌ Error parsing linguistic analysis JSON:', parseError)
+      console.error('Raw response was:', response)
       return {
         emotionalTone: [],
         keyPhrases: [],
@@ -449,7 +467,7 @@ Return ONLY valid JSON.`
       }
     }
   } catch (error) {
-    console.error('Error performing linguistic analysis:', error)
+    console.error('❌ Error performing linguistic analysis:', error)
     return {
       emotionalTone: [],
       keyPhrases: [],
@@ -468,6 +486,8 @@ async function analyzeArchetypePatterns(
   archetypes: any[]
 ): Promise<ArchetypeConfidence> {
   try {
+    console.log('🎭 Analyzing archetype patterns for message:', message.substring(0, 50))
+
     const analysisPrompt = `Analyze this conversation for Jungian archetype patterns. Return ONLY a JSON object with archetype names as keys and confidence percentages (0-100) as values.
 
 Available archetypes: ${archetypes.map(a => a.name).join(', ')}
@@ -495,9 +515,12 @@ Return only JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
     })
 
     const response = completion.choices[0]?.message?.content || '{}'
+    console.log('📊 Archetype analysis response:', response)
 
     try {
       const parsed = JSON.parse(response)
+      console.log('✅ Parsed archetype patterns:', parsed)
+
       // Filter out low confidence scores and limit to top 5
       const filtered = Object.entries(parsed)
         .filter(([_, confidence]) => (confidence as number) >= 30)
@@ -508,12 +531,15 @@ Return only JSON like: {"Archetype Name": 75, "Another Archetype": 60}`
           return acc
         }, {} as ArchetypeConfidence)
 
+      console.log('🎯 Filtered archetype confidence:', filtered)
       return filtered
-    } catch {
+    } catch (parseError) {
+      console.error('❌ Error parsing archetype analysis JSON:', parseError)
+      console.error('Raw response was:', response)
       return {}
     }
   } catch (error) {
-    console.error('Error analyzing archetype patterns:', error)
+    console.error('❌ Error analyzing archetype patterns:', error)
     return {}
   }
 }
@@ -531,8 +557,12 @@ async function saveAnalysisToDatabase(
   archetypeConfidence: ArchetypeConfidence
 ): Promise<void> {
   try {
+    console.log('🔍 Saving analysis to database for user:', userId)
+    console.log('📊 Linguistic analysis:', linguisticAnalysis)
+    console.log('🎭 Archetype confidence:', archetypeConfidence)
+
     // Save to assessment_responses table
-    await supabase.from('assessment_responses').insert({
+    const { data: insertedResponse, error: insertError } = await supabase.from('assessment_responses').insert({
       user_id: userId,
       session_id: conversationId,
       template_id: assessmentId || 'main-assessment',
@@ -543,7 +573,14 @@ async function saveAnalysisToDatabase(
         archetype_confidence: archetypeConfidence,
         timestamp: new Date().toISOString()
       }
-    })
+    }).select()
+
+    if (insertError) {
+      console.error('❌ Error inserting assessment response:', insertError)
+      throw insertError
+    }
+
+    console.log('✅ Assessment response saved:', insertedResponse)
 
     // Update or create user_archetypes for each detected archetype
     for (const [archetypeName, confidence] of Object.entries(archetypeConfidence)) {
