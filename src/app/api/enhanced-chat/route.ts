@@ -478,32 +478,36 @@ Do NOT include any other text.`
           const archetypeScores = JSON.parse(archetypeAnalysis.content)
           console.log('🎭 Detected archetype scores:', archetypeScores)
 
-          // Convert to array and match with archetype data from RAG
-          detectedArchetypes = Object.entries(archetypeScores)
-            .filter(([_, score]) => (score as number) >= minConfidenceThreshold)
-            .map(([name, score]) => {
-              // Find archetype description from RAG context
-              const archetypeChunk = ragContext.archetypeContent.find(
-                chunk => chunk.archetype_name === name
-              )
-              return {
-                name,
-                confidenceScore: score as number,
-                description: archetypeChunk?.content?.substring(0, 300) || '',
-                isNewlyRevealed: (score as number) >= Math.max(minConfidenceThreshold + 20, 70) // Reveal when confidence is 20+ points above threshold or 70%
-              }
-            })
-            .sort((a, b) => b.confidenceScore - a.confidenceScore)
-            .slice(0, 5) // Top 5 archetypes
-
-          // Store archetype confidence for database saving
+          // Store ALL archetype confidence for database saving (for RAG context)
           archetypeConfidence = Object.entries(archetypeScores)
             .reduce((acc, [name, score]) => {
               acc[name] = score as number
               return acc
             }, {} as Record<string, number>)
 
-          console.log('✅ Detected archetypes:', detectedArchetypes.length)
+          // Only reveal archetypes that meet the high confidence threshold
+          const revealThreshold = Math.max(minConfidenceThreshold + 20, 70) // Default 70% or 20 points above threshold
+          console.log('🎯 Reveal threshold:', revealThreshold)
+
+          // Convert to array and match with archetype data from RAG
+          detectedArchetypes = Object.entries(archetypeScores)
+            .filter(([_, score]) => (score as number) >= revealThreshold) // Only reveal high confidence archetypes
+            .map(([name, score]) => {
+              // Find archetype description from RAG context
+              const archetypeChunk = ragContext && ragContext.archetypeContent && ragContext.archetypeContent.find(
+                chunk => chunk.archetype_name === name
+              )
+              return {
+                name,
+                confidenceScore: score as number,
+                description: archetypeChunk?.content?.substring(0, 300) || '',
+                isNewlyRevealed: true // All returned archetypes are newly revealed (they passed the threshold)
+              }
+            })
+            .sort((a, b) => b.confidenceScore - a.confidenceScore)
+            .slice(0, 5) // Top 5 archetypes
+
+          console.log('✅ Archetypes to reveal:', detectedArchetypes.length, 'out of', Object.keys(archetypeScores).length, 'detected')
         } catch (parseError) {
           console.error('Error parsing archetype analysis:', parseError)
           console.error('Raw response:', archetypeAnalysis.content)
@@ -519,6 +523,15 @@ Do NOT include any other text.`
         console.log('💾 Saving assessment response to database...')
         const latestUserMessage = finalMessages[finalMessages.length - 1]?.content || ''
 
+        // Generate a UUID for question_id (v4 random UUID)
+        const generateUUID = () => {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0
+            const v = c === 'x' ? r : (r & 0x3 | 0x8)
+            return v.toString(16)
+          })
+        }
+
         // Save to assessment_responses table
         const { data: insertedResponse, error: insertError } = await supabase
           .from('assessment_responses')
@@ -526,7 +539,7 @@ Do NOT include any other text.`
             user_id: user.id,
             session_id: conversationId,
             template_id: assessmentId,
-            question_id: `response_${Date.now()}`,
+            question_id: generateUUID(),
             response_value: latestUserMessage,
             response_data: {
               archetype_confidence: archetypeConfidence,
