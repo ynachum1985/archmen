@@ -366,6 +366,8 @@ export async function POST(request: Request) {
 
     // Detect archetypes from the conversation for inline revelation using RAG
     let detectedArchetypes = []
+    let archetypeConfidence: Record<string, number> = {}
+
     if (assessmentId && conversationHistory.length > 0 && ragContext && ragContext.archetypeContent.length > 0) {
       try {
         // Fetch assessment configuration for thresholds
@@ -430,6 +432,7 @@ Do NOT include any other text.`
 
         try {
           const archetypeScores = JSON.parse(archetypeAnalysis.content)
+          console.log('🎭 Detected archetype scores:', archetypeScores)
 
           // Convert to array and match with archetype data from RAG
           detectedArchetypes = Object.entries(archetypeScores)
@@ -448,12 +451,59 @@ Do NOT include any other text.`
             })
             .sort((a, b) => b.confidenceScore - a.confidenceScore)
             .slice(0, 5) // Top 5 archetypes
+
+          // Store archetype confidence for database saving
+          archetypeConfidence = Object.entries(archetypeScores)
+            .reduce((acc, [name, score]) => {
+              acc[name] = score as number
+              return acc
+            }, {} as Record<string, number>)
+
+          console.log('✅ Detected archetypes:', detectedArchetypes.length)
         } catch (parseError) {
           console.error('Error parsing archetype analysis:', parseError)
           console.error('Raw response:', archetypeAnalysis.content)
         }
       } catch (error) {
         console.error('Error detecting archetypes:', error)
+      }
+    }
+
+    // Save detailed analysis to database for RAG and admin visibility
+    if (user && conversationId && assessmentId && Object.keys(archetypeConfidence).length > 0) {
+      try {
+        console.log('💾 Saving assessment response to database...')
+        const latestUserMessage = finalMessages[finalMessages.length - 1]?.content || ''
+
+        // Save to assessment_responses table
+        const { data: insertedResponse, error: insertError } = await supabase
+          .from('assessment_responses')
+          .insert({
+            user_id: user.id,
+            session_id: conversationId,
+            template_id: assessmentId,
+            question_id: `response_${Date.now()}`,
+            response_value: latestUserMessage,
+            response_data: {
+              archetype_confidence: archetypeConfidence,
+              detected_archetypes: detectedArchetypes.map(a => ({
+                name: a.name,
+                confidenceScore: a.confidenceScore,
+                isNewlyRevealed: a.isNewlyRevealed
+              })),
+              timestamp: new Date().toISOString()
+            }
+          })
+          .select()
+
+        if (insertError) {
+          console.error('❌ Error inserting assessment response:', insertError)
+        } else {
+          console.log('✅ Assessment response saved successfully')
+        }
+      } catch (error) {
+        console.error('❌ Error saving assessment response:', error)
+        // Don't throw - continue with response even if save fails
       }
     }
 
