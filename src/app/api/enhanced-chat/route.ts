@@ -368,7 +368,8 @@ export async function POST(request: Request) {
     let detectedArchetypes = []
     let archetypeConfidence: Record<string, number> = {}
 
-    if (assessmentId && conversationHistory.length > 0 && ragContext && ragContext.archetypeContent.length > 0) {
+    // Always attempt archetype detection if we have an assessment and conversation history
+    if (assessmentId && conversationHistory.length > 0) {
       try {
         // Fetch assessment configuration for thresholds
         let minConfidenceThreshold = 50 // Default
@@ -390,14 +391,17 @@ export async function POST(request: Request) {
         // Analyze the user's latest message for archetype patterns using RAG context
         const latestUserMessage = finalMessages[finalMessages.length - 1]?.content || ''
 
-        // Build archetype knowledge from RAG results
-        const archetypeKnowledge = ragContext.archetypeContent
-          .slice(0, 10) // Use top 10 relevant chunks
-          .map(chunk => `${chunk.archetype_name}:\n${chunk.content}`)
-          .join('\n\n---\n\n')
+        // Build archetype knowledge from RAG results or use fallback
+        let archetypeAnalysisPrompt = ''
 
-        // Use AI to detect archetypes based on RAG knowledge
-        const archetypeAnalysisPrompt = `You are an expert Jungian psychologist analyzing user responses for archetypal patterns.
+        if (ragContext && ragContext.archetypeContent && ragContext.archetypeContent.length > 0) {
+          // Use RAG-based analysis when knowledge is available
+          const archetypeKnowledge = ragContext.archetypeContent
+            .slice(0, 10) // Use top 10 relevant chunks
+            .map(chunk => `${chunk.archetype_name}:\n${chunk.content}`)
+            .join('\n\n---\n\n')
+
+          archetypeAnalysisPrompt = `You are an expert Jungian psychologist analyzing user responses for archetypal patterns.
 
 Based on the embedded archetype knowledge provided below, analyze this user message and identify which archetypes are present. Return ONLY a JSON object with archetype names as keys and confidence percentages (0-100) as values.
 
@@ -418,6 +422,46 @@ Analyze the patterns and match them to the archetypes in the knowledge base abov
 
 Return ONLY valid JSON like: {"Archetype Name": 75, "Another Archetype": 60}
 Do NOT include any other text.`
+        } else {
+          // Fallback analysis using Jungian archetypes when RAG context is unavailable
+          console.log('⚠️ RAG context empty, using fallback archetype analysis')
+
+          archetypeAnalysisPrompt = `You are an expert Jungian psychologist analyzing user responses for archetypal patterns.
+
+Analyze this user message and identify which Jungian archetypes are present. Return ONLY a JSON object with archetype names as keys and confidence percentages (0-100) as values.
+
+Common Jungian Archetypes:
+- The Hero: courage, strength, overcoming challenges
+- The Shadow: repressed aspects, darkness, unconscious
+- The Wise Old Man/Woman: wisdom, knowledge, guidance
+- The Innocent: optimism, happiness, safety
+- The Explorer: freedom, adventure, discovery
+- The Lover: intimacy, passion, connection
+- The Creator: innovation, self-expression, imagination
+- The Caregiver: compassion, service, support
+- The Everyman: belonging, connection, relatability
+- The Jester: humor, playfulness, entertainment
+- The Sage: analysis, truth-seeking, reflection
+- The Magician: transformation, power, knowledge
+- The Ruler: control, order, leadership
+- The Lover: intimacy, relationships, passion
+- The King: authority, responsibility, leadership
+- The Warrior: discipline, courage, competition
+
+IMPORTANT:
+- Only include archetypes with confidence >= ${minConfidenceThreshold}
+- Return top 5 matches maximum
+- Match based on language patterns, values, behaviors, and emotional responses
+
+User message: "${latestUserMessage}"
+
+Recent conversation context: ${conversationHistory.slice(-3).map(m => `${m.role}: ${m.content.substring(0, 150)}`).join('\n')}
+
+Analyze the patterns and identify matching archetypes.
+
+Return ONLY valid JSON like: {"Archetype Name": 75, "Another Archetype": 60}
+Do NOT include any other text.`
+        }
 
         const multiLLM = new MultiLLMService()
         const archetypeAnalysis = await multiLLM.generateChatCompletion(
