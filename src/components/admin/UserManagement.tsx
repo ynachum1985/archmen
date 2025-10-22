@@ -633,6 +633,35 @@ export function UserManagement() {
     }
   }
 
+  const handleResetConversation = async (conversationId: string, userId: string) => {
+    if (!confirm('Are you sure you want to reset this conversation? This will clear all messages and analysis data, but preserve the user\'s archetype profile.')) {
+      return
+    }
+
+    try {
+      const response = await fetch('/api/admin/reset-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, userId })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to reset conversation')
+      }
+
+      const result = await response.json()
+      alert(`✅ Conversation reset successfully!\n\nDetails:\n- Messages cleared\n- Emerging archetypes cleared\n- Assessment responses deleted\n- User archetype profile preserved\n\nYou can now start fresh with the new RAG system!`)
+
+      // Reload the assessment sessions to show the reset conversation
+      if (selectedUser) {
+        await loadAssessmentSessions(selectedUser.id)
+      }
+    } catch (error) {
+      console.error('Error resetting conversation:', error)
+      alert('❌ Failed to reset conversation. Please try again.')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -913,6 +942,15 @@ export function UserManagement() {
                                                 </p>
                                               )}
                                             </div>
+                                            {isInProgress && (
+                                              <button
+                                                onClick={() => handleResetConversation(session.id, selectedUser.id)}
+                                                className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                                                title="Reset this conversation to start fresh with the new RAG system"
+                                              >
+                                                🔄 Reset
+                                              </button>
+                                            )}
                                           </div>
 
                                           {hasArchetypes ? (
