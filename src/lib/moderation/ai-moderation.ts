@@ -197,6 +197,9 @@ export class AIModeration {
     }
 
     try {
+      // Truncate content to 3000 chars (Perspective API limit)
+      const truncatedContent = content.substring(0, 3000)
+
       const response = await fetch(
         `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${this.perspectiveApiKey}`,
         {
@@ -213,14 +216,16 @@ export class AIModeration {
               PROFANITY: {},
               THREAT: {}
             },
-            comment: { text: content },
-            languages: ['en']
+            comment: { text: truncatedContent },
+            languages: ['en'],
+            clientToken: 'archmen-assessment' // Add client token for tracking
           })
         }
       )
 
       if (!response.ok) {
-        console.warn(`Perspective API error: ${response.status}`)
+        const errorText = await response.text()
+        console.warn(`Perspective API error: ${response.status}`, errorText)
         return null
       }
 
