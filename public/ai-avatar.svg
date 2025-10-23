@@ -1,0 +1,31 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="50" fill="#3b82f6"/>
+  
+  <!-- Head -->
+  <circle cx="50" cy="35" r="18" fill="#e0e7ff"/>
+  
+  <!-- Eyes -->
+  <circle cx="44" cy="32" r="2.5" fill="#1e40af"/>
+  <circle cx="56" cy="32" r="2.5" fill="#1e40af"/>
+  
+  <!-- Smile -->
+  <path d="M 44 36 Q 50 38 56 36" stroke="#1e40af" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body -->
+  <rect x="38" y="55" width="24" height="28" rx="4" fill="#e0e7ff"/>
+  
+  <!-- Chest circuit pattern -->
+  <circle cx="50" cy="62" r="3" fill="#3b82f6"/>
+  <line x1="50" y1="65" x2="50" y2="72" stroke="#3b82f6" stroke-width="1"/>
+  <line x1="45" y1="62" x2="38" y2="62" stroke="#3b82f6" stroke-width="1"/>
+  <line x1="55" y1="62" x2="62" y2="62" stroke="#3b82f6" stroke-width="1"/>
+  
+  <!-- Arms -->
+  <rect x="28" y="58" width="10" height="6" rx="3" fill="#e0e7ff"/>
+  <rect x="62" y="58" width="10" height="6" rx="3" fill="#e0e7ff"/>
+  
+  <!-- Glow effect -->
+  <circle cx="50" cy="50" r="48" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.3"/>
+</svg>
+

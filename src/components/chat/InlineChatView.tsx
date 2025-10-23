@@ -449,7 +449,7 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
                     className="mb-4"
                   >
                     <ChatBubbleAvatar
-                      src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
+                      src={msg.role === 'assistant' ? '/ai-avatar.svg' : undefined}
                       fallback={msg.role === 'assistant' ? 'AI' : 'You'}
                     />
                     <ChatBubbleMessage>

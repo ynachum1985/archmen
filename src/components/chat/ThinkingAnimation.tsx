@@ -7,7 +7,7 @@ export function ThinkingAnimation() {
     <div className="mb-6">
       <ChatBubble variant="received" className="mb-4">
         <ChatBubbleAvatar
-          src="/ai-avatar.png"
+          src="/ai-avatar.svg"
           fallback="AI"
         />
         <ChatBubbleMessage>

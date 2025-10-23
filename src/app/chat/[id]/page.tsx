@@ -253,7 +253,7 @@ export default function ChatPage() {
               variant={msg.role === 'user' ? 'sent' : 'received'}
             >
               <ChatBubbleAvatar
-                src={msg.role === 'assistant' ? '/ai-avatar.png' : undefined}
+                src={msg.role === 'assistant' ? '/ai-avatar.svg' : undefined}
                 fallback={msg.role === 'assistant' ? 'AI' : 'You'}
               />
               <ChatBubbleMessage>
