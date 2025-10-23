@@ -486,7 +486,8 @@ Do NOT include any other text.`
             }, {} as Record<string, number>)
 
           // Only reveal archetypes that meet the high confidence threshold
-          const revealThreshold = Math.max(minConfidenceThreshold + 20, 70) // Default 70% or 20 points above threshold
+          // Use 75% as the reveal threshold (higher than min_confidence to ensure strong signal)
+          const revealThreshold = 75
           console.log('🎯 Reveal threshold:', revealThreshold)
 
           // Convert to array and match with archetype data from RAG
