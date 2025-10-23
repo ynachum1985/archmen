@@ -485,10 +485,9 @@ Do NOT include any other text.`
               return acc
             }, {} as Record<string, number>)
 
-          // Only reveal archetypes that meet the high confidence threshold
-          // Use 75% as the reveal threshold (higher than min_confidence to ensure strong signal)
-          const revealThreshold = 75
-          console.log('🎯 Reveal threshold:', revealThreshold)
+          // Only reveal archetypes that meet the assessment's configured min_confidence threshold
+          const revealThreshold = minConfidenceThreshold
+          console.log('🎯 Reveal threshold (from assessment config):', revealThreshold)
 
           // Convert to array and match with archetype data from RAG
           detectedArchetypes = Object.entries(archetypeScores)
