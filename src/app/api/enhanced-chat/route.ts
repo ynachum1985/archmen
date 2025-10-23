@@ -373,7 +373,10 @@ export async function POST(request: Request) {
     const minConversationTurns = 3
     const userMessageCount = conversationHistory.filter(m => m.role === 'user').length
 
+    console.log(`📊 Archetype detection check: ${userMessageCount} user messages (need ${minConversationTurns})`)
+
     if (assessmentId && conversationHistory.length > 0 && userMessageCount >= minConversationTurns) {
+      console.log('✅ Sufficient conversation turns - proceeding with archetype detection')
       try {
         // Fetch assessment configuration for thresholds
         let minConfidenceThreshold = 50 // Default
@@ -391,8 +394,6 @@ export async function POST(request: Request) {
         } catch (error) {
           console.error('Error fetching assessment config:', error)
         }
-
-        console.log(`📊 Archetype detection check: ${userMessageCount} user messages (need ${minConversationTurns})`)
 
         // Analyze the user's latest message for archetype patterns using RAG context
         const latestUserMessage = finalMessages[finalMessages.length - 1]?.content || ''

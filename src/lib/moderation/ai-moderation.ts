@@ -225,7 +225,12 @@ export class AIModeration {
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.warn(`Perspective API error: ${response.status}`, errorText)
+        // Check if it's an API key error - if so, disable Perspective API
+        if (response.status === 400 && errorText.includes('API key')) {
+          console.warn('⚠️ Perspective API key invalid - disabling Perspective API checks')
+          return null
+        }
+        console.warn(`Perspective API error: ${response.status}`)
         return null
       }
 
