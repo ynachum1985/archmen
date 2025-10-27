@@ -31,8 +31,8 @@ export function AssessmentProgressBar({
     // messageCount includes both user and AI messages, so divide by 2
     const conversationTurns = Math.ceil(messageCount / 2)
 
-    // Calculate progress based on questions answered
-    const questionsProgress = Math.min(conversationTurns / minQuestions, 1)
+    // Calculate progress based on questions answered (from min to max)
+    const questionsProgress = Math.min(conversationTurns / maxQuestions, 1)
 
     // If we have detected archetypes, we're past the first reveal
     if (detectedArchetypesCount > 0) {
@@ -47,15 +47,17 @@ export function AssessmentProgressBar({
       setProgress(questionsProgress * 0.7)
       setStage('questions')
     }
-  }, [messageCount, detectedArchetypesCount, minQuestions])
+  }, [messageCount, detectedArchetypesCount, minQuestions, maxQuestions])
 
   const getStageLabel = () => {
     const conversationTurns = Math.ceil(messageCount / 2)
+    const isNearLimit = conversationTurns >= maxQuestions - 1
+
     switch (stage) {
       case 'questions':
-        return `Building conversation... (${conversationTurns}/${minQuestions} questions)`
+        return `Building conversation... (${conversationTurns}/${minQuestions} min, ${maxQuestions} max)${isNearLimit ? ' ⚠️ Approaching limit' : ''}`
       case 'confidence':
-        return `Analyzing patterns... (${minConfidence}% confidence needed)`
+        return `Analyzing patterns... (${minConfidence}% confidence needed)${isNearLimit ? ' ⚠️ Approaching limit' : ''}`
       case 'archetype':
         return `${detectedArchetypesCount}/${minArchetypes} archetype${detectedArchetypesCount !== 1 ? 's' : ''} revealed!`
       default:
@@ -111,7 +113,7 @@ export function AssessmentProgressBar({
         {/* Debug Info */}
         {showDebug && (
           <div className="mt-3 p-2 bg-gray-100/50 rounded text-xs text-gray-600 space-y-1 font-mono">
-            <div>Questions: {Math.ceil(messageCount / 2)}/{minQuestions}</div>
+            <div>Questions: {Math.ceil(messageCount / 2)}/{minQuestions} (max: {maxQuestions})</div>
             <div>Archetypes: {detectedArchetypesCount}/{minArchetypes}</div>
             <div>Confidence: {minConfidence}% needed</div>
             {sessionData?.discovered_archetypes && (

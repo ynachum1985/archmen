@@ -373,6 +373,7 @@ export async function POST(request: Request) {
     const userMessageCount = conversationHistory.filter(m => m.role === 'user').length
 
     let minQuestionsRequired = 3 // Default fallback
+    let maxQuestionsAllowed = 15 // Default fallback
     let minConfidenceThreshold = 70 // Default fallback
     let minArchetypesRequired = 2 // Default fallback
 
@@ -380,15 +381,16 @@ export async function POST(request: Request) {
     try {
       const { data: assessment } = await supabase
         .from('enhanced_assessments')
-        .select('min_questions, min_confidence, min_archetypes')
+        .select('min_questions, max_questions, min_confidence, min_archetypes')
         .eq('id', assessmentId)
         .single()
 
       if (assessment) {
         minQuestionsRequired = assessment.min_questions || 3
+        maxQuestionsAllowed = assessment.max_questions || 15
         minConfidenceThreshold = assessment.min_confidence || 70
         minArchetypesRequired = assessment.min_archetypes || 2
-        console.log(`⚙️ Assessment config loaded: min_questions=${minQuestionsRequired}, min_confidence=${minConfidenceThreshold}%, min_archetypes=${minArchetypesRequired}`)
+        console.log(`⚙️ Assessment config loaded: min_questions=${minQuestionsRequired}, max_questions=${maxQuestionsAllowed}, min_confidence=${minConfidenceThreshold}%, min_archetypes=${minArchetypesRequired}`)
       }
     } catch (error) {
       console.error('Error fetching assessment config:', error)
@@ -500,10 +502,11 @@ Do NOT include any other text.`
           // Only reveal archetypes that meet the assessment's configured min_confidence threshold
           const revealThreshold = minConfidenceThreshold
           console.log('🎯 Reveal threshold (from assessment config):', revealThreshold)
+          console.log('📊 Min archetypes required:', minArchetypesRequired)
 
           // Convert to array and match with archetype data from RAG
-          detectedArchetypes = Object.entries(archetypeScores)
-            .filter(([_, score]) => (score as number) >= revealThreshold) // Only reveal high confidence archetypes
+          const candidateArchetypes = Object.entries(archetypeScores)
+            .filter(([_, score]) => (score as number) >= revealThreshold) // Only high confidence archetypes
             .map(([name, score]) => {
               // Find archetype description from RAG context
               const archetypeChunk = ragContext && ragContext.archetypeContent && ragContext.archetypeContent.find(
@@ -513,13 +516,19 @@ Do NOT include any other text.`
                 name,
                 confidenceScore: score as number,
                 description: archetypeChunk?.content?.substring(0, 300) || '',
-                isNewlyRevealed: true // All returned archetypes are newly revealed (they passed the threshold)
+                isNewlyRevealed: true
               }
             })
             .sort((a, b) => b.confidenceScore - a.confidenceScore)
-            .slice(0, 5) // Top 5 archetypes
 
-          console.log('✅ Archetypes to reveal:', detectedArchetypes.length, 'out of', Object.keys(archetypeScores).length, 'detected')
+          // ENFORCE min_archetypes: Only reveal if we have enough archetypes meeting the threshold
+          if (candidateArchetypes.length >= minArchetypesRequired) {
+            detectedArchetypes = candidateArchetypes.slice(0, 5) // Top 5 archetypes max
+            console.log(`✅ Archetypes to reveal: ${detectedArchetypes.length} out of ${Object.keys(archetypeScores).length} detected (meets min_archetypes=${minArchetypesRequired})`)
+          } else {
+            console.log(`⏳ Not enough archetypes yet: ${candidateArchetypes.length} found, need ${minArchetypesRequired} (min_confidence=${minConfidenceThreshold}%)`)
+            detectedArchetypes = [] // Don't reveal yet
+          }
         } catch (parseError) {
           console.error('Error parsing archetype analysis:', parseError)
           console.error('Raw response:', archetypeAnalysis.content)

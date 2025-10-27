@@ -203,6 +203,15 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
   const sendMessage = async () => {
     if (!message.trim() || !conversation || !userId || sending) return
 
+    // Check if assessment has reached max_questions limit
+    if (conversation.metadata?.assessmentId) {
+      const userMessageCount = Math.ceil(conversation.messages.filter(m => m.role === 'user').length)
+      if (userMessageCount >= assessmentSettings.maxQuestions) {
+        setModerationWarning(`Assessment limit reached: Maximum ${assessmentSettings.maxQuestions} questions allowed. Please complete your assessment.`)
+        return
+      }
+    }
+
     setSending(true)
     setModerationWarning(null)
 
@@ -329,11 +338,42 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
 
       const finalMessages = [...updatedMessages, aiMessage]
 
+      // Check if assessment should be marked as complete
+      const userMessageCount = finalMessages.filter(m => m.role === 'user').length
+      const detectedArchetypesCount = getDetectedArchetypesCount()
+      const hasDetectedArchetypes = aiData.detectedArchetypes && aiData.detectedArchetypes.length > 0
+
+      let shouldMarkComplete = false
+      let completionReason = ''
+
+      // Completion criteria:
+      // 1. Max questions reached, OR
+      // 2. Min questions met AND min archetypes revealed AND min confidence met
+      if (userMessageCount >= assessmentSettings.maxQuestions) {
+        shouldMarkComplete = true
+        completionReason = `Max questions (${assessmentSettings.maxQuestions}) reached`
+      } else if (
+        userMessageCount >= assessmentSettings.minQuestions &&
+        detectedArchetypesCount >= assessmentSettings.minArchetypes &&
+        hasDetectedArchetypes
+      ) {
+        shouldMarkComplete = true
+        completionReason = `Min criteria met: ${userMessageCount}/${assessmentSettings.minQuestions} questions, ${detectedArchetypesCount}/${assessmentSettings.minArchetypes} archetypes`
+      }
+
+      if (shouldMarkComplete) {
+        console.log(`✅ Assessment completion criteria met: ${completionReason}`)
+      }
+
       // Update conversation with AI response
       await supabase
         .from('conversations')
         .update({
           messages: finalMessages,
+          metadata: {
+            ...conversation.metadata,
+            status: shouldMarkComplete ? 'completed' : conversation.metadata.status
+          },
           updated_at: new Date().toISOString()
         })
         .eq('id', conversation.id)
@@ -341,7 +381,11 @@ export function InlineChatView({ conversation, userId, onConversationUpdate }: I
       // Update local state
       const finalConversation = {
         ...conversation,
-        messages: finalMessages
+        messages: finalMessages,
+        metadata: {
+          ...conversation.metadata,
+          status: shouldMarkComplete ? 'completed' : conversation.metadata.status
+        }
       }
       onConversationUpdate(finalConversation)
 
