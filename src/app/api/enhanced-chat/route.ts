@@ -368,32 +368,37 @@ export async function POST(request: Request) {
     let detectedArchetypes = []
     let archetypeConfidence: Record<string, number> = {}
 
-    // Only attempt archetype detection after sufficient conversation turns (3+ messages)
-    // This prevents premature archetype revelation after just 1 response
-    const minConversationTurns = 3
+    // Only attempt archetype detection after sufficient conversation turns
+    // Use min_questions from assessment config, with minimum of 3 as fallback
     const userMessageCount = conversationHistory.filter(m => m.role === 'user').length
 
-    console.log(`📊 Archetype detection check: ${userMessageCount} user messages (need ${minConversationTurns})`)
+    let minQuestionsRequired = 3 // Default fallback
+    let minConfidenceThreshold = 70 // Default fallback
+    let minArchetypesRequired = 2 // Default fallback
 
-    if (assessmentId && conversationHistory.length > 0 && userMessageCount >= minConversationTurns) {
-      console.log('✅ Sufficient conversation turns - proceeding with archetype detection')
+    // Fetch assessment configuration for thresholds
+    try {
+      const { data: assessment } = await supabase
+        .from('enhanced_assessments')
+        .select('min_questions, min_confidence, min_archetypes')
+        .eq('id', assessmentId)
+        .single()
+
+      if (assessment) {
+        minQuestionsRequired = assessment.min_questions || 3
+        minConfidenceThreshold = assessment.min_confidence || 70
+        minArchetypesRequired = assessment.min_archetypes || 2
+        console.log(`⚙️ Assessment config loaded: min_questions=${minQuestionsRequired}, min_confidence=${minConfidenceThreshold}%, min_archetypes=${minArchetypesRequired}`)
+      }
+    } catch (error) {
+      console.error('Error fetching assessment config:', error)
+    }
+
+    console.log(`📊 Archetype detection check: ${userMessageCount} user messages (need ${minQuestionsRequired})`)
+
+    if (assessmentId && conversationHistory.length > 0 && userMessageCount >= minQuestionsRequired) {
+      console.log(`✅ Sufficient questions answered (${userMessageCount}/${minQuestionsRequired}) - proceeding with archetype detection`)
       try {
-        // Fetch assessment configuration for thresholds
-        let minConfidenceThreshold = 50 // Default
-
-        try {
-          const { data: assessment } = await supabase
-            .from('enhanced_assessments')
-            .select('min_confidence, min_archetypes')
-            .eq('id', assessmentId)
-            .single()
-
-          if (assessment) {
-            minConfidenceThreshold = assessment.min_confidence || 50
-          }
-        } catch (error) {
-          console.error('Error fetching assessment config:', error)
-        }
 
         // Analyze the user's latest message for archetype patterns using RAG context
         const latestUserMessage = finalMessages[finalMessages.length - 1]?.content || ''
